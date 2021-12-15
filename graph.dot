@@ -1,0 +1,271 @@
+digraph G {
+
+  subgraph cluster_0 {
+    style=filled;
+    color=green;
+    node [style=filled,color=white];
+    interop_cats_ce_3;
+    interop_reactive_streams;
+    zio_cli;
+    zio_config;
+    zio_kafka;
+    zio_prelude;
+    zio_query;
+    
+    label = "Green stuff";
+  }
+
+  subgraph cluster_1 {
+    style=filled;
+    color=yellow;
+    node [style=filled,color=white];
+    interop_cats_ce_2;
+    interop_twitter;
+    Rezilience;
+    zio_aws;
+    zio_cache;
+    zio_grpc;
+    zio_json;
+    zio_kinesis;
+    zio_process;
+    zio_schema;
+    label = "Yellow stuff"
+  }
+  
+  subgraph cluster_2 {
+    style=filled;
+    color=grey;
+    node [style=filled,color=white];
+    zio_analytics;
+    zio_codec;
+    zio_columnar;
+    zio_connect;
+    zio_distributed;
+    zio_gcp;
+    zio_lambda_old;
+    zio_rocksdb;
+    zio_shield;
+    zio_spark;
+    zio_test_intellij;
+    label = "Grey stuff"
+  }
+  
+  subgraph cluster_3 {
+    style=filled;
+    color=white;
+    node [style=filled,color=white];
+    izumi_reflect;
+    zio_lambda;
+    zio_logging;
+    zio_metrics;
+    zio_s3;
+    zio_saga;
+    zio_simple_seed_g8;
+    zio_zmx;
+    label = "White stuff"
+  }
+  
+  subgraph cluster_4 {
+    style=filled;
+    color=red;
+    node [style=filled,color=white];
+    Caliban;
+    caliban_deriving;
+    Distage;
+    interop_guava;
+    interop_scalaz;
+    LogStage;
+    munit_zio;
+    sttp_http_client_backend_zio;
+    tranzactIO;
+    Zio_test_Akka_HTTP;
+    zio_actors;
+    zio_akka_cluster;
+    zio_amqp;
+    zio_arrow;
+    zio_crypto;
+    zio_dynamodb;
+    zio_flow;
+    zio_ftp;
+    zio_http;
+    zio_intellij;
+    zio_k8s;
+    zio_keeper;
+    zio_memberlist;
+    zio_microservice;
+    zio_nio;
+    zio_optics;
+    zio_project_seed_g8;
+    zio_pulsar;
+    zio_redis;
+    zio_slick_interop;
+    zio_sql;
+    zio_sqs;
+    zio_telemetry_OpenCensus;
+    zio_telemetry_OpenTelemetry;
+    zio_telemetry_OpenTracing;
+    zio_tls_http;
+    zio_uring;
+    zio_webhooks;
+    label = "Red stuff"
+  }
+  
+  subgraph cluster_5 {
+    style=filled;
+    color=orange;
+    node [style=filled,color=white];
+    zio_quill_scala_2;
+    zio_quill_scala_3;
+    zio_streams;
+    zionomicon;
+    label = "Orange stuff"
+  }
+  
+  interop_cats_2 -> Caliban;
+  interop_cats_3 -> Caliban;
+  zio_config -> Caliban;
+  zio_query -> Caliban;
+  zio_json -> Caliban;
+  zio_http -> Caliban;
+  
+  Caliban -> caliban_deriving;
+
+  izumi_reflect -> Distage;
+  interop_cats_ce_2 -> Distage;
+  interop_cats_ce_3 -> Distage;
+  
+  zio_streams -> interop_cats_ce_2;
+  zio_streams -> interop_cats_ce_3;
+  
+  zio_streams -> interop_reactive_streams;
+  
+  izumi_reflect -> LogStage;
+  interop_cats_ce_2 -> LogStage;
+  interop_cats_ce_3 -> LogStage;
+  
+  zio_streams -> Rezilience;
+  
+  zio_streams -> tranzactIO;
+  interop_cats_ce_2 -> tranzactIO;
+  interop_cats_ce_3 -> tranzactIO;
+  
+  zio_nio -> zio_actors;
+  zio_config -> zio_actors;
+  
+  zio_streams -> zio_akka_cluster;
+  
+  interop_reactive_streams -> zio_amqp;
+  zio_streams -> zio_amqp;
+  zio_prelude -> zio_amqp;
+  
+  interop_reactive_streams -> zio_aws_s3;
+  interop_cats_ce_2 -> zio_aws_s3;
+  interop_cats_ce_3 -> zio_aws_s3;
+  zio_config -> zio_aws_s3;
+  zio_streams -> zio_aws_s3;
+  
+  zio_streams -> zio_dynamodb;
+  zio_schema -> zio_dynamodb;
+  zio_config -> zio_dynamodb;
+  
+  zio_schema -> zio_flow;
+  
+  zio_streams -> zio_ftp;
+  zio_nio -> zio_ftp;
+  
+  zio_streams -> zio_grpc;
+  zio_streams -> zio_http;
+  zio_streams -> zio_json;
+  
+  zio_streams -> zio_k8s;
+  zio_config -> zio_k8s;
+  zio_logging -> zio_k8s;
+  zio_nio -> zio_k8s;
+  zio_process -> zio_k8s;
+  sttp_http_client_backend_zio -> zio_k8s;
+  sttp_async_http_client_backend_zio -> zio_k8s;
+  
+  zio_streams -> zio_kafka;
+  
+  zio_streams -> zio_keeper;
+  zio_nio -> zio_keeper;
+  zio_logging -> zio_keeper;
+  zio_config -> zio_keeper;
+  
+  zio_streams -> zio_kinesis;
+  interop_reactive_streams -> zio_kinesis;
+  zio_logging -> zio_kinesis;
+  zio_aws -> zio_kinesis;
+  
+  zio_streams -> zio_logging;
+  
+  zio_streams -> zio_memberlist;
+  zio_nio -> zio_memberlist;
+  zio_logging -> zio_memberlist;
+  zio_config -> zio_memberlist;
+  
+  zio_logging -> zio_microservice;
+  zio_streams -> zio_microservice;
+  zio_schema -> zio_microservice;
+  zio_nio -> zio_microservice;
+  zio_json -> zio_microservice;
+  
+  zio_streams -> zio_nio;
+  zio_streams -> zio_prelude;
+  zio_streams -> zio_process;
+  zio_streams -> zio_pulsar;
+  
+  zio_streams -> zio_quill_scala_2;
+  interop_guava -> zio_quill_scala_2;
+  
+  zio_streams -> zio_quill_scala_3;
+  interop_guava -> zio_quill_scala_3;
+  
+  zio_streams -> zio_redis;
+  zio_logging -> zio_redis;
+  zio_schema -> zio_redis;
+  
+  zio_streams -> zio_rocksdb;
+  
+  zio_streams -> zio_s3;
+  zio_nio -> zio_s3;
+  interop_reactive_streams -> zio_s3;
+  
+  interop_cats_2 -> zio_saga;
+  interop_cats_3 -> zio_saga;
+  
+  zio_streams -> zio_schema;
+  zio_prelude -> zio_schema;
+  
+  zio_streams -> zio_shield;
+  
+  interop_reactive_streams -> zio_slick_interop;
+  zio_config -> zio_spark;
+  zio_streams -> zio_sql;
+  
+  zio_streams -> zio_sqs;
+  zio_aws -> zio_sqs;
+  
+  zio_json -> zio_telemetry_OpenCensus;
+  sttp_async_http_client_backend_zio -> zio_telemetry_OpenCensus;
+  zio_config -> zio_telemetry_OpenCensus;
+  
+  zio_json -> zio_telemetry_OpenTelemetry;
+  sttp_async_http_client_backend_zio -> zio_telemetry_OpenTelemetry;
+  zio_config -> zio_telemetry_OpenTelemetry;
+  
+  zio_json -> zio_telemetry_OpenTracing;
+  sttp_async_http_client_backend_zio -> zio_telemetry_OpenTracing;
+  zio_config -> zio_telemetry_OpenTracing;
+  
+  zio_json -> zio_tls_http;
+  
+  zio_json -> zio_webhooks;
+  zio_prelude -> zio_webhooks;
+  zio_streams -> zio_webhooks;
+  sttp_http_client_backend_zio -> zio_webhooks;
+  sttp_async_http_client_backend_zio -> zio_webhooks;
+  
+  zio_http -> zio_zmx;
+  zio_json -> zio_zmx;
+}
