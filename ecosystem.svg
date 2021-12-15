@@ -8,7 +8,7 @@
    version="1.1"
    id="svg5"
    inkscape:version="1.1.1 (c3084ef, 2021-09-22)"
-   sodipodi:docname="tree.svg"
+   sodipodi:docname="ecosystem.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -24,13 +24,13 @@
      inkscape:pagecheckerboard="0"
      inkscape:document-units="mm"
      showgrid="false"
-     inkscape:zoom="0.96505"
-     inkscape:cx="422.77602"
-     inkscape:cy="536.75975"
+     inkscape:zoom="0.3411967"
+     inkscape:cx="559.79439"
+     inkscape:cy="416.18222"
      inkscape:window-width="1047"
      inkscape:window-height="946"
      inkscape:window-x="0"
-     inkscape:window-y="26"
+     inkscape:window-y="25"
      inkscape:window-maximized="0"
      inkscape:current-layer="layer1" />
   <defs
@@ -900,6 +900,14 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
+    <rect
+       style="fill:#ffffff;stroke:#ffffff;stroke-width:0.465"
+       id="rect2113"
+       width="296.22452"
+       height="208.5979"
+       x="0"
+       y="0"
+       ry="0" />
     <path
        style="fill:#000000;stroke-width:0.0680815"
        id="path21"
@@ -4686,8 +4694,8 @@
        style="font-size:40px;line-height:1.25;font-family:sans-serif;word-spacing:0px;white-space:pre;shape-inside:url(#rect80597)"><tspan
          x="828.97266"
          y="146.33306"
-         id="tspan94786"><tspan
+         id="tspan3147"><tspan
            style="font-weight:bold"
-           id="tspan94784">ZIO 2.0 Ecosystem</tspan></tspan></text>
+           id="tspan3145">ZIO 2.0 Ecosystem</tspan></tspan></text>
   </g>
 </svg>
