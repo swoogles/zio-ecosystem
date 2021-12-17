@@ -3,6 +3,7 @@ package org.ziverge
 import sttp.model.Uri
 import zio.ZIOAppDefault
 import zio.ZIO
+import zio.durationInt
 
 import scala.xml.{Elem, XML}
 
@@ -21,7 +22,6 @@ enum ScalaVersion(val mvnFriendlyVersion: String) {
 case class VersionedProject(project: Project, version: String)
 object VersionedProject:
   def stripped(project: Project, version: String): VersionedProject =
-    ScalaVersion.values.filter( scalaVersion => project.artifactId.endsWith("_" + scalaVersion.mvnFriendlyVersion)).foreach( version => println("Artifact is for scalaversion: " + version))
     VersionedProject(stripScalaVersionFromArtifact(project), version)
     
   private def stripScalaVersionFromArtifact(project: Project): Project =
@@ -29,7 +29,9 @@ object VersionedProject:
       .map( scalaVersion => project.copy(artifactId = project.artifactId.replace("_"+scalaVersion.mvnFriendlyVersion, "")))
       .getOrElse(project)
       
-case class ProjectMetaData(project: VersionedProject, dependencies: Set[VersionedProject])
+case class ProjectMetaData(project: VersionedProject, dependencies: Set[VersionedProject]) {
+  dependencies.find(project => project.project.artifactId == "zio").foreach(x => println(s"${project.project.artifactId} Zio version : " + x.version))
+}
 
 def latestVersionOfArtifact(project: Project, scalaVersion: ScalaVersion) = {
   import sttp.client3._
@@ -56,7 +58,6 @@ def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) = {
     s"${project.project.versionedArtifactId(scalaVersion)}-${project.version}.pom"
   val fileName = pomFile(project)
   val urlString = s"maven2/${project.project.groupUrl}/${project.project.versionedArtifactId(scalaVersion)}/${project.version}/${fileName}"
-  println("pom URL: " + urlString)
 
   for
     url <- ZIO.fromEither(Uri.safeApply(scheme = "https", host = "repo1.maven.org": String, path = urlString.split("\\/").toSeq))
@@ -115,23 +116,31 @@ def projectMetaDataFor( project: Project, scalaVersion: ScalaVersion ) =
 
 object ZioDependencyTracker extends ZIOAppDefault:
   val projects = Set(
+    Project("dev.zio", "zio-streams"),
     Project("dev.zio", "zio-prelude"),
     Project("dev.zio", "zio-prelude-macros"),
     Project("nl.vroste", "zio-amqp"),
+//    Project("dev.zio", "zio-cli"),
+    Project("dev.zio", "zio"),
     Project("dev.zio", "zio-json"),
     Project("dev.zio", "zio-query"),
     Project("dev.zio", "zio-schema"),
+    Project("dev.zio", "zio-kafka"), // TODO Why isn't this showing up?
+    Project("dev.zio", "zio-optics"),
 //    Project("dev.zio", "zio-flow"),
     Project("com.github.ghostdogpr", "caliban"),
     Project("io.github.vigoo", "zio-aws-dynamodb"),
     Project("io.github.vigoo", "zio-aws-core"),
+    Project("io.d11", "zhttp"),
+    Project("dev.zio", "zio-interop-cats"),
+    Project("nl/vroste", "rezilience"),
 //    Project("com.coralogix", "zio-k8s-client"),
   )
   
   def run =
     for
-      allProjectsMetaData <- ZIO.foreach(projects)( project => projectMetaDataFor(project, ScalaVersion.V2_13))
-      _ <- zio.Console.printLine(serializeDotGraphs(allProjectsMetaData))
+      allProjectsMetaData <- ZIO.foreach(projects)( project => ZIO.sleep(1.seconds) *> projectMetaDataFor(project, ScalaVersion.V2_13))
+//      _ <- zio.Console.printLine(serializeDotGraphs(allProjectsMetaData))
     yield ()
 
 /*
