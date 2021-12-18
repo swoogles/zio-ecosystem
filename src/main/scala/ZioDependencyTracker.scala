@@ -4,6 +4,11 @@ import sttp.model.Uri
 import zio.ZIOAppDefault
 import zio.ZIO
 import zio.durationInt
+import zio.Console.printLine
+import scalax.collection.Graph // or scalax.collection.mutable.Graph
+import scalax.collection.GraphPredef._, scalax.collection.GraphEdge._
+import scalax.collection.edge.LDiEdge
+import scalax.collection.edge.Implicits._ // shortcuts
 
 import scala.xml.{Elem, XML}
 
@@ -29,9 +34,33 @@ object VersionedProject:
       .map( scalaVersion => project.copy(artifactId = project.artifactId.replace("_"+scalaVersion.mvnFriendlyVersion, "")))
       .getOrElse(project)
       
-case class ProjectMetaData(project: VersionedProject, dependencies: Set[VersionedProject]) {
-  dependencies.find(project => project.project.artifactId == "zio").foreach(x => println(s"${project.project.artifactId} Zio version : " + x.version))
+case class ProjectMetaData private(project: VersionedProject, dependencies: Set[VersionedProject]):
+  val zioDep = dependencies.find(project => project.project.artifactId == "zio") // TODO Fix
+
+object ProjectMetaData {
+  def withZioDependenciesOnly(project: VersionedProject, dependencies: Set[VersionedProject]): ProjectMetaData =
+    ProjectMetaData(project, dependencies.filter(isAZioLibrary))
+    
+  def renderRow(project: ProjectMetaData): String =
+    val renderedZioDependency = project.zioDep.fold("transitive")(_.version)
+    val renderedDependencies = project.dependencies.map(dep => dep.project.artifactId).mkString(",")
+    f"${project.project.project.artifactId}%-30s ${"ZIO " + renderedZioDependency}%-20s ${renderedDependencies}"
 }
+
+case class ConnectedProjectData private(projectMetaData: ProjectMetaData, dependendants: Set[String])
+object ConnectedProjectData :
+  def apply(projectMetaData: ProjectMetaData, dependendencyGraph: Graph[String, DiEdge]): ConnectedProjectData =
+    val node = dependendencyGraph.nodes.find(_.value == projectMetaData.project.project.artifactId).getOrElse(throw new RuntimeException("No node for: "+ projectMetaData.project.project.artifactId))
+    val dependents: Set[String] =
+      node.diSuccessors.map(_.value.toString)
+      
+//    val onLatestZio = ???
+//      node.diPredecessors.
+    
+    ConnectedProjectData (projectMetaData,
+      dependents
+    )
+
 
 def latestVersionOfArtifact(project: Project, scalaVersion: ScalaVersion) = {
   import sttp.client3._
@@ -80,9 +109,9 @@ def latestProjectOnMaven(project: Project, scalaVersion: ScalaVersion) =
   yield latestProject
 
 
-def dependenciesFor(pom: Elem, scalaVersion: ScalaVersion): Seq[VersionedProject] =
+def dependenciesFor(pom: Elem, scalaVersion: ScalaVersion): Set[VersionedProject] =
   val dependencies = pom \ "dependencies" \ "dependency"
-  dependencies.map( node => VersionedProject.stripped(Project((node \ "groupId").text, (node \ "artifactId").text), (node \ "version").text))
+  dependencies.map( node => VersionedProject.stripped(Project((node \ "groupId").text, (node \ "artifactId").text), (node \ "version").text)).toSet
   
 def isAZioLibrary(project: VersionedProject) =
   project.project.artifactId.contains("zio") || project.project.group.contains("zio")
@@ -111,36 +140,77 @@ def projectMetaDataFor( project: Project, scalaVersion: ScalaVersion ) =
   for
     versionedProject <- latestProjectOnMaven(project, ScalaVersion.V2_13)
     pomFile <- pomFor(versionedProject, ScalaVersion.V2_13)
-    zioDeps = dependenciesFor(pomFile, ScalaVersion.V2_13).filter(isAZioLibrary)
-  yield ProjectMetaData(versionedProject, zioDeps.toSet)
+  yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile, ScalaVersion.V2_13))
 
 object ZioDependencyTracker extends ZIOAppDefault:
-  val projects = Set(
-    Project("dev.zio", "zio-streams"),
-    Project("dev.zio", "zio-prelude"),
-    Project("dev.zio", "zio-prelude-macros"),
-    Project("nl.vroste", "zio-amqp"),
-//    Project("dev.zio", "zio-cli"),
+  val projects = List(
     Project("dev.zio", "zio"),
+    Project("dev.zio", "zio-cache"),
+    Project("dev.zio", "zio-test-sbt"),
+    Project("com.github.ghostdogpr", "caliban"),
+    Project("dev.zio", "zio-optics"),
+    Project("dev.zio", "zio-streams"),
     Project("dev.zio", "zio-json"),
     Project("dev.zio", "zio-query"),
     Project("dev.zio", "zio-schema"),
-    Project("dev.zio", "zio-kafka"), // TODO Why isn't this showing up?
-    Project("dev.zio", "zio-optics"),
-//    Project("dev.zio", "zio-flow"),
-    Project("com.github.ghostdogpr", "caliban"),
+    Project("dev.zio", "zio-config"),
+    Project("dev.zio", "zio-kafka"),
     Project("io.github.vigoo", "zio-aws-dynamodb"),
     Project("io.github.vigoo", "zio-aws-core"),
+    Project("dev.zio", "zio-prelude"),
+    Project("dev.zio", "zio-prelude-macros"),
+    Project("dev.zio", "zio-interop-reactivestreams"),
+    Project("dev.zio", "zio-interop-scalaz7x"),
+    Project("dev.zio", "zio-interop-twitter"),
+    Project("nl.vroste", "zio-amqp"),
+    /*
+    zio-query, zio-interop-cats, zio-prelude, zio-cache, and zio-optics
+    */
+    Project("dev.zio", "zio-interop-guava"),
+    Project("io.7mind.izumi", "distage-core"),
+    Project("io.7mind.izumi", "logstage-core"),
+    Project("com.github.poslegm", "munit-zio"),
+    Project("com.softwaremill.sttp.client3", "async-http-client-backend-zio"), // todo wrong zio version 3.3.18
     Project("io.d11", "zhttp"),
     Project("dev.zio", "zio-interop-cats"),
+    Project("dev.zio", "zio-nio"),
+    Project("dev.zio", "zio-opentracing"),
+    Project("dev.zio", "zio-zmx"),
+    Project("dev.zio", "zio-actors"),
+    Project("dev.zio", "zio-akka-cluster"),
     Project("nl/vroste", "rezilience"),
-//    Project("com.coralogix", "zio-k8s-client"),
-  )
+    Project("io.getquill", "quill-jdbc-zio"),
+    Project("io.github.gaelrenoux", "tranzactio"),
+    Project("info.senia", "zio-test-akka-http"),
+  ).sortBy(_.artifactId)
   
   def run =
     for
-      allProjectsMetaData <- ZIO.foreach(projects)( project => ZIO.sleep(1.seconds) *> projectMetaDataFor(project, ScalaVersion.V2_13))
-//      _ <- zio.Console.printLine(serializeDotGraphs(allProjectsMetaData))
+      allProjectsMetaData <- ZIO.foreach(projects)( project => projectMetaDataFor(project, ScalaVersion.V2_13))
+      graph: Graph[String, DiEdge] <- ZIO {
+        Graph(
+        allProjectsMetaData
+          .flatMap { project =>
+            project.dependencies.map {
+              dependency => dependency.project.artifactId ~> project.project.project.artifactId
+            }
+
+          }*
+        )
+      }
+      node <- ZIO(graph.nodes.map(node => node.diPredecessors).mkString(","))
+//      _ <- printLine(node.diPredecessors)
+//      _ <- printLine(allProjectsMetaData)
+      connectedProjects = allProjectsMetaData.map(ConnectedProjectData.apply(_, graph)).sortBy(_.dependendants.size).reverse
+      _ <- printLine(connectedProjects
+        .map{project=>
+          if (project.dependendants.size > 0)
+            f"${project.projectMetaData.project.project.artifactId}%-30s is required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
+          else
+            f"${project.projectMetaData.project.project.artifactId}%-30s has no dependants: "
+//          ProjectMetaData.renderRow(project)
+          }.mkString("\n")
+      )
     yield ()
 
 /*
