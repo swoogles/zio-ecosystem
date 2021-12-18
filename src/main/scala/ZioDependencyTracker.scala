@@ -34,32 +34,27 @@ object VersionedProject:
       .map( scalaVersion => project.copy(artifactId = project.artifactId.replace("_"+scalaVersion.mvnFriendlyVersion, "")))
       .getOrElse(project)
       
-case class ProjectMetaData private(project: VersionedProject, dependencies: Set[VersionedProject]):
-  val zioDep = dependencies.find(project => project.project.artifactId == "zio") // TODO Fix
+case class ProjectMetaData private(project: Project, version: String, dependencies: Set[VersionedProject]):
+  val zioDep: Option[VersionedProject] = dependencies.find(project => project.project.artifactId == "zio") // TODO Fix
 
 object ProjectMetaData {
   def withZioDependenciesOnly(project: VersionedProject, dependencies: Set[VersionedProject]): ProjectMetaData =
-    ProjectMetaData(project, dependencies.filter(isAZioLibrary))
+    ProjectMetaData(project.project, project.version, dependencies.filter(isAZioLibrary))
     
   def renderRow(project: ProjectMetaData): String =
     val renderedZioDependency = project.zioDep.fold("transitive")(_.version)
     val renderedDependencies = project.dependencies.map(dep => dep.project.artifactId).mkString(",")
-    f"${project.project.project.artifactId}%-30s ${"ZIO " + renderedZioDependency}%-20s ${renderedDependencies}"
+    f"${project.project.artifactId}%-30s ${"ZIO " + renderedZioDependency}%-20s ${renderedDependencies}"
 }
 
-case class ConnectedProjectData private(projectMetaData: ProjectMetaData, dependendants: Set[String])
+case class ConnectedProjectData private(project: Project, version: String, dependencies: Set[VersionedProject], dependendants: Set[String], zioDep: Option[VersionedProject])
 object ConnectedProjectData :
   def apply(projectMetaData: ProjectMetaData, dependendencyGraph: Graph[String, DiEdge]): ConnectedProjectData =
-    val node = dependendencyGraph.nodes.find(_.value == projectMetaData.project.project.artifactId).getOrElse(throw new RuntimeException("No node for: "+ projectMetaData.project.project.artifactId))
+    val node = dependendencyGraph.nodes.find(_.value == projectMetaData.project.artifactId).getOrElse(throw new RuntimeException("No node for: "+ projectMetaData.project.artifactId))
     val dependents: Set[String] =
       node.diSuccessors.map(_.value.toString)
       
-//    val onLatestZio = ???
-//      node.diPredecessors.
-    
-    ConnectedProjectData (projectMetaData,
-      dependents
-    )
+    ConnectedProjectData (projectMetaData.project, projectMetaData.version, projectMetaData.dependencies, dependents, projectMetaData.zioDep )
 
 
 def latestVersionOfArtifact(project: Project, scalaVersion: ScalaVersion) = {
@@ -74,9 +69,7 @@ def latestVersionOfArtifact(project: Project, scalaVersion: ScalaVersion) = {
         .get(url).send(backend)
     }
     body <- ZIO.fromEither(r.body)
-  yield XML.loadString(
-    body
-  )
+  yield XML.loadString(body)
   
 }
 
@@ -116,31 +109,32 @@ def dependenciesFor(pom: Elem, scalaVersion: ScalaVersion): Set[VersionedProject
 def isAZioLibrary(project: VersionedProject) =
   project.project.artifactId.contains("zio") || project.project.group.contains("zio")
   
-def renderInSbtStyle(project: VersionedProject) =
-  project.project.group + "::" + project.project.artifactId + ":" + project.version
+def renderInSbtStyle(project: Project, version: String) =
+  project.group + "::" + project.artifactId + ":" + version
 
 def renderDependencies(projectMetaData: ProjectMetaData) =
   val targetProject = projectMetaData.project
   val dependencies = projectMetaData.dependencies
-  "Target Project: " + renderInSbtStyle(targetProject) + "\n" +
+  "Target Project: " + renderInSbtStyle(targetProject, projectMetaData.version) + "\n" +
   "Dependencies:\n" +
     dependencies
-      .map(project => "  " + renderInSbtStyle(project))
+      .map(project => "  " + renderInSbtStyle(project.project, projectMetaData.version))
       .mkString("\n")
   
 def serializeDotGraph(project: ProjectMetaData) =
-  project.dependencies.map(dependency => s"""   "${dependency.project.artifactId}" -> "${project.project.project.artifactId}"  ;""").mkString("\n")
+  project.dependencies.map(dependency => s"""   "${dependency.project.artifactId}" -> "${project.project.artifactId}"  ;""").mkString("\n")
   
 def serializeDotGraphs(projects: Set[ProjectMetaData]) =
   projects.map(serializeDotGraph).mkString("\n")
-
-val zioCore = Project("dev.zio", "zio_2.13")
 
 def projectMetaDataFor( project: Project, scalaVersion: ScalaVersion ) =
   for
     versionedProject <- latestProjectOnMaven(project, ScalaVersion.V2_13)
     pomFile <- pomFor(versionedProject, ScalaVersion.V2_13).tapError( error => printLine("Failed to get POM for: " + project.artifactId))
   yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile, ScalaVersion.V2_13))
+  
+def renderGraph(graph: Graph[String, DiEdge]): String =
+  graph.edges.map(_.toString.replace("~","-")).mkString("\n")
 
 object ZioDependencyTracker extends ZIOAppDefault:
   val projects = List(
@@ -165,9 +159,6 @@ object ZioDependencyTracker extends ZIOAppDefault:
     Project("dev.zio", "zio-interop-scalaz7x"),
     Project("dev.zio", "zio-interop-twitter"),
     Project("nl.vroste", "zio-amqp"),
-    /*
-    zio-query, zio-interop-cats, zio-prelude, zio-cache, and zio-optics
-    */
     Project("dev.zio", "zio-interop-guava"),
     Project("io.7mind.izumi", "distage-core"),
     Project("io.7mind.izumi", "logstage-core"),
@@ -208,35 +199,33 @@ object ZioDependencyTracker extends ZIOAppDefault:
   
   def run =
     for
-      allProjectsMetaData <- ZIO.foreach(projects)( project => projectMetaDataFor(project, ScalaVersion.V2_13))
+      allProjectsMetaData <- ZIO.foreachPar(projects)( project => projectMetaDataFor(project, ScalaVersion.V2_13))
       graph: Graph[String, DiEdge] <- ZIO {
         Graph(
         allProjectsMetaData
           .flatMap { project =>
             project.dependencies.map {
-              dependency => dependency.project.artifactId ~> project.project.project.artifactId
+              dependency => dependency.project.artifactId ~> project.project.artifactId
             }
 
           }*
         )
       }
+      _ <- printLine(renderGraph(graph))
       node <- ZIO(graph.nodes.map(node => node.diPredecessors).mkString(","))
-//      _ <- printLine(node.diPredecessors)
-//      _ <- printLine(allProjectsMetaData)
       connectedProjects = allProjectsMetaData.map(ConnectedProjectData.apply(_, graph)).sortBy(_.dependendants.size).reverse
       _ <- printLine(connectedProjects
         .map{project=>
           val renderedZioDependency = 
-            if (List("zio", "zio-streams", "zio-test", "zio-test-sbt").contains(project.projectMetaData.project.project.artifactId))
+            if (List("zio", "zio-streams", "zio-test", "zio-test-sbt").contains(project.project.artifactId))
               "is a core project"
             else
-              project.projectMetaData.zioDep
+              project.zioDep
                 .fold("has a transitive ZIO dependency")(dep => "is on ZIO " + dep.version)
-          if (project.dependendants.size > 0)
-            f"${project.projectMetaData.project.project.artifactId}%-30s ${renderedZioDependency} and required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
+          if (project.dependendants.nonEmpty)
+            f"${project.project.artifactId}%-30s ${renderedZioDependency} and required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
           else
-            f"${project.projectMetaData.project.project.artifactId}%-30s ${renderedZioDependency} and has no dependants."
-//          ProjectMetaData.renderRow(project)
+            f"${project.project.artifactId}%-30s ${renderedZioDependency} and has no dependants."
           }.mkString("\n")
       )
     yield ()
