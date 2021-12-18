@@ -204,10 +204,16 @@ object ZioDependencyTracker extends ZIOAppDefault:
       connectedProjects = allProjectsMetaData.map(ConnectedProjectData.apply(_, graph)).sortBy(_.dependendants.size).reverse
       _ <- printLine(connectedProjects
         .map{project=>
+          val renderedZioDependency = 
+            if (List("zio", "zio-streams", "zio-test", "zio-test-sbt").contains(project.projectMetaData.project.project.artifactId))
+              "is a core project"
+            else
+              project.projectMetaData.zioDep
+                .fold("has a transitive ZIO dependency")(dep => "is on ZIO " + dep.version)
           if (project.dependendants.size > 0)
-            f"${project.projectMetaData.project.project.artifactId}%-30s is required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
+            f"${project.projectMetaData.project.project.artifactId}%-30s ${renderedZioDependency} and required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
           else
-            f"${project.projectMetaData.project.project.artifactId}%-30s has no dependants: "
+            f"${project.projectMetaData.project.project.artifactId}%-30s ${renderedZioDependency} and has no dependants."
 //          ProjectMetaData.renderRow(project)
           }.mkString("\n")
       )
