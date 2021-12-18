@@ -103,7 +103,7 @@ def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) = {
 
 def latestProjectOnMaven(project: Project, scalaVersion: ScalaVersion) =
   for
-    latestVersion <- latestVersionOfArtifact(project, scalaVersion)
+    latestVersion <- latestVersionOfArtifact(project, scalaVersion).tapError( error => printLine("Failed to get latest version of: " + project.artifactId))
     version = (latestVersion \ "versioning" \ "latest").text
     latestProject = VersionedProject(project, version)
   yield latestProject
@@ -139,7 +139,7 @@ val zioCore = Project("dev.zio", "zio_2.13")
 def projectMetaDataFor( project: Project, scalaVersion: ScalaVersion ) =
   for
     versionedProject <- latestProjectOnMaven(project, ScalaVersion.V2_13)
-    pomFile <- pomFor(versionedProject, ScalaVersion.V2_13)
+    pomFile <- pomFor(versionedProject, ScalaVersion.V2_13).tapError( error => printLine("Failed to get POM for: " + project.artifactId))
   yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile, ScalaVersion.V2_13))
 
 object ZioDependencyTracker extends ZIOAppDefault:
@@ -155,7 +155,9 @@ object ZioDependencyTracker extends ZIOAppDefault:
     Project("dev.zio", "zio-schema"),
     Project("dev.zio", "zio-config"),
     Project("dev.zio", "zio-kafka"),
+    Project("dev.zio", "zio-ftp"),
     Project("io.github.vigoo", "zio-aws-dynamodb"),
+    Project("io.github.vigoo", "zio-aws-core"),
     Project("io.github.vigoo", "zio-aws-core"),
     Project("dev.zio", "zio-prelude"),
     Project("dev.zio", "zio-prelude-macros"),
@@ -170,6 +172,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
     Project("io.7mind.izumi", "distage-core"),
     Project("io.7mind.izumi", "logstage-core"),
     Project("com.github.poslegm", "munit-zio"),
+    Project("com.coralogix", "zio-k8s-client"),
     Project("com.softwaremill.sttp.client3", "async-http-client-backend-zio"), // todo wrong zio version 3.3.18
     Project("io.d11", "zhttp"),
     Project("dev.zio", "zio-interop-cats"),
@@ -177,11 +180,30 @@ object ZioDependencyTracker extends ZIOAppDefault:
     Project("dev.zio", "zio-opentracing"),
     Project("dev.zio", "zio-zmx"),
     Project("dev.zio", "zio-actors"),
+    Project("dev.zio", "zio-logging"),
+    Project("dev.zio", "zio-metrics"),
+    Project("dev.zio", "zio-process"),
     Project("dev.zio", "zio-akka-cluster"),
+    
+    Project("dev.zio", "zio-rocksdb"),
+    Project("dev.zio", "zio-s3"),
+    Project("dev.zio", "zio-opencensus"),
+    Project("dev.zio", "zio-opentelemetry"),
+    Project("dev.zio", "zio-opentracing"),
+    Project("io.github.ollls", "zio-tls-http"),
+    Project("com.vladkopanev", "zio-saga-core"),
+    Project("io.scalac", "zio-slick-interop"),
+    Project("dev.zio", "zio-sqs"),
+    Project("dev.zio", "zio-webhooks"),
+    
+//    Project("com.github.jczuchnowski", "zio-pulsar"), // Scala 3 Only
     Project("nl/vroste", "rezilience"),
+    Project("nl/vroste", "zio-kinesis"),
     Project("io.getquill", "quill-jdbc-zio"),
     Project("io.github.gaelrenoux", "tranzactio"),
     Project("info.senia", "zio-test-akka-http"),
+    Project("io.github.neurodyne", "zio-arrow"),
+    Project("io.github.neurodyne", "zio-aws-s3"),
   ).sortBy(_.artifactId)
   
   def run =
