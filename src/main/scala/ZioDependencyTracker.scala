@@ -2,7 +2,7 @@ package org.ziverge
 
 import sttp.model.Uri
 import zio.ZIOAppDefault
-import zio.ZIO
+import zio.{Chunk, ZIO}
 import zio.durationInt
 import zio.Console.printLine
 import scalax.collection.Graph // or scalax.collection.mutable.Graph
@@ -133,8 +133,20 @@ def projectMetaDataFor( project: Project, scalaVersion: ScalaVersion ) =
     pomFile <- pomFor(versionedProject, ScalaVersion.V2_13).tapError( error => printLine("Failed to get POM for: " + project.artifactId))
   yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile, ScalaVersion.V2_13))
   
-def renderGraph(graph: Graph[String, DiEdge]): String =
-  graph.edges.map(_.toString.replace("~","-")).mkString("\n")
+def renderGraph(graph: Graph[String, DiEdge]): String = {
+  /*
+   * There should be an easier way to do this, but I can't figure out what in
+   * the flying heck a "dotRoot" and an "edgeTransfomer" are. Not worth my time
+   * or brain cells to figure it out. http://www.scala-graph.org/guides/dot.html
+   */
+  val Edge = "^(.+)~>(.+)$".r
+  s"""|digraph {
+      |${graph.edges.map{_.toString match
+          case Edge(src, tgt) => s"""  "$src"->"$tgt";"""
+        }.mkString("\n")
+      }
+      |}""".stripMargin
+  }
 
 object ZioDependencyTracker extends ZIOAppDefault:
   val projects = List(
@@ -196,9 +208,13 @@ object ZioDependencyTracker extends ZIOAppDefault:
     Project("io.github.neurodyne", "zio-arrow"),
     Project("io.github.neurodyne", "zio-aws-s3"),
   ).sortBy(_.artifactId)
-  
+
+  // TODO: Rope zio-cli into this thing to make the command line interface The
+  // Right Way (TM). (The following may be the sloppiest CLI args handling that
+  // I have ever written.)
   def run =
     for
+      args <- this.getArgs
       allProjectsMetaData <- ZIO.foreachPar(projects)( project => projectMetaDataFor(project, ScalaVersion.V2_13))
       graph: Graph[String, DiEdge] <- ZIO {
         Graph(
@@ -211,23 +227,28 @@ object ZioDependencyTracker extends ZIOAppDefault:
           }*
         )
       }
-      _ <- printLine(renderGraph(graph))
-      node <- ZIO(graph.nodes.map(node => node.diPredecessors).mkString(","))
-      connectedProjects = allProjectsMetaData.map(ConnectedProjectData.apply(_, graph)).sortBy(_.dependendants.size).reverse
-      _ <- printLine(connectedProjects
-        .map{project=>
-          val renderedZioDependency = 
-            if (List("zio", "zio-streams", "zio-test", "zio-test-sbt").contains(project.project.artifactId))
-              "is a core project"
-            else
-              project.zioDep
-                .fold("has a transitive ZIO dependency")(dep => "is on ZIO " + dep.version)
-          if (project.dependendants.nonEmpty)
-            f"${project.project.artifactId}%-30s ${renderedZioDependency} and required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
-          else
-            f"${project.project.artifactId}%-30s ${renderedZioDependency} and has no dependants."
-          }.mkString("\n")
-      )
+      _ <- args match {
+        case Chunk("dot") => printLine(renderGraph(graph))
+        case _ =>
+          for
+            node <- ZIO(graph.nodes.map(node => node.diPredecessors).mkString(","))
+            connectedProjects = allProjectsMetaData.map(ConnectedProjectData.apply(_, graph)).sortBy(_.dependendants.size).reverse
+            _ <- printLine(connectedProjects
+              .map{project=>
+                val renderedZioDependency = 
+                  if (List("zio", "zio-streams", "zio-test", "zio-test-sbt").contains(project.project.artifactId))
+                    "is a core project"
+                  else
+                    project.zioDep
+                      .fold("has a transitive ZIO dependency")(dep => "is on ZIO " + dep.version)
+                if (project.dependendants.nonEmpty)
+                  f"${project.project.artifactId}%-30s ${renderedZioDependency} and required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
+                else
+                  f"${project.project.artifactId}%-30s ${renderedZioDependency} and has no dependants."
+                }.mkString("\n")
+            )
+          yield ()
+      }
     yield ()
 
 /*

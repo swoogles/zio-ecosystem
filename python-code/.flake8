@@ -1,0 +1,8 @@
+[flake8]
+ignore = E501, W504
+exclude =
+    __pycache__,
+    .venv-python-code,
+    .mypy_cache,
+    .pytest_cache,
+    .mypy_stubs
