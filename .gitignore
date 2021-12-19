@@ -21,6 +21,7 @@ sbt.json
 .bsp/
 project/project/
 *.iml
+.vscode/
 
 # if you are here to add your IDE's files please read this instead:
 # https://stackoverflow.com/questions/7335420/global-git-ignore#22885996
@@ -35,3 +36,8 @@ website/yarn.lock
 website/package-lock.json
 website/static/api
 .bsp/
+
+# Python stuff
+python-code/.mypy_cache
+python-code/.venv-python-code
+python-code/.python-version
