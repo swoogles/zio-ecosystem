@@ -57,7 +57,7 @@ enum DependencyType:
   
 case class ZioDep(zioDep: VersionedProject, dependencyType: DependencyType)
 
-case class ConnectedProjectData private(project: Project, version: Version, dependencies: Set[ProjectMetaData], dependendants: Set[ProjectMetaData], zioDep: Option[ZioDep])
+case class ConnectedProjectData private(project: Project, version: Version, dependencies: Set[ProjectMetaData], dependants: Set[ProjectMetaData], zioDep: Option[ZioDep])
 object ConnectedProjectData :
   def apply(projectMetaData: ProjectMetaData, allProjectsMetaData: Seq[ProjectMetaData], dependendencyGraph: Graph[String, DiEdge]): ConnectedProjectData =
     val node = dependendencyGraph.nodes.find(_.value == projectMetaData.project.artifactId).getOrElse(throw new RuntimeException("No node for: "+ projectMetaData.project.artifactId))
@@ -178,77 +178,6 @@ def renderGraph(graph: Graph[String, DiEdge]): String = {
   }
 
 object ZioDependencyTracker extends ZIOAppDefault:
-  val projects = List(
-    Project("dev.zio", "zio"),
-    Project("dev.zio", "zio-cache"),
-    Project("dev.zio", "zio-test"),
-    Project("dev.zio", "zio-test-sbt"),
-    Project("dev.zio", "zio-test-magnolia"),
-    Project("dev.zio", "zio-internal-macros"),
-    Project("dev.zio", "izumi-reflect"),
-    Project("dev.zio", "izumi-reflect-thirdparty-boopickle-shaded"),
-    Project("com.github.ghostdogpr", "caliban"),
-    Project("dev.zio", "zio-optics"),
-    Project("dev.zio", "zio-streams"),
-    Project("dev.zio", "zio-json"),
-    Project("dev.zio", "zio-query"),
-    Project("dev.zio", "zio-schema"),
-    Project("dev.zio", "zio-config"),
-    Project("dev.zio", "zio-config-typesafe"),
-    Project("dev.zio", "zio-kafka"),
-    Project("dev.zio", "zio-ftp"),
-    Project("io.github.vigoo", "zio-aws-dynamodb"),
-    Project("io.github.vigoo", "zio-aws-core"),
-    Project("io.github.vigoo", "zio-aws-netty"),
-    Project("io.github.vigoo", "zio-aws-sqs"),
-    Project("io.github.vigoo", "zio-aws-kinesis"),
-    Project("io.github.vigoo", "zio-aws-cloudwatch"),
-    Project("dev.zio", "zio-prelude"),
-    Project("dev.zio", "zio-prelude-macros"),
-    Project("dev.zio", "zio-interop-reactivestreams"),
-    Project("dev.zio", "zio-interop-scalaz7x"),
-    Project("dev.zio", "zio-interop-twitter"),
-    Project("nl.vroste", "zio-amqp"),
-    Project("dev.zio", "zio-interop-guava"),
-    Project("io.7mind.izumi", "distage-core"),
-    Project("io.7mind.izumi", "logstage-core"),
-    Project("com.github.poslegm", "munit-zio"),
-    Project("com.coralogix", "zio-k8s-client"),
-    Project("com.softwaremill.sttp.client3", "zio"),
-    Project("com.softwaremill.sttp.client3", "httpclient-backend-zio"),
-    Project("com.softwaremill.sttp.client3", "async-http-client-backend-zio"),
-    Project("com.softwaremill.sttp.shared", "zio"),
-    Project("io.d11", "zhttp"),
-    Project("dev.zio", "zio-interop-cats"),
-    Project("dev.zio", "zio-nio"),
-    Project("dev.zio", "zio-opentracing"),
-    Project("dev.zio", "zio-zmx"),
-    Project("dev.zio", "zio-actors"),
-    Project("dev.zio", "zio-logging"),
-    Project("dev.zio", "zio-metrics"),
-    Project("dev.zio", "zio-process"),
-    Project("dev.zio", "zio-akka-cluster"),
-    Project("dev.zio", "zio-rocksdb"),
-    Project("dev.zio", "zio-s3"),
-    Project("dev.zio", "zio-opencensus"),
-    Project("dev.zio", "zio-opentelemetry"),
-    Project("dev.zio", "zio-opentracing"),
-    Project("dev.zio", "zio-stacktracer"),
-    Project("io.github.ollls", "zio-tls-http"),
-    Project("com.vladkopanev", "zio-saga-core"),
-    Project("io.scalac", "zio-slick-interop"),
-    Project("dev.zio", "zio-sqs"),
-    Project("dev.zio", "zio-webhooks"),
-//    Project("com.github.jczuchnowski", "zio-pulsar"), // Scala 3 Only
-    Project("nl/vroste", "rezilience"),
-    Project("nl/vroste", "zio-kinesis"),
-    Project("io.getquill", "quill-zio"),
-    Project("io.getquill", "quill-jdbc-zio"),
-    Project("io.github.gaelrenoux", "tranzactio"),
-    Project("info.senia", "zio-test-akka-http"),
-    Project("io.github.neurodyne", "zio-arrow"),
-    Project("io.github.neurodyne", "zio-aws-s3"),
-  ).sortBy(_.artifactId)
 
   // TODO: Rope zio-cli into this thing to make the command line interface The
   // Right Way (TM). (The following may be the sloppiest CLI args handling that
@@ -256,7 +185,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
   def run =
     for
       args <- this.getArgs
-      allProjectsMetaData: Seq[ProjectMetaData] <- ZIO.foreachPar(projects){ project => projectMetaDataFor(project, ScalaVersion.V2_13)}
+      allProjectsMetaData: Seq[ProjectMetaData] <- ZIO.foreachPar(Data.projects){ project => projectMetaDataFor(project, ScalaVersion.V2_13)}
 //      allProjectsMetaData: Seq[ProjectMetaData]<- ZIO(Data.sampleProjectsMetaData)
       // I used this to get a persistent version that could be tested against without continously hitting Maven
 //      _ <- ZIO(pprint.pprintln(allProjectsMetaData, height = Int.MaxValue))
@@ -275,58 +204,30 @@ object ZioDependencyTracker extends ZIOAppDefault:
       _ <- args match {
         case Chunk("dot") => printLine(renderGraph(graph))
         case Chunk("dependents") =>
-            for
-              connectedProjects <- ZIO(allProjectsMetaData.map(ConnectedProjectData.apply(_, allProjectsMetaData, graph)).sortBy(_.dependendants.size).reverse)
-              _ <- printLine(connectedProjects
-                .map{project=>
-                  val renderedZioDependency = 
-                    if (List("zio", "zio-streams", "zio-test", "zio-test-sbt").contains(project.project.artifactId))
-                      "is a core project"
-                    else
-                      project.zioDep
-                        .fold("has a transitive ZIO dependency"){dep =>
-                          dep.dependencyType match {
-                            case DependencyType.Direct => " directly depends on ZIO " + dep.zioDep.version
-                            case DependencyType.Transitive =>  " Transitively depends on ZIO " + dep.zioDep.version
-                          }
-                        }
-                  if (project.dependendants.nonEmpty)
-                    f"${project.project.artifactId}%-30s ${renderedZioDependency} and required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
-                  else
-                    f"${project.project.artifactId}%-30s ${renderedZioDependency} and has no dependants."
-                  }.mkString("\n")
-              )
-            yield ()
+            connectAndRender(allProjectsMetaData, graph, _.dependants.size,
+              p =>
+                if (p.dependants.nonEmpty)
+                  f"Required by ${p.dependants.size} projects: " + p.dependants.mkString(",")
+                else
+                  "Has no dependents"
+
+            )
       case Chunk("dependencies") =>
-            for
-              connectedProjects <- ZIO(allProjectsMetaData.map(ConnectedProjectData.apply(_, allProjectsMetaData, graph)).sortBy(_.dependencies.size).reverse) 
-              _ <- printLine(connectedProjects
-                .map{project=>
-                  val renderedZioDependency =
-                    if (List("zio", "zio-streams", "zio-test", "zio-test-sbt").contains(project.project.artifactId))
-                      "is a core project"
-                    else
-                      project.zioDep
-                        .fold("has a transitive ZIO dependency"){dep =>
-                          dep.dependencyType match {
-                            case DependencyType.Direct => " directly depends on ZIO " + dep.zioDep.version
-                            case DependencyType.Transitive =>  " Transitively depends on ZIO " + dep.zioDep.version
-                          }
-                        }
-                  if (project.dependencies.nonEmpty)
-                    f"${project.project.artifactId}%-30s ${renderedZioDependency} and depends on ${project.dependencies.size} projects: " + project.dependencies.map(_.project.artifactId).mkString(",")
-                  else
-                    f"${project.project.artifactId}%-30s ${renderedZioDependency} and does not depend on any known ecosystem ."
-                }.mkString("\n")
-              )
-            yield ()
+        connectAndRender(allProjectsMetaData, graph, _.dependencies.size,
+          p =>
+            if (p.dependencies.nonEmpty)
+              s"Depends on ${p.dependencies.size} projects: " + p.dependencies.map(_.project.artifactId).mkString(",")
+            else
+              "Does not depend on any known ecosystem library."
+
+        )
         case _ => ZIO.fail("Unrecognized CLI arguments")
       }
     yield ()
     
-  def blah(allProjectsMetaData: Seq[ProjectMetaData], graph: Graph[String, DiEdge]) = 
+  def connectAndRender(allProjectsMetaData: Seq[ProjectMetaData], graph: Graph[String, DiEdge], sort: ConnectedProjectData => Integer, connectionMessage: ConnectedProjectData => String) = 
     for
-      connectedProjects <- ZIO(allProjectsMetaData.map(ConnectedProjectData.apply(_, allProjectsMetaData, graph)).sortBy(_.dependendants.size).reverse)
+      connectedProjects <- ZIO(allProjectsMetaData.map(ConnectedProjectData.apply(_, allProjectsMetaData, graph)).sortBy(sort).reverse)
       _ <- printLine(connectedProjects
         .map{project=>
           val renderedZioDependency =
@@ -340,10 +241,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
                     case DependencyType.Transitive =>  " Transitively depends on ZIO " + dep.zioDep.version
                   }
                 }
-          if (project.dependendants.nonEmpty)
-            f"${project.project.artifactId}%-30s ${renderedZioDependency} and required by ${project.dependendants.size} projects: " + project.dependendants.mkString(",")
-          else
-            f"${project.project.artifactId}%-30s ${renderedZioDependency} and has no dependants."
+          f"${project.project.artifactId}%-30s ${renderedZioDependency} and " + connectionMessage(project)
         }.mkString("\n")
       )
     yield ()
