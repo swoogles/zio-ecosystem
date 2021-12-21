@@ -125,7 +125,6 @@ def dependenciesFor(pom: Elem, scalaVersion: ScalaVersion): Set[VersionedProject
         .replaceAll("\\(",  "")
         .replaceAll("\\)",  "")
         .split(",").last
-    println("version: " + version)
     VersionedProject.stripped(Project((node \ "groupId").text, (node \ "artifactId").text), version)
   }.toSet
   
@@ -165,6 +164,13 @@ def renderGraph(graph: Graph[String, DiEdge]): String = {
   val Edge = "^(.+)~>(.+)$".r
   s"""|digraph {
       |${graph.edges.map{_.toString match
+          case Edge("zio", "zio") | Edge("zio-streams", "zio") =>
+            /*
+            * TODO: These two edges introduce cycles into the dependency graph.
+            * This could be due to a bug of some sort in the dependency graph
+            * construction. For now, ignore these edges in the dot output.
+            */
+            ""
           case Edge(src, tgt) => s"""  "$src"->"$tgt";"""
         }.mkString("\n")
       }
@@ -249,10 +255,6 @@ object ZioDependencyTracker extends ZIOAppDefault:
   // I have ever written.)
   def run =
     for
-      _ <- ZIO.debug(Version.parse("1.0.0") compareTo Version.parse("3.0.0"))
-      _ <- ZIO.debug(Version.parse("1.1.0") compareTo Version.parse("1.0.0"))
-      _ <- ZIO.debug(Version.parse("2.0.0") compareTo Version.parse("2.0.0-RC1"))
-      _ <- ZIO.debug(Version.parse("2.0.0-RC1") compareTo Version.parse("2.0.0"))
       args <- this.getArgs
       allProjectsMetaData: Seq[ProjectMetaData] <- ZIO.foreachPar(projects){ project => projectMetaDataFor(project, ScalaVersion.V2_13)}
 //      allProjectsMetaData: Seq[ProjectMetaData]<- ZIO(Data.sampleProjectsMetaData)
