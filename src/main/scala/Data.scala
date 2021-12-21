@@ -9,17 +9,28 @@ object Data:
       Project("dev.zio", "zio-test"),
       Project("dev.zio", "zio-test-sbt"),
       Project("dev.zio", "zio-test-magnolia"),
-      Project("dev.zio", "zio-internal-macros")
+      Project("dev.zio", "zio-internal-macros"),
+      Project("dev.zio", "zio-stacktracer"),
+      Project("dev.zio", "izumi-reflect"),
+      Project("dev.zio", "zio-streams"),
+      Project("dev.zio", "izumi-reflect-thirdparty-boopickle-shaded"),
     )
+
+  val smallProjectsList =
+    coreProjects ++
+      List(
+        Project("dev.zio", "zio-schema"),
+        Project("dev.zio", "zio-prelude"),
+        Project("dev.zio", "zio-prelude-macros"),
+        Project("io.d11", "zhttp"),
+      )
+    
   val projects =
     coreProjects ++
       List(
         Project("dev.zio", "zio-cache"),
-        Project("dev.zio", "izumi-reflect"),
-        Project("dev.zio", "izumi-reflect-thirdparty-boopickle-shaded"),
         Project("com.github.ghostdogpr", "caliban"),
         Project("dev.zio", "zio-optics"),
-        Project("dev.zio", "zio-streams"),
         Project("dev.zio", "zio-json"),
         Project("dev.zio", "zio-query"),
         Project("dev.zio", "zio-schema"),
@@ -51,7 +62,6 @@ object Data:
         Project("io.d11", "zhttp"),
         Project("dev.zio", "zio-interop-cats"),
         Project("dev.zio", "zio-nio"),
-        Project("dev.zio", "zio-opentracing"),
         Project("dev.zio", "zio-zmx"),
         Project("dev.zio", "zio-actors"),
         Project("dev.zio", "zio-logging"),
@@ -63,7 +73,6 @@ object Data:
         Project("dev.zio", "zio-opencensus"),
         Project("dev.zio", "zio-opentelemetry"),
         Project("dev.zio", "zio-opentracing"),
-        Project("dev.zio", "zio-stacktracer"),
         Project("io.github.ollls", "zio-tls-http"),
         Project("com.vladkopanev", "zio-saga-core"),
         Project("io.scalac", "zio-slick-interop"),

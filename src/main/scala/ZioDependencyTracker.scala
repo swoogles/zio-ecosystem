@@ -62,7 +62,9 @@ object ProjectMetaData:
             ZIO.foreach(projectMetaData.dependencies)(dependency =>
               ZIO(allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep))
             )
-        yield rez.flatten.headOption.map(project => ZioDep(project, DependencyType.Transitive))
+        yield rez.flatten
+          .minByOption(_.typedVersion)
+          .map(project => ZioDep(project, DependencyType.Transitive))
 end ProjectMetaData
 
 enum DependencyType:
@@ -84,6 +86,7 @@ case class ConnectedProjectData private (
     project: Project,
     version: Version,
     dependencies: Set[ProjectMetaData],
+    blockers: Set[ProjectMetaData],
     dependants: Set[ProjectMetaData],
     zioDep: Option[ZioDep]
 )
@@ -91,7 +94,8 @@ object ConnectedProjectData:
   def apply(
       projectMetaData: ProjectMetaData,
       allProjectsMetaData: Seq[ProjectMetaData],
-      dependendencyGraph: Graph[Project, DiEdge]
+      dependendencyGraph: Graph[Project, DiEdge],
+      currentZioVersion: Version
   ): ZIO[Any, Object, ConnectedProjectData] = // TODO More specific error type
     for
       node <- ZIO.fromOption(dependendencyGraph.nodes.find(_.value == projectMetaData.project))
@@ -102,13 +106,21 @@ object ConnectedProjectData:
         )
       typedDependencies <-
         ZIO.foreach(projectMetaData.dependencies)(dependency =>
-          ZIO.fromOption(allProjectsMetaData.find(_.project == dependency.project))
+          ZIO.fromOption(allProjectsMetaData.find(_.project == dependency.project)).mapError( _ => "Missing dependency entry for: " + dependency.project)
         )
       zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData)
+      blockers =
+        typedDependencies.filter(p=> p.zioDep.map(_.typedVersion) match {
+          case Some(value) => 
+            value.compareTo(currentZioVersion) < 0
+          case None => false
+        }
+        )
     yield ConnectedProjectData(
       projectMetaData.project,
       projectMetaData.typedVersion,
       typedDependencies,
+      blockers,
       typedDependants,
       zioDep
     )
@@ -129,6 +141,9 @@ object Render:
 
   def sbtStyle(project: Project, version: Version) =
     project.group + "::" + project.artifactId + ":" + version
+    
+  def sbtStyle(project: Project) =
+    project.group + "::" + project.artifactId
 
 object ScalaGraph:
   def apply(allProjectsMetaData: Seq[ProjectMetaData]): Graph[Project, DiEdge] =
@@ -163,8 +178,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
 //      _ <- ZIO(pprint.pprintln(allProjectsMetaData, height = Int.MaxValue))
       filteredProjects =
         allProjectsMetaData
-          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
-      _ <- ZIO.foreach(filteredProjects)(x => ZIO.debug(x.project))
+//          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
 
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
       _ <-
@@ -197,6 +211,19 @@ object ZioDependencyTracker extends ZIOAppDefault:
                 else
                   "Does not depend on any known ecosystem library."
             )
+          case Chunk("blockers") =>
+            connectAndRender(
+              filteredProjects,
+              allProjectsMetaData,
+              graph,
+              _.blockers.size,
+              p =>
+                if (p.blockers.nonEmpty)
+                  s"is blocked by ${p.blockers.size} projects: " +
+                    p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
+                else
+                  "Is not blocked by any known ecosystem library."
+            )
           case _ =>
             ZIO.fail("Unrecognized CLI arguments")
     yield ()
@@ -208,21 +235,24 @@ object ZioDependencyTracker extends ZIOAppDefault:
       sort: ConnectedProjectData => Integer,
       connectionMessage: ConnectedProjectData => String
   ) =
+    val currentZioVersion = Version.parse("2.0.0-RC1")
     for
       connectedProjects <-
-        ZIO.foreach(filteredProjectsMetaData)(ConnectedProjectData(_, allProjectsMetaData, graph))
+        ZIO.foreach(filteredProjectsMetaData)(ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion))
       _ <-
         printLine(
           connectedProjects
+            .filter(p => p.blockers.nonEmpty || p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) && !Data.coreProjects.contains(p.project)) // TODO Where to best provide this?
             .sortBy(sort)
             .reverse
+            .sortBy(p => Render.sbtStyle(p.project)) // TODO remove after demo run
             .map { project =>
               val renderedZioDependency =
                 if (Data.coreProjects.contains(project.project))
                   "is a core project"
                 else
                   ZioDep.render(project.zioDep)
-              f"${project.project.artifactId}%-30s ${renderedZioDependency} and " +
+              f"${Render.sbtStyle(project.project)}%-50s ${renderedZioDependency} and " +
                 connectionMessage(project)
             }
             .mkString("\n")
