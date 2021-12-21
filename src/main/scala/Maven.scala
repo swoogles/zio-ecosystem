@@ -11,28 +11,36 @@ object Maven:
     val backend = HttpURLConnectionBackend()
     for
       url <-
-        ZIO.fromEither(
-          Uri.safeApply(
-            scheme = "https",
-            host = "repo1.maven.org": String,
-            path = url.split("\\/").toSeq
+        ZIO
+          .fromEither(
+            Uri.safeApply(
+              scheme = "https",
+              host = "repo1.maven.org": String,
+              path = url.split("\\/").toSeq
+            )
           )
-        ).mapError(new Exception(_))
-      r <- ZIO(basicRequest.get(url).send(backend))
+          .mapError(new Exception(_))
+      r    <- ZIO(basicRequest.get(url).send(backend))
       body <- ZIO.fromEither(r.body).mapError(new Exception(_))
     yield XML.loadString(body)
 
-  def latestVersionOfArtifact(project: Project, scalaVersion: ScalaVersion): ZIO[Any, Throwable, Elem] =
+  def latestVersionOfArtifact(
+      project: Project,
+      scalaVersion: ScalaVersion
+  ): ZIO[Any, Throwable, Elem] =
     val urlString =
       s"maven2/${project.groupUrl}/${project.versionedArtifactId(scalaVersion)}/maven-metadata.xml"
     mavenHttpCall(urlString)
 
-  def latestProjectOnMaven(project: Project, scalaVersion: ScalaVersion): ZIO[Any, String, VersionedProject] =
+  def latestProjectOnMaven(
+      project: Project,
+      scalaVersion: ScalaVersion
+  ): ZIO[Any, String, VersionedProject] =
     for
       latestVersion <-
         latestVersionOfArtifact(project, scalaVersion)
           .mapError(error => "Failed to get latest version of: " + project.artifactId)
-      version = (latestVersion \ "versioning" \ "latest").text
+      version       = (latestVersion \ "versioning" \ "latest").text
       latestProject = VersionedProject(project, version)
     yield latestProject
 
@@ -42,8 +50,7 @@ object Maven:
       pomFile <-
         pomFor(versionedProject, ScalaVersion.V2_13)
           .mapError(error => "Failed to get POM for: " + project.artifactId)
-    yield ProjectMetaData
-      .withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile))
+    yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile))
 
   def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) =
     def pomFile(project: VersionedProject) =
@@ -51,12 +58,10 @@ object Maven:
 
     val fileName = pomFile(project)
     val urlString =
-      s"maven2/${project.project.groupUrl}/${project.project.versionedArtifactId(scalaVersion)}/${
-        project
-          .version
-      }/${fileName}"
+      s"maven2/${project.project.groupUrl}/${project.project.versionedArtifactId(scalaVersion)}/${project
+        .version}/${fileName}"
     mavenHttpCall(urlString)
-    
+
   private def dependenciesFor(pom: Elem) =
     val dependencies = pom \ "dependencies" \ "dependency"
     dependencies
@@ -73,4 +78,4 @@ object Maven:
           .stripped(Project((node \ "groupId").text, (node \ "artifactId").text), version)
       }
       .toSet
-
+end Maven

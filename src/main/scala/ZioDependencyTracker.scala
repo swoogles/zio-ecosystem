@@ -48,22 +48,22 @@ object ProjectMetaData:
       dependencies: Set[VersionedProject]
   ): ProjectMetaData =
     ProjectMetaData(project.project, project.version.toString, dependencies.filter(isAZioLibrary))
-    
-  def getUnderlyingZioDep(projectMetaData: ProjectMetaData,
-                          allProjectsMetaData: Seq[ProjectMetaData],
-                         ): ZIO[Any, Throwable, Option[ZioDep]] =
-      projectMetaData.zioDep match
-        case Some(value) =>
-          ZIO.succeed(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
-        case None =>
-          for 
-            rez <- ZIO.foreach(projectMetaData .dependencies)(dependency => ZIO(
-              allProjectsMetaData
-                .find(_.project == dependency.project)
-                .flatMap(_.zioDep)
-            ))
-          yield rez.flatten.headOption
-            .map(project => ZioDep(project, DependencyType.Transitive))
+
+  def getUnderlyingZioDep(
+      projectMetaData: ProjectMetaData,
+      allProjectsMetaData: Seq[ProjectMetaData]
+  ): ZIO[Any, Throwable, Option[ZioDep]] =
+    projectMetaData.zioDep match
+      case Some(value) =>
+        ZIO.succeed(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
+      case None =>
+        for
+          rez <-
+            ZIO.foreach(projectMetaData.dependencies)(dependency =>
+              ZIO(allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep))
+            )
+        yield rez.flatten.headOption.map(project => ZioDep(project, DependencyType.Transitive))
+end ProjectMetaData
 
 enum DependencyType:
   case Direct, Transitive
@@ -89,48 +89,33 @@ case class ConnectedProjectData private (
 )
 object ConnectedProjectData:
   def apply(
-             projectMetaData: ProjectMetaData,
-             allProjectsMetaData: Seq[ProjectMetaData],
-             dependendencyGraph: Graph[String, DiEdge]
-           ): ZIO[Any, Object, ConnectedProjectData] = // TODO More specific error type
-    for 
-      node <- ZIO.fromOption(
-        dependendencyGraph
-          .nodes
-          .find(_.value == projectMetaData.project.artifactId)
-      )
-      dependents: Set[String] = node.diSuccessors.map(_.value.toString)
-      typedDependants: Set[ProjectMetaData] <- ZIO.foreach(dependents)(
-        dependent =>
-          ZIO.fromOption(
-          allProjectsMetaData
-            .find(_.project.artifactId == dependent)
-          )
-      )
-      typedDependencies <- ZIO.foreach(
-        projectMetaData
-          .dependencies
-      )(
-        dependency =>
-          ZIO.fromOption(
-            allProjectsMetaData
-              .find(_.project == dependency.project)
-          )
-      )
+      projectMetaData: ProjectMetaData,
+      allProjectsMetaData: Seq[ProjectMetaData],
+      dependendencyGraph: Graph[Project, DiEdge]
+  ): ZIO[Any, Object, ConnectedProjectData] = // TODO More specific error type
+    for
+      node <- ZIO.fromOption(dependendencyGraph.nodes.find(_.value == projectMetaData.project))
+      dependents = node.diSuccessors.map(_.value)
+      typedDependants: Set[ProjectMetaData] <-
+        ZIO.foreach(dependents)(dependent =>
+          ZIO.fromOption(allProjectsMetaData.find(_.project == dependent))
+        )
+      typedDependencies <-
+        ZIO.foreach(projectMetaData.dependencies)(dependency =>
+          ZIO.fromOption(allProjectsMetaData.find(_.project == dependency.project))
+        )
       zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData)
-    yield
-      ConnectedProjectData(
-        projectMetaData.project,
-        projectMetaData.typedVersion,
-        typedDependencies,
-        typedDependants,
-        zioDep
-      )
+    yield ConnectedProjectData(
+      projectMetaData.project,
+      projectMetaData.typedVersion,
+      typedDependencies,
+      typedDependants,
+      zioDep
+    )
   end apply
 end ConnectedProjectData
 
-def isAZioLibrary(project: VersionedProject) =
-  Data.projects.contains(project.project)
+def isAZioLibrary(project: VersionedProject) = Data.projects.contains(project.project)
 
 object Render:
   def dependencies(projectMetaData: ProjectMetaData) =
@@ -145,16 +130,14 @@ object Render:
   def sbtStyle(project: Project, version: Version) =
     project.group + "::" + project.artifactId + ":" + version
 
-
-
 object ScalaGraph:
-  def apply(allProjectsMetaData: Seq[ProjectMetaData]): Graph[String, DiEdge] =
+  def apply(allProjectsMetaData: Seq[ProjectMetaData]): Graph[Project, DiEdge] =
     Graph(
       allProjectsMetaData.flatMap { project =>
         project
           .dependencies
           .map { dependency =>
-            dependency.project.artifactId ~> project.project.artifactId
+            dependency.project ~> project.project
           }
       }*
     )
@@ -178,14 +161,19 @@ object ZioDependencyTracker extends ZIOAppDefault:
       // that could be tested against without
       // continously hitting Maven
 //      _ <- ZIO(pprint.pprintln(allProjectsMetaData, height = Int.MaxValue))
+      filteredProjects =
+        allProjectsMetaData
+          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
+      _ <- ZIO.foreach(filteredProjects)(x => ZIO.debug(x.project))
 
-      graph: Graph[String, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
+      graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
       _ <-
         args match
           case Chunk("dot") =>
             printLine(DotGraph.render(graph))
           case Chunk("dependents") =>
             connectAndRender(
+              filteredProjects,
               allProjectsMetaData,
               graph,
               _.dependants.size,
@@ -198,6 +186,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
             )
           case Chunk("dependencies") =>
             connectAndRender(
+              filteredProjects,
               allProjectsMetaData,
               graph,
               _.dependencies.size,
@@ -213,16 +202,15 @@ object ZioDependencyTracker extends ZIOAppDefault:
     yield ()
 
   def connectAndRender(
+      filteredProjectsMetaData: Seq[ProjectMetaData],
       allProjectsMetaData: Seq[ProjectMetaData],
-      graph: Graph[String, DiEdge],
+      graph: Graph[Project, DiEdge],
       sort: ConnectedProjectData => Integer,
       connectionMessage: ConnectedProjectData => String
   ) =
     for
       connectedProjects <-
-        ZIO.foreach(
-          allProjectsMetaData
-        )(ConnectedProjectData(_, allProjectsMetaData, graph))
+        ZIO.foreach(filteredProjectsMetaData)(ConnectedProjectData(_, allProjectsMetaData, graph))
       _ <-
         printLine(
           connectedProjects
@@ -230,10 +218,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
             .reverse
             .map { project =>
               val renderedZioDependency =
-                if (
-                  Data.coreProjects
-                    .contains(project.project)
-                )
+                if (Data.coreProjects.contains(project.project))
                   "is a core project"
                 else
                   ZioDep.render(project.zioDep)
