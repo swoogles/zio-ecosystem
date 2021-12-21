@@ -1,9 +1,7 @@
 package org.ziverge
 
 import sttp.model.Uri
-import zio.ZIOAppDefault
-import zio.{Chunk, ZIO}
-import zio.durationInt
+import zio.{Chunk, Console, ZIO, ZIOAppDefault, durationInt}
 import zio.Console.printLine
 import scalax.collection.Graph
 import scalax.collection.GraphPredef.*
@@ -165,6 +163,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
   // sloppiest CLI args handling that
   // I have ever written.)
   def run =
+    val currentZioVersion = Version.parse("2.0.0-RC1")
     for
       args <- this.getArgs
       allProjectsMetaData: Seq[ProjectMetaData] <-
@@ -181,64 +180,40 @@ object ZioDependencyTracker extends ZIOAppDefault:
 //          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
 
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
+      connectedProjects <-
+        ZIO.foreach(filteredProjects)(ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion))
       _ <-
         args match
           case Chunk("dot") =>
             printLine(DotGraph.render(graph))
           case Chunk("dependents") =>
-            connectAndRender(
-              filteredProjects,
-              allProjectsMetaData,
-              graph,
-              _.dependants.size,
-              p =>
-                if (p.dependants.nonEmpty)
-                  f"Required by ${p.dependants.size} projects: " +
-                    p.dependants.map(_.project.artifactId).mkString(",")
-                else
-                  "Has no dependents"
-            )
+            manipulateAndRender(connectedProjects, _.dependants.size, p =>
+                            if (p.dependants.nonEmpty)
+                              f"Required by ${p.dependants.size} projects: " +
+                                p.dependants.map(_.project.artifactId).mkString(",")
+                            else
+                              "Has no dependents")
           case Chunk("dependencies") =>
-            connectAndRender(
-              filteredProjects,
-              allProjectsMetaData,
-              graph,
-              _.dependencies.size,
-              p =>
-                if (p.dependencies.nonEmpty)
-                  s"Depends on ${p.dependencies.size} projects: " +
-                    p.dependencies.map(_.project.artifactId).mkString(",")
-                else
-                  "Does not depend on any known ecosystem library."
-            )
+            manipulateAndRender(connectedProjects, _.dependencies.size, p =>
+                            if (p.dependencies.nonEmpty)
+                              s"Depends on ${p.dependencies.size} projects: " +
+                                p.dependencies.map(_.project.artifactId).mkString(",")
+                            else
+                              "Does not depend on any known ecosystem library.")
           case Chunk("blockers") =>
-            connectAndRender(
-              filteredProjects,
-              allProjectsMetaData,
-              graph,
-              _.blockers.size,
-              p =>
-                if (p.blockers.nonEmpty)
-                  s"is blocked by ${p.blockers.size} projects: " +
-                    p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
-                else
-                  "Is not blocked by any known ecosystem library."
-            )
+            manipulateAndRender(connectedProjects, _.blockers.size, p =>
+                            if (p.blockers.nonEmpty)
+                              s"is blocked by ${p.blockers.size} projects: " +
+                                p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
+                            else
+                              "Is not blocked by any known ecosystem library.")
           case _ =>
             ZIO.fail("Unrecognized CLI arguments")
     yield ()
 
-  def connectAndRender(
-      filteredProjectsMetaData: Seq[ProjectMetaData],
-      allProjectsMetaData: Seq[ProjectMetaData],
-      graph: Graph[Project, DiEdge],
-      sort: ConnectedProjectData => Integer,
-      connectionMessage: ConnectedProjectData => String
-  ) =
+  def manipulateAndRender(connectedProjects: Seq[ConnectedProjectData], sort: ConnectedProjectData => Integer, connectionMessage: ConnectedProjectData => String): ZIO[Console, Any, Unit] =
     val currentZioVersion = Version.parse("2.0.0-RC1")
     for
-      connectedProjects <-
-        ZIO.foreach(filteredProjectsMetaData)(ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion))
       _ <-
         printLine(
           connectedProjects
@@ -252,19 +227,22 @@ object ZioDependencyTracker extends ZIOAppDefault:
                   "is a core project"
                 else
                   ZioDep.render(project.zioDep)
-              f"${Render.sbtStyle(project.project)}%-50s ${renderedZioDependency} and " +
+              f"${Render.sbtStyle(project.project, project.version)}%-50s ${renderedZioDependency} and " +
                 connectionMessage(project)
             }
             .mkString("\n")
         )
     yield ()
 end ZioDependencyTracker
+/*
+  TODO Cli Options
+    --include-core-deps
+    --dotfile
+    --include-version-deps
+    --targetProject
+*/
 
 /* TODO Questions
- * - Where do we want to display versions
- * - Which versions do we want to show?
- * - Eg current dependency version VS what is available
- * - Should we include snapshot releases?
  *
  * Connected Component Datastructure JGraphT.org Calculate longest paths between nodes Topological
  * sort Visit each node Only keep edges that reduce the number of connected components in the graph

@@ -16,15 +16,6 @@ object Data:
       Project("dev.zio", "izumi-reflect-thirdparty-boopickle-shaded"),
     )
 
-  val smallProjectsList =
-    coreProjects ++
-      List(
-        Project("dev.zio", "zio-schema"),
-        Project("dev.zio", "zio-prelude"),
-        Project("dev.zio", "zio-prelude-macros"),
-        Project("io.d11", "zhttp"),
-      )
-    
   val projects =
     coreProjects ++
       List(

@@ -11,6 +11,9 @@ lazy val root = (project in file("."))
       "com.softwaremill.sttp.client3" %% "core" % "3.3.18",
       "org.scala-lang.modules" %% "scala-xml" % "2.0.1",
       "com.lihaoyi" %% "pprint" % "0.7.0",
+      "io.circe" %% "circe-core" % "0.15.0-M1",
+      "io.circe" %% "circe-generic" % "0.15.0-M1",
+
       ("org.scala-graph" %% "graph-core" % "1.13.3").cross(CrossVersion.for3Use2_13)
     )
     
