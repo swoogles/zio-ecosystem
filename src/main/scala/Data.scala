@@ -13,7 +13,7 @@ object Data:
       Project("dev.zio", "zio-stacktracer"),
       Project("dev.zio", "izumi-reflect"),
       Project("dev.zio", "zio-streams"),
-      Project("dev.zio", "izumi-reflect-thirdparty-boopickle-shaded"),
+      Project("dev.zio", "izumi-reflect-thirdparty-boopickle-shaded")
     )
 
   val projects =

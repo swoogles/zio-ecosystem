@@ -60,7 +60,8 @@ object ProjectMetaData:
             ZIO.foreach(projectMetaData.dependencies)(dependency =>
               ZIO(allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep))
             )
-        yield rez.flatten
+        yield rez
+          .flatten
           .minByOption(_.typedVersion)
           .map(project => ZioDep(project, DependencyType.Transitive))
 end ProjectMetaData
@@ -104,15 +105,18 @@ object ConnectedProjectData:
         )
       typedDependencies <-
         ZIO.foreach(projectMetaData.dependencies)(dependency =>
-          ZIO.fromOption(allProjectsMetaData.find(_.project == dependency.project)).mapError( _ => "Missing dependency entry for: " + dependency.project)
+          ZIO
+            .fromOption(allProjectsMetaData.find(_.project == dependency.project))
+            .mapError(_ => "Missing dependency entry for: " + dependency.project)
         )
       zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData)
       blockers =
-        typedDependencies.filter(p=> p.zioDep.map(_.typedVersion) match {
-          case Some(value) => 
-            value.compareTo(currentZioVersion) < 0
-          case None => false
-        }
+        typedDependencies.filter(p =>
+          p.zioDep.map(_.typedVersion) match
+            case Some(value) =>
+              value.compareTo(currentZioVersion) < 0
+            case None =>
+              false
         )
     yield ConnectedProjectData(
       projectMetaData.project,
@@ -139,9 +143,8 @@ object Render:
 
   def sbtStyle(project: Project, version: Version) =
     project.group + "::" + project.artifactId + ":" + version
-    
-  def sbtStyle(project: Project) =
-    project.group + "::" + project.artifactId
+
+  def sbtStyle(project: Project) = project.group + "::" + project.artifactId
 
 object ScalaGraph:
   def apply(allProjectsMetaData: Seq[ProjectMetaData]): Graph[Project, DiEdge] =
@@ -175,49 +178,75 @@ object ZioDependencyTracker extends ZIOAppDefault:
       // that could be tested against without
       // continously hitting Maven
 //      _ <- ZIO(pprint.pprintln(allProjectsMetaData, height = Int.MaxValue))
-      filteredProjects =
-        allProjectsMetaData
+      filteredProjects = allProjectsMetaData
 //          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
 
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
-      connectedProjects <-
-        ZIO.foreach(filteredProjects)(ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion))
+      connectedProjects: Seq[ConnectedProjectData] <-
+        ZIO.foreach(filteredProjects)(
+          ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion)
+        )
       _ <-
         args match
+          case Chunk("json") =>
+            printLine(Json.render(connectedProjects))
           case Chunk("dot") =>
             printLine(DotGraph.render(graph))
           case Chunk("dependents") =>
-            manipulateAndRender(connectedProjects, _.dependants.size, p =>
-                            if (p.dependants.nonEmpty)
-                              f"Required by ${p.dependants.size} projects: " +
-                                p.dependants.map(_.project.artifactId).mkString(",")
-                            else
-                              "Has no dependents")
+            manipulateAndRender(
+              connectedProjects,
+              _.dependants.size,
+              p =>
+                if (p.dependants.nonEmpty)
+                  f"Required by ${p.dependants.size} projects: " +
+                    p.dependants.map(_.project.artifactId).mkString(",")
+                else
+                  "Has no dependents"
+            )
           case Chunk("dependencies") =>
-            manipulateAndRender(connectedProjects, _.dependencies.size, p =>
-                            if (p.dependencies.nonEmpty)
-                              s"Depends on ${p.dependencies.size} projects: " +
-                                p.dependencies.map(_.project.artifactId).mkString(",")
-                            else
-                              "Does not depend on any known ecosystem library.")
+            manipulateAndRender(
+              connectedProjects,
+              _.dependencies.size,
+              p =>
+                if (p.dependencies.nonEmpty)
+                  s"Depends on ${p.dependencies.size} projects: " +
+                    p.dependencies.map(_.project.artifactId).mkString(",")
+                else
+                  "Does not depend on any known ecosystem library."
+            )
           case Chunk("blockers") =>
-            manipulateAndRender(connectedProjects, _.blockers.size, p =>
-                            if (p.blockers.nonEmpty)
-                              s"is blocked by ${p.blockers.size} projects: " +
-                                p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
-                            else
-                              "Is not blocked by any known ecosystem library.")
+            manipulateAndRender(
+              connectedProjects,
+              _.blockers.size,
+              p =>
+                if (p.blockers.nonEmpty)
+                  s"is blocked by ${p.blockers.size} projects: " +
+                    p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
+                else
+                  "Is not blocked by any known ecosystem library."
+            )
           case _ =>
             ZIO.fail("Unrecognized CLI arguments")
     yield ()
+    end for
+  end run
 
-  def manipulateAndRender(connectedProjects: Seq[ConnectedProjectData], sort: ConnectedProjectData => Integer, connectionMessage: ConnectedProjectData => String): ZIO[Console, Any, Unit] =
+  def manipulateAndRender(
+      connectedProjects: Seq[ConnectedProjectData],
+      sort: ConnectedProjectData => Integer,
+      connectionMessage: ConnectedProjectData => String
+  ): ZIO[Console, Any, Unit] =
     val currentZioVersion = Version.parse("2.0.0-RC1")
     for
       _ <-
         printLine(
           connectedProjects
-            .filter(p => p.blockers.nonEmpty || p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) && !Data.coreProjects.contains(p.project)) // TODO Where to best provide this?
+            .filter(p =>
+              p.blockers.nonEmpty ||
+                p.zioDep
+                  .fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) &&
+                !Data.coreProjects.contains(p.project)
+            ) // TODO Where to best provide this?
             .sortBy(sort)
             .reverse
             .sortBy(p => Render.sbtStyle(p.project)) // TODO remove after demo run
@@ -229,18 +258,17 @@ object ZioDependencyTracker extends ZIOAppDefault:
                   ZioDep.render(project.zioDep)
               f"${Render.sbtStyle(project.project, project.version)}%-50s ${renderedZioDependency} and " +
                 connectionMessage(project)
-            }
-            .mkString("\n")
+            }.mkString("\n")
         )
     yield ()
+    end for
+  end manipulateAndRender
 end ZioDependencyTracker
-/*
-  TODO Cli Options
-    --include-core-deps
-    --dotfile
-    --include-version-deps
-    --targetProject
-*/
+/* TODO Cli Options
+ * --include-core-deps
+ * --dotfile
+ * --include-version-deps
+ * --targetProject */
 
 /* TODO Questions
  *
