@@ -166,9 +166,9 @@ object ZioDependencyTracker extends ZIOAppDefault:
   // sloppiest CLI args handling that
   // I have ever written.)
   def run =
-    val currentZioVersion = Version.parse("2.0.0-RC1")
     for
       args <- this.getArgs
+      currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
       allProjectsMetaData: Seq[ProjectMetaData] <-
         ZIO.foreachPar(Data.projects) { project =>
           Maven.projectMetaDataFor(project, ScalaVersion.V2_13)
@@ -256,7 +256,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
                   "is a core project"
                 else
                   ZioDep.render(project.zioDep)
-              f"${Render.sbtStyle(project.project, project.version)}%-50s ${renderedZioDependency} and " +
+              f"${Render.sbtStyle(project.project)}%-50s ${renderedZioDependency} and " +
                 connectionMessage(project)
             }.mkString("\n")
         )

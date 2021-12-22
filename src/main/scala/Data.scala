@@ -3,9 +3,10 @@ package org.ziverge
 import scala.collection.immutable.HashSet
 
 object Data:
+  val zioCore = Project("dev.zio", "zio")
   val coreProjects =
     List(
-      Project("dev.zio", "zio"),
+      zioCore,
       Project("dev.zio", "zio-test"),
       Project("dev.zio", "zio-test-sbt"),
       Project("dev.zio", "zio-test-magnolia"),
