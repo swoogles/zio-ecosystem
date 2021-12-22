@@ -1,7 +1,7 @@
 package org.ziverge
 
 import sttp.model.Uri
-import zio.{Chunk, Console, ZIO, ZIOAppDefault, durationInt}
+import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, durationInt}
 import zio.Console.printLine
 import scalax.collection.Graph
 import scalax.collection.GraphPredef.*
@@ -11,16 +11,22 @@ import scalax.collection.edge.Implicits.*
 
 import java.lang.module.ModuleDescriptor.Version
 import scala.xml.{Elem, XML}
+import upickle.default.{macroRW, ReadWriter as RW}
+import upickle.default.*
 
 case class Project(group: String, artifactId: String):
   val groupUrl = group.replaceAll("\\.", "/")
   def versionedArtifactId(scalaVersion: ScalaVersion) =
     artifactId + "_" + scalaVersion.mvnFriendlyVersion
+    
+object Project:
+  implicit val rw: RW[Project] = macroRW
 
 case class VersionedProject(project: Project, version: String):
   val typedVersion = Version.parse(version)
 
 object VersionedProject:
+  implicit val rw: RW[VersionedProject] = macroRW
   def stripped(project: Project, version: String): VersionedProject =
     VersionedProject(stripScalaVersionFromArtifact(project), version)
 
@@ -41,6 +47,7 @@ case class ProjectMetaData(project: Project, version: String, dependencies: Set[
   val typedVersion = Version.parse(version)
 
 object ProjectMetaData:
+  implicit val rw: RW[ProjectMetaData] = macroRW
   def withZioDependenciesOnly(
       project: VersionedProject,
       dependencies: Set[VersionedProject]
@@ -69,8 +76,12 @@ end ProjectMetaData
 enum DependencyType:
   case Direct, Transitive
 
+object DependencyType:
+  implicit val rw: RW[DependencyType] = macroRW
+
 case class ZioDep(zioDep: VersionedProject, dependencyType: DependencyType)
 object ZioDep:
+  implicit val rw: RW[ZioDep] = macroRW
 
   def render(zioDep: Option[ZioDep]): String =
     zioDep.fold("Does not depend on ZIO") { dep =>
@@ -90,6 +101,9 @@ case class ConnectedProjectData private (
     zioDep: Option[ZioDep]
 )
 object ConnectedProjectData:
+  implicit val versionRw: RW[Version] = readwriter[String].bimap[Version](_.toString, Version.parse(_))
+  implicit val rw: RW[ConnectedProjectData] = macroRW
+  
   def apply(
       projectMetaData: ProjectMetaData,
       allProjectsMetaData: Seq[ProjectMetaData],
@@ -168,33 +182,40 @@ object ZioDependencyTracker extends ZIOAppDefault:
   def run =
     for
       args <- this.getArgs
-      currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
-      allProjectsMetaData: Seq[ProjectMetaData] <-
-        ZIO.foreachPar(Data.projects) { project =>
-          Maven.projectMetaDataFor(project, ScalaVersion.V2_13)
-        }
-//      allProjectsMetaData: Seq[ProjectMetaData]<- ZIO(Data.sampleProjectsMetaData)
-      // I used this to get a persistent version
-      // that could be tested against without
-      // continously hitting Maven
-//      _ <- ZIO(pprint.pprintln(allProjectsMetaData, height = Int.MaxValue))
-      filteredProjects = allProjectsMetaData
-//          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
+      (connected: Seq[ConnectedProjectData], all: Seq[ProjectMetaData], graph: Graph[Project, DiEdge]) <- (if (args.contains("--cached"))
+        for
+          connectedX <- FileIO.readResource[Seq[ConnectedProjectData]]("connectedProjectData.txt")
+          allX <- FileIO.readResource[Seq[ProjectMetaData]]("allProjectsMetaData.txt")
+          graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allX))
+        yield (connectedX, allX, graph)
+      else
+        for
+          currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
+          allProjectsMetaData: Seq[ProjectMetaData] <-
+            ZIO.foreachPar(Data.projects) { project =>
+              Maven.projectMetaDataFor(project, ScalaVersion.V2_13)
+            }
+          filteredProjects = allProjectsMetaData
+          //          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
 
-      graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
-      connectedProjects: Seq[ConnectedProjectData] <-
-        ZIO.foreach(filteredProjects)(
-          ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion)
-        )
+          graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
+          connectedProjects: Seq[ConnectedProjectData] <-
+            ZIO.foreach(filteredProjects)(
+              ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion)
+            )
+          _ <- FileIO.saveAsResource(connectedProjects, "connectedProjectData.txt")
+          _ <- FileIO.saveAsResource(allProjectsMetaData, "allProjectsMetaData.txt")
+        yield (connectedProjects, allProjectsMetaData, graph)
+          )
+      
       _ <-
-        args match
-          case Chunk("json") =>
-            printLine(Json.render(connectedProjects))
-          case Chunk("dot") =>
+        if (args.contains("json") )
+            printLine(Json.render(connected))
+        else if (args.contains("dot") )
             printLine(DotGraph.render(graph))
-          case Chunk("dependents") =>
+        else if (args.contains("dependents") )
             manipulateAndRender(
-              connectedProjects,
+              connected,
               _.dependants.size,
               p =>
                 if (p.dependants.nonEmpty)
@@ -203,9 +224,9 @@ object ZioDependencyTracker extends ZIOAppDefault:
                 else
                   "Has no dependents"
             )
-          case Chunk("dependencies") =>
+        else if (args.contains("dependencies") )
             manipulateAndRender(
-              connectedProjects,
+              connected,
               _.dependencies.size,
               p =>
                 if (p.dependencies.nonEmpty)
@@ -214,9 +235,9 @@ object ZioDependencyTracker extends ZIOAppDefault:
                 else
                   "Does not depend on any known ecosystem library."
             )
-          case Chunk("blockers") =>
+        else if (args.contains("blockers") )
             manipulateAndRender(
-              connectedProjects,
+              connected,
               _.blockers.size,
               p =>
                 if (p.blockers.nonEmpty)
@@ -225,11 +246,52 @@ object ZioDependencyTracker extends ZIOAppDefault:
                 else
                   "Is not blocked by any known ecosystem library."
             )
-          case _ =>
+        else
             ZIO.fail("Unrecognized CLI arguments")
     yield ()
     end for
   end run
+  
+  object FileIO:
+
+    import java.io.{File, FileWriter}
+    def saveAsResource[T : upickle.default.ReadWriter](
+                               connectedProjects: T,
+                               fileName: String
+                             )   =
+      ZIO {
+        val file = new File(s"src/main/resources/$fileName")
+        if (!file.exists()) file.createNewFile()
+        val fileWriter = new FileWriter(file)
+        fileWriter.write(write(connectedProjects))
+        fileWriter.close()
+      }
+      
+    def readResource[T : upickle.default.ReadWriter](
+                                                        fileName: String
+                                                      ): Task[T] =
+      ZIO {
+        val src = scala.io.Source.fromFile(s"src/main/resources/$fileName")
+        val res = read[T](src.mkString)
+        src.close()
+        res
+      }
+      
+//      val file = root/"tmp"/"test.txt"
+//      file.overwrite("hello")
+//      file.appendLine().append("world")
+//      assert(file.contentAsString == "hello\nworld")
+      
+  
+  def zprint[T : upickle.default.ReadWriter](x: T) =
+//    import upickle.default.ReadWriter.join
+    val pickled = write(x)
+    val depickled = read[T](pickled)
+//    Console.printLine(write(x))
+    Console.printLine(pprint(x, height = Int.MaxValue))
+    
+  enum DataView:
+    case Dependencies, Dependents, Json, Blockers
 
   def manipulateAndRender(
       connectedProjects: Seq[ConnectedProjectData],
