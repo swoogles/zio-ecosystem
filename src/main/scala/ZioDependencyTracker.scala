@@ -182,32 +182,31 @@ object ZioDependencyTracker extends ZIOAppDefault:
   def run =
     for
       args <- this.getArgs
-      (connected: Seq[ConnectedProjectData], all: Seq[ProjectMetaData], graph: Graph[Project, DiEdge]) <- (if (args.contains("--cached"))
-        for
-          connectedX <- FileIO.readResource[Seq[ConnectedProjectData]]("connectedProjectData.txt")
-          allX <- FileIO.readResource[Seq[ProjectMetaData]]("allProjectsMetaData.txt")
-          graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allX))
-        yield (connectedX, allX, graph)
-      else
-        for
-          currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
-          allProjectsMetaData: Seq[ProjectMetaData] <-
-            ZIO.foreachPar(Data.projects) { project =>
-              Maven.projectMetaDataFor(project, ScalaVersion.V2_13)
-            }
-          filteredProjects = allProjectsMetaData
-          //          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
+      (connected, all, graph) <- 
+        if (args.contains("--cached"))
+          for
+            connectedX <- FileIO.readResource[Seq[ConnectedProjectData]]("connectedProjectData.txt")
+            allX <- FileIO.readResource[Seq[ProjectMetaData]]("allProjectsMetaData.txt")
+            graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allX))
+          yield (connectedX, allX, graph)
+        else
+          for
+            currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
+            allProjectsMetaData: Seq[ProjectMetaData] <-
+              ZIO.foreachPar(Data.projects) { project =>
+                Maven.projectMetaDataFor(project, ScalaVersion.V2_13)
+              }
+            filteredProjects = allProjectsMetaData
+            //          .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
 
-          graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
-          connectedProjects: Seq[ConnectedProjectData] <-
-            ZIO.foreach(filteredProjects)(
-              ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion)
-            )
-          _ <- FileIO.saveAsResource(connectedProjects, "connectedProjectData.txt")
-          _ <- FileIO.saveAsResource(allProjectsMetaData, "allProjectsMetaData.txt")
-        yield (connectedProjects, allProjectsMetaData, graph)
-          )
-      
+            graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
+            connectedProjects: Seq[ConnectedProjectData] <-
+              ZIO.foreach(filteredProjects)(
+                ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion)
+              )
+            _ <- FileIO.saveAsResource(connectedProjects, "connectedProjectData.txt")
+            _ <- FileIO.saveAsResource(allProjectsMetaData, "allProjectsMetaData.txt")
+          yield (connectedProjects, allProjectsMetaData, graph)
       _ <-
         if (args.contains("json") )
             printLine(Json.render(connected))
@@ -326,15 +325,22 @@ object ZioDependencyTracker extends ZIOAppDefault:
     end for
   end manipulateAndRender
 end ZioDependencyTracker
+
+
 /* TODO Cli Options
  * --include-core-deps
- * --dotfile
  * --include-version-deps
  * --targetProject */
 
-/* TODO Questions
- *
- * Connected Component Datastructure JGraphT.org Calculate longest paths between nodes Topological
- * sort Visit each node Only keep edges that reduce the number of connected components in the graph
- *
- * TODO Use color to indicate if a version of this project has been published that uses ZIO2 */
+
+object DependencyExplorer extends ZIOAppDefault:
+
+  import com.raquo.laminar.api.L.{*, given}
+
+  // TODO: Rope zio-cli into this thing to make
+  // the command line interface The
+  // Right Way (TM). (The following may be the
+  // sloppiest CLI args handling that
+  // I have ever written.)
+  def run =
+    ZIO.debug("Laminar stuff goes here ZZZ!!")

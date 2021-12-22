@@ -3,12 +3,15 @@ package org.ziverge
 import sttp.model.Uri
 import zio.ZIO
 
+import scala.concurrent.ExecutionContext
 import scala.xml.{Elem, XML}
 
 object Maven:
   def mavenHttpCall(url: String): ZIO[Any, Throwable, Elem] =
     import sttp.client3.*
-    val backend = HttpURLConnectionBackend()
+//    implicit val ec = ExecutionContext.global
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val backend = FetchBackend()
     for
       url <-
         ZIO
@@ -20,7 +23,7 @@ object Maven:
             )
           )
           .mapError(new Exception(_))
-      r    <- ZIO(basicRequest.get(url).send(backend))
+      r    <- ZIO.fromFuture(ec => basicRequest.get(url).send(backend))
       body <- ZIO.fromEither(r.body).mapError(new Exception(_))
     yield XML.loadString(body)
 
