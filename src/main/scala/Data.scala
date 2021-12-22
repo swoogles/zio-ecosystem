@@ -29,12 +29,7 @@ object Data:
         Project("dev.zio", "zio-config-typesafe"),
         Project("dev.zio", "zio-kafka"),
         Project("dev.zio", "zio-ftp"),
-        Project("io.github.vigoo", "zio-aws-dynamodb"),
         Project("io.github.vigoo", "zio-aws-core"),
-        Project("io.github.vigoo", "zio-aws-netty"),
-        Project("io.github.vigoo", "zio-aws-sqs"),
-        Project("io.github.vigoo", "zio-aws-kinesis"),
-        Project("io.github.vigoo", "zio-aws-cloudwatch"),
         Project("dev.zio", "zio-prelude"),
         Project("dev.zio", "zio-prelude-macros"),
         Project("dev.zio", "zio-interop-reactivestreams"),
@@ -80,6 +75,15 @@ object Data:
         Project("io.github.neurodyne", "zio-arrow"),
         Project("io.github.neurodyne", "zio-aws-s3")
       ).sortBy(_.artifactId)
+    
+  val awsSubprojects =
+    List(
+      Project("io.github.vigoo", "zio-aws-dynamodb"),
+      Project("io.github.vigoo", "zio-aws-netty"),
+      Project("io.github.vigoo", "zio-aws-sqs"),
+      Project("io.github.vigoo", "zio-aws-kinesis"),
+      Project("io.github.vigoo", "zio-aws-cloudwatch"),
+    )
 
   val sampleProjectsMetaData =
     List(
