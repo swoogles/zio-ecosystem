@@ -3,15 +3,12 @@ package org.ziverge
 import sttp.model.Uri
 import zio.ZIO
 
-import scala.concurrent.ExecutionContext
 import scala.xml.{Elem, XML}
 
 object Maven:
   def mavenHttpCall(url: String): ZIO[Any, Throwable, Elem] =
     import sttp.client3.*
-//    implicit val ec = ExecutionContext.global
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val backend = FetchBackend()
+    val backend = HttpURLConnectionBackend()
     for
       url <-
         ZIO
@@ -23,22 +20,22 @@ object Maven:
             )
           )
           .mapError(new Exception(_))
-      r    <- ZIO.fromFuture(ec => basicRequest.get(url).send(backend))
+      r    <- ZIO(basicRequest.get(url).send(backend))
       body <- ZIO.fromEither(r.body).mapError(new Exception(_))
     yield XML.loadString(body)
 
   def latestVersionOfArtifact(
-      project: Project,
-      scalaVersion: ScalaVersion
-  ): ZIO[Any, Throwable, Elem] =
+                               project: Project,
+                               scalaVersion: ScalaVersion
+                             ): ZIO[Any, Throwable, Elem] =
     val urlString =
       s"maven2/${project.groupUrl}/${project.versionedArtifactId(scalaVersion)}/maven-metadata.xml"
     mavenHttpCall(urlString)
 
   def latestProjectOnMaven(
-      project: Project,
-      scalaVersion: ScalaVersion
-  ): ZIO[Any, String, VersionedProject] =
+                            project: Project,
+                            scalaVersion: ScalaVersion
+                          ): ZIO[Any, String, VersionedProject] =
     for
       latestVersion <-
         latestVersionOfArtifact(project, scalaVersion)
@@ -58,6 +55,7 @@ object Maven:
   def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) =
     def pomFile(project: VersionedProject) =
       s"${project.project.versionedArtifactId(scalaVersion)}-${project.version}.pom"
+      
 
     val fileName = pomFile(project)
     val urlString =
