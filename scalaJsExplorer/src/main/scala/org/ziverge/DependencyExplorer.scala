@@ -130,9 +130,6 @@ object LaminarApp {
               //          clickObserver
 
             ),
-
-//            onClick --> router.pushState(busPageInfo.copy(targetProject=Some("fake.click.project")))
-            //            div( PPrinter.BlackWhite.apply(renderedContent, height = Int.MaxValue).toString)
           )
         }
       ),
