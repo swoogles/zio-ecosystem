@@ -36,7 +36,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
         else if (args.contains("dot") )
           printLine(DotGraph.render(graph))
         else if (args.contains("dependents") )
-          manipulateAndRender(
+          printLine(SummaryLogic.manipulateAndRender(
             connected,
             _.dependants.size,
             p =>
@@ -45,9 +45,9 @@ object ZioDependencyTracker extends ZIOAppDefault:
                   p.dependants.map(_.project.artifactId).mkString(",")
               else
                 "Has no dependents"
-          )
+          ).mkString("\n"))
         else if (args.contains("dependencies") )
-          manipulateAndRender(
+          printLine(SummaryLogic.manipulateAndRender(
             connected,
             _.dependencies.size,
             p =>
@@ -56,9 +56,10 @@ object ZioDependencyTracker extends ZIOAppDefault:
                   p.dependencies.map(_.project.artifactId).mkString(",")
               else
                 "Does not depend on any known ecosystem library."
+          ).mkString("\n")
           )
         else if (args.contains("blockers") )
-          manipulateAndRender(
+          printLine(SummaryLogic.manipulateAndRender(
             connected,
             _.blockers.size,
             p =>
@@ -67,6 +68,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
                   p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
               else
                 "Is not blocked by any known ecosystem library."
+          ).mkString("\n")
           )
         else
           ZIO.fail("Unrecognized CLI arguments")
@@ -111,41 +113,6 @@ object ZioDependencyTracker extends ZIOAppDefault:
     val depickled = read[T](pickled)
     Console.printLine(pprint(x, height = Int.MaxValue))
 
-  enum DataView:
-    case Dependencies, Dependents, Json, Blockers
-
-  def manipulateAndRender(
-                           connectedProjects: Seq[ConnectedProjectData],
-                           sort: ConnectedProjectData => Integer,
-                           connectionMessage: ConnectedProjectData => String
-                         ): ZIO[Console, Any, Unit] =
-    val currentZioVersion = Version("2.0.0-RC1")
-    for
-      _ <-
-        printLine(
-          connectedProjects
-            .filter(p =>
-              p.blockers.nonEmpty ||
-                p.zioDep
-                  .fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) &&
-                  !Data.coreProjects.contains(p.project)
-            ) // TODO Where to best provide this?
-            .sortBy(sort)
-            .reverse
-            .sortBy(p => Render.sbtStyle(p.project)) // TODO remove after demo run
-            .map { project =>
-              val renderedZioDependency =
-                if (Data.coreProjects.contains(project.project))
-                  "is a core project"
-                else
-                  ZioDep.render(project.zioDep)
-              f"${Render.sbtStyle(project.project)}%-50s ${renderedZioDependency} and " +
-                connectionMessage(project)
-            }.mkString("\n")
-        )
-    yield ()
-    end for
-  end manipulateAndRender
 end ZioDependencyTracker
 
 

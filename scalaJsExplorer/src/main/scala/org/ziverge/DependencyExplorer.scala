@@ -2,6 +2,7 @@ package org.ziverge
 
 import upickle.default.{read, write}
 import com.raquo.waypoint.{param, root}
+import pprint.PPrinter
 //import localized.{Localized}
 import sttp.model.Uri
 import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, durationInt}
@@ -16,6 +17,7 @@ import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
 
 import java.time.{OffsetDateTime, ZoneId}
+import org.scalajs.dom
 
 object LaminarApp {
   import com.raquo.laminar.api.L._
@@ -97,26 +99,52 @@ object LaminarApp {
   )
   println("Created router")
 
-  private def renderMyPage(
-                            $loginPage: Signal[DependencyExplorerPage],
+  private def renderMyPage( $loginPage: Signal[DependencyExplorerPage],
+                            connectedProjectData: Seq[ConnectedProjectData]
                           ) =
+
+    val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
+    val pageUpdateObserver = Observer[DependencyExplorerPage](onNext = page => router.pushState(page.copy(targetProject=Some("fake.click.project"))))
+//    val clickBus = new EventBus[]
+    val renderedContent = SummaryLogic.manipulateAndRender(
+      connectedProjectData,
+      _.blockers.size,
+      p =>
+        if (p.blockers.nonEmpty)
+          s"is blocked by ${p.blockers.size} projects: " +
+            p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
+        else
+          "Is not blocked by any known ecosystem library."
+      )
     div(
       child <-- $loginPage.map(
-        busPageInfo => {
+        (busPageInfo: DependencyExplorerPage) => {
           println("time: "  + busPageInfo.time)
           println("targetProject: "  + busPageInfo.targetProject)
-          div("time query param value: " + busPageInfo.time)
+          div(
+            div("time query param value: " + busPageInfo.time),
+            renderedContent.map(div(_)),
+            div(
+              "blah",
+              onClick.map(_ => busPageInfo) --> pageUpdateObserver
+              //          clickObserver
+
+            ),
+
+//            onClick --> router.pushState(busPageInfo.copy(targetProject=Some("fake.click.project")))
+            //            div( PPrinter.BlackWhite.apply(renderedContent, height = Int.MaxValue).toString)
+          )
         }
       ),
     )
 
-  private val splitter =
+  private def splitter(connectedProjectData: Seq[ConnectedProjectData]) =
     SplitRender[Page, HtmlElement](router.$currentPage)
-      .collectSignal[DependencyExplorerPage](renderMyPage)
+      .collectSignal[DependencyExplorerPage](renderMyPage(_, connectedProjectData))
       .collectStatic(LoginPageOriginal) { div("Login page") }
 
-  val app: Div = div(
-    child <-- splitter.$view,
+  def app(connectedProjectData: Seq[ConnectedProjectData]): Div = div(
+    child <-- splitter(connectedProjectData).$view,
   )
 
 }
@@ -156,11 +184,11 @@ object DependencyExplorer extends ZIOAppDefault :
       appData <- getJsData
       _ <- zprint(appData.all)
       _ <- ZIO {
-        val appHolder = dom.document.getElementById("landing-message")
+      val appHolder = dom.document.getElementById("landing-message")
         appHolder.innerHTML = ""
         com.raquo.laminar.api.L.render(
           appHolder,
-          LaminarApp.app,
+          LaminarApp.app(appData.connected),
         )
       }
       _ <- ZIO.debug("Laminar stuff goes here ZZZ")
