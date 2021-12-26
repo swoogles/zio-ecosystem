@@ -12,7 +12,7 @@ object ZioDependencyTracker extends ZIOAppDefault:
     for
       _ <- ZIO.debug("Running")
       args <- this.getArgs
-      FullAppData(connected, all, graph) <-
+      fullAppData  <-
         if (args.contains("--cached-jvm"))
           for
             connectedX <- FileIO.readResource[Seq[ConnectedProjectData]]("connectedProjectData.txt")
@@ -30,52 +30,13 @@ object ZioDependencyTracker extends ZIOAppDefault:
             _ <- FileIO.saveAsResource(connected, "connectedProjectData.txt")
             _ <- FileIO.saveAsResource(all, "allProjectsMetaData.txt")
           yield FullAppData(connected, all, graph)
+      selectedView <- DataView.fromString(args)
       _ <-
-        if (args.contains("json") )
-          printLine(Json.render(connected))
-        else if (args.contains("dot") )
-          printLine(DotGraph.render(graph))
-        else if (args.contains("dependents") )
-          printLine(SummaryLogic.manipulateAndRender(
-            connected,
-            _.dependants.size,
-            p =>
-              if (p.dependants.nonEmpty)
-                f"Required by ${p.dependants.size} projects: " +
-                  p.dependants.map(_.project.artifactId).mkString(",")
-              else
-                "Has no dependents"
-          ).mkString("\n"))
-        else if (args.contains("dependencies") )
-          printLine(SummaryLogic.manipulateAndRender(
-            connected,
-            _.dependencies.size,
-            p =>
-              if (p.dependencies.nonEmpty)
-                s"Depends on ${p.dependencies.size} projects: " +
-                  p.dependencies.map(_.project.artifactId).mkString(",")
-              else
-                "Does not depend on any known ecosystem library."
-          ).mkString("\n")
-          )
-        else if (args.contains("blockers") )
-          printLine(SummaryLogic.manipulateAndRender(
-            connected,
-            _.blockers.size,
-            p =>
-              if (p.blockers.nonEmpty)
-                s"is blocked by ${p.blockers.size} projects: " +
-                  p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
-              else
-                "Is not blocked by any known ecosystem library."
-          ).mkString("\n")
-          )
-        else
-          ZIO.fail("Unrecognized CLI arguments")
+          printLine(SummaryLogic.viewLogic(selectedView, fullAppData))
     yield ()
     end for
   end run
-
+  
   object FileIO:
 
     import java.io.{File, FileWriter}

@@ -100,22 +100,14 @@ object LaminarApp {
   println("Created router")
 
   private def renderMyPage( $loginPage: Signal[DependencyExplorerPage],
-                            connectedProjectData: Seq[ConnectedProjectData]
+                            fullAppData: FullAppData
                           ) =
 
     val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
     val pageUpdateObserver = Observer[DependencyExplorerPage](onNext = page => router.pushState(page.copy(targetProject=Some("fake.click.project"))))
+    val selectZioObserver = Observer[DependencyExplorerPage](onNext = page => router.pushState(page.copy(targetProject=Some("dev.zio.zio"))))
+    
 //    val clickBus = new EventBus[]
-    val renderedContent = SummaryLogic.manipulateAndRender(
-      connectedProjectData,
-      _.blockers.size,
-      p =>
-        if (p.blockers.nonEmpty)
-          s"is blocked by ${p.blockers.size} projects: " +
-            p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
-        else
-          "Is not blocked by any known ecosystem library."
-      )
     div(
       child <-- $loginPage.map(
         (busPageInfo: DependencyExplorerPage) => {
@@ -123,25 +115,32 @@ object LaminarApp {
           println("targetProject: "  + busPageInfo.targetProject)
           div(
             div("time query param value: " + busPageInfo.time),
-            renderedContent.map(div(_)),
             div(
-              "blah",
-              onClick.map(_ => busPageInfo) --> pageUpdateObserver
-              //          clickObserver
-
+              SummaryLogic.viewLogic(DataView.Json, fullAppData).toString
             ),
+            button(
+              "Select fake proejct",
+              onClick.map(_ => busPageInfo) --> pageUpdateObserver
+              
+              //          clickObserver
+            ),
+            button(
+              "Select ZIO",
+              onClick.map(_ => busPageInfo) --> selectZioObserver
+            ),
+            
           )
         }
       ),
     )
 
-  private def splitter(connectedProjectData: Seq[ConnectedProjectData]) =
+  private def splitter(fullAppData: FullAppData) =
     SplitRender[Page, HtmlElement](router.$currentPage)
-      .collectSignal[DependencyExplorerPage](renderMyPage(_, connectedProjectData))
+      .collectSignal[DependencyExplorerPage](renderMyPage(_, fullAppData))
       .collectStatic(LoginPageOriginal) { div("Login page") }
 
-  def app(connectedProjectData: Seq[ConnectedProjectData]): Div = div(
-    child <-- splitter(connectedProjectData).$view,
+  def app(fullAppData: FullAppData): Div = div(
+    child <-- splitter(fullAppData).$view,
   )
 
 }
@@ -185,7 +184,7 @@ object DependencyExplorer extends ZIOAppDefault :
         appHolder.innerHTML = ""
         com.raquo.laminar.api.L.render(
           appHolder,
-          LaminarApp.app(appData.connected),
+          LaminarApp.app(appData),
         )
       }
       _ <- ZIO.debug("Laminar stuff goes here ZZZ")
