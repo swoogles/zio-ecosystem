@@ -1,28 +1,38 @@
 package org.ziverge
 
+import ujson.Js
 import zio.Console.printLine
 import zio.{Chunk, ZIO}
+import upickle.default.{macroRW, ReadWriter as RW, *}
 
 enum DataView:
   case Dependencies, Dependents, Json, Blockers, DotGraph
   
 object DataView:
-  def fromString(args: Chunk[String]) = // TODO Decide whether to do with multiple args
-    if (args.contains("json") )
-      ZIO(Json)
-    else if (args.contains("dot") )
-      ZIO(DotGraph)
-    else if (args.contains("dependents") )
-      ZIO(Dependents)
-    else if (args.contains("dependencies") )
-      ZIO(Dependencies)
-    else if (args.contains("blockers") )
-      ZIO(Blockers)
-    else
-      ZIO.fail("Unrecognized CLI arguments")
-    
+  def fromStrings(args: Chunk[String]): Option[ DataView] = // TODO Decide whether to do with multiple args
+    args.flatMap(fromString).headOption
+      
+  def fromString(args: String): Option[DataView] = // TODO Decide whether to do with multiple args
+    values.find(_.toString == args)
+
+  implicit val explorerRW: RW[DataView] = macroRW
   
-  
+//  val dtWriter: Writer[DataView] ={
+//    case t => Js.Str(format(t))
+//  }
+//  val dtReader = Reader[DataView]{
+//    case Js.Str(time) =>
+//      try {
+//        Data.fromString(time).get
+//      }
+//      catch {
+//        case _: Exception =>
+//          DataView.Blockers
+//      }
+//  }
+
+
+
 
 object SummaryLogic:
 
@@ -53,7 +63,8 @@ object SummaryLogic:
       }
   end manipulateAndRender
 
-  def viewLogic(dataView: DataView, fullAppData: FullAppData): Any =
+  def viewLogic(dataView: DataView, fullAppData: FullAppData): Any = 
+    println("DataView in view logic: " + dataView)
     dataView match {
       case DataView.Dependencies =>
         SummaryLogic.manipulateAndRender(

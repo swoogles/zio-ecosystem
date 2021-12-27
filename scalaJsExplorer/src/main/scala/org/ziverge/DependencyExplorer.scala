@@ -31,6 +31,7 @@ object LaminarApp {
   private case class DependencyExplorerPage(
                                              time: Option[String], // TODO Make this a WallTime instead
                                              targetProject: Option[String],
+                                             dataView: DataView
                                            ) extends Page {
 
   }
@@ -42,29 +43,30 @@ object LaminarApp {
   implicit private val rw: ReadWriter[Page] = macroRW
 
   private val encodePage
-  : DependencyExplorerPage => (Option[String], Option[String]) =
-    page => (page.time, page.targetProject)
+  : DependencyExplorerPage => (Option[String], Option[String], Option[String]) =
+    page => (page.time, page.targetProject, Some(page.dataView.toString))
 
   private val decodePage: (
-    (Option[String], Option[String]),
+    (Option[String], Option[String], Option[String]),
     ) => DependencyExplorerPage = {
-    case (time, targetProject) =>
+    case (time, targetProject, dataView) =>
       DependencyExplorerPage(
         time = time,
         targetProject = targetProject,
+        dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Blockers)
       )
   }
 
   val params: QueryParameters[
-    (Option[String], Option[String]),
+    (Option[String], Option[String] ,Option[String]),
     DummyError,
   ] =
-    param[String]("time").? & param[String]("targetProject").?
+    param[String]("time").? & param[String]("targetProject").? & param[String]("dataView").? 
   println("Get params")
 
   private val devRoute =
     Route.onlyQuery[DependencyExplorerPage,
-      (Option[String], Option[String])](
+      (Option[String], Option[String], Option[String])](
       encode = encodePage,
       decode = decodePage,
       pattern = (root / "index_dev.html" / endOfSegments) ? params,
@@ -72,7 +74,7 @@ object LaminarApp {
 
   private val prodRoute =
     Route.onlyQuery[DependencyExplorerPage,
-      (Option[String], Option[String])](
+      (Option[String], Option[String], Option[String])](
       encode = encodePage,
       decode = decodePage,
       pattern = (root / endOfSegments) ? params,
@@ -92,6 +94,7 @@ object LaminarApp {
       DependencyExplorerPage(
         time = None, // TODO Make this a WallTime instead
         targetProject = None,
+        dataView = DataView.Blockers
       ),
   )(
     $popStateEvent = L.windowEvents.onPopState, // this is how Waypoint avoids an explicit dependency on Laminar
@@ -106,6 +109,13 @@ object LaminarApp {
     val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
     val pageUpdateObserver = Observer[DependencyExplorerPage](onNext = page => router.pushState(page.copy(targetProject=Some("fake.click.project"))))
     val selectZioObserver = Observer[DependencyExplorerPage](onNext = page => router.pushState(page.copy(targetProject=Some("dev.zio.zio"))))
+    def viewUpdate(page: DependencyExplorerPage) = Observer[String](onNext = (dataView) => {
+      println("!view mode: " + dataView)
+      DataView.fromString(dataView).foreach(x =>
+        router.pushState(page.copy(dataView = x))
+      )
+    }
+    )
     
 //    val clickBus = new EventBus[]
     div(
@@ -115,8 +125,16 @@ object LaminarApp {
           println("targetProject: "  + busPageInfo.targetProject)
           div(
             div("time query param value: " + busPageInfo.time),
+            select(
+              inContext { thisNode =>
+                onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
+              },
+              DataView.values.map( dataView =>
+                option(value := dataView.toString, dataView.toString)
+              ).toSeq
+            ),
             div(
-              SummaryLogic.viewLogic(DataView.Json, fullAppData).toString
+              SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData).toString
             ),
             button(
               "Select fake proejct",
