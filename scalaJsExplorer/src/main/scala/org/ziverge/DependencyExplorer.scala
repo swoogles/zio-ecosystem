@@ -134,7 +134,11 @@ object LaminarApp {
               ).toSeq
             ),
             div(
-              SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData).toString
+              // TODO Better result type so we can properly render different schemas
+              SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData) match {
+                case content: String => content.split("\n").map(p(_)).toSeq
+                case other => other.toString
+              }
             ),
             button(
               "Select fake proejct",
