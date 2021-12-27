@@ -12,9 +12,7 @@ import upickle.default.{macroRW, ReadWriter as RW, *}
 
 import java.time.{OffsetDateTime, ZoneId}
 
-class Models {
-
-}
+class Models {}
 case class Project(group: String, artifactId: String):
   val groupUrl = group.replaceAll("\\.", "/")
   def versionedArtifactId(scalaVersion: ScalaVersion) =
@@ -50,15 +48,15 @@ case class ProjectMetaData(project: Project, version: String, dependencies: Set[
 object ProjectMetaData:
   implicit val rw: RW[ProjectMetaData] = macroRW
   def withZioDependenciesOnly(
-                               project: VersionedProject,
-                               dependencies: Set[VersionedProject]
-                             ): ProjectMetaData =
+      project: VersionedProject,
+      dependencies: Set[VersionedProject]
+  ): ProjectMetaData =
     ProjectMetaData(project.project, project.version.toString, dependencies.filter(isAZioLibrary))
 
   def getUnderlyingZioDep(
-                           projectMetaData: ProjectMetaData,
-                           allProjectsMetaData: Seq[ProjectMetaData]
-                         ): ZIO[Any, Throwable, Option[ZioDep]] =
+      projectMetaData: ProjectMetaData,
+      allProjectsMetaData: Seq[ProjectMetaData]
+  ): ZIO[Any, Throwable, Option[ZioDep]] =
     projectMetaData.zioDep match
       case Some(value) =>
         ZIO.succeed(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
@@ -70,7 +68,7 @@ object ProjectMetaData:
             )
         yield rez
           .flatten
-          .minByOption( _.typedVersion)
+          .minByOption(_.typedVersion)
           .map(project => ZioDep(project, DependencyType.Transitive))
 end ProjectMetaData
 
@@ -93,24 +91,24 @@ object ZioDep:
           " Transitively depends on ZIO " + dep.zioDep.version
     }
 
-case class ConnectedProjectData (
-                                          project: Project,
-                                          version: Version,
-                                          dependencies: Set[ProjectMetaData],
-                                          blockers: Set[ProjectMetaData],
-                                          dependants: Set[ProjectMetaData],
-                                          zioDep: Option[ZioDep]
-                                        )
+case class ConnectedProjectData(
+    project: Project,
+    version: Version,
+    dependencies: Set[ProjectMetaData],
+    blockers: Set[ProjectMetaData],
+    dependants: Set[ProjectMetaData],
+    zioDep: Option[ZioDep]
+)
 object ConnectedProjectData:
   implicit val versionRw: RW[Version] = readwriter[String].bimap[Version](_.toString, Version(_))
   implicit val rw: RW[ConnectedProjectData] = macroRW
 
   def apply(
-             projectMetaData: ProjectMetaData,
-             allProjectsMetaData: Seq[ProjectMetaData],
-             dependendencyGraph: Graph[Project, DiEdge],
-             currentZioVersion: Version
-           ): ZIO[Any, Object, ConnectedProjectData] = // TODO More specific error type
+      projectMetaData: ProjectMetaData,
+      allProjectsMetaData: Seq[ProjectMetaData],
+      dependendencyGraph: Graph[Project, DiEdge],
+      currentZioVersion: Version
+  ): ZIO[Any, Object, ConnectedProjectData] = // TODO More specific error type
     for
       node <- ZIO.fromOption(dependendencyGraph.nodes.find(_.value == projectMetaData.project))
       dependents = node.diSuccessors.map(_.value)
@@ -173,5 +171,8 @@ object ScalaGraph:
       }*
     )
 
-case class FullAppData(connected: Seq[ConnectedProjectData], all: Seq[ProjectMetaData], graph: Graph[Project, DiEdge])
-
+case class FullAppData(
+    connected: Seq[ConnectedProjectData],
+    all: Seq[ProjectMetaData],
+    graph: Graph[Project, DiEdge]
+)

@@ -13,5 +13,4 @@ object Json:
 //      io.circe.Json.fromString(a.toString)
 //  }
 
-  def render(connectedProjects: Seq[ConnectedProjectData]) =
-    connectedProjects.asJson
+  def render(connectedProjects: Seq[ConnectedProjectData]) = connectedProjects.asJson

@@ -25,17 +25,17 @@ object Maven:
     yield XML.loadString(body)
 
   def latestVersionOfArtifact(
-                               project: Project,
-                               scalaVersion: ScalaVersion
-                             ): ZIO[Any, Throwable, Elem] =
+      project: Project,
+      scalaVersion: ScalaVersion
+  ): ZIO[Any, Throwable, Elem] =
     val urlString =
       s"maven2/${project.groupUrl}/${project.versionedArtifactId(scalaVersion)}/maven-metadata.xml"
     mavenHttpCall(urlString)
 
   def latestProjectOnMaven(
-                            project: Project,
-                            scalaVersion: ScalaVersion
-                          ): ZIO[Any, String, VersionedProject] =
+      project: Project,
+      scalaVersion: ScalaVersion
+  ): ZIO[Any, String, VersionedProject] =
     for
       latestVersion <-
         latestVersionOfArtifact(project, scalaVersion)
@@ -55,7 +55,6 @@ object Maven:
   def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) =
     def pomFile(project: VersionedProject) =
       s"${project.project.versionedArtifactId(scalaVersion)}-${project.version}.pom"
-      
 
     val fileName = pomFile(project)
     val urlString =

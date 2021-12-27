@@ -73,7 +73,7 @@ object Data:
         Project("io.getquill", "quill-jdbc-zio"),
 //        Project("io.github.gaelrenoux", "tranzactio"),
 //        Project("info.senia", "zio-test-akka-http"),
-        Project("io.github.neurodyne", "zio-arrow"),
+        Project("io.github.neurodyne", "zio-arrow")
 //        Project("io.github.neurodyne", "zio-aws-s3")
       ).sortBy(_.artifactId)
 
@@ -83,7 +83,7 @@ object Data:
       Project("io.github.vigoo", "zio-aws-netty"),
       Project("io.github.vigoo", "zio-aws-sqs"),
       Project("io.github.vigoo", "zio-aws-kinesis"),
-      Project("io.github.vigoo", "zio-aws-cloudwatch"),
+      Project("io.github.vigoo", "zio-aws-cloudwatch")
     )
 
   val sampleProjectsMetaData =
