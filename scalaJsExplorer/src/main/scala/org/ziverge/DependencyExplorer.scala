@@ -54,9 +54,8 @@ object LaminarApp:
       )
   }
 
-  val params: QueryParameters[(Option[String], Option[String], Option[String]), DummyError, ] =
+  val params: QueryParameters[(Option[String], Option[String], Option[String]), DummyError] =
     param[String]("time").? & param[String]("targetProject").? & param[String]("dataView").?
-  println("Get params")
 
   private val devRoute =
     Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[String])](
@@ -72,7 +71,6 @@ object LaminarApp:
       pattern = (root / endOfSegments) ? params
     )
 
-  println("Creating router")
 
   private val router =
     new Router[Page](
@@ -96,7 +94,6 @@ object LaminarApp:
         L.windowEvents.onPopState, // this is how Waypoint avoids an explicit dependency on Laminar
       owner = L.unsafeWindowOwner  // this router will live as long as the window
     )
-  println("Created router")
 
   private def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: FullAppData) =
 
@@ -112,7 +109,6 @@ object LaminarApp:
     def viewUpdate(page: DependencyExplorerPage) =
       Observer[String](onNext =
         dataView =>
-          println("!view mode: " + dataView)
           DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
       )
 
@@ -120,8 +116,6 @@ object LaminarApp:
     div(
       child <--
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
-          println("time: " + busPageInfo.time)
-          println("targetProject: " + busPageInfo.targetProject)
           div(
             div("time query param value: " + busPageInfo.time),
             select(
