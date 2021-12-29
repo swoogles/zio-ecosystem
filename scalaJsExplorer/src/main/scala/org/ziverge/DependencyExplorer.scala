@@ -1,7 +1,7 @@
 package org.ziverge
 
 import upickle.default.{read, write}
-import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, durationInt}
+import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, durationInt, ZLayer}
 import upickle.default.{macroRW, ReadWriter as RW, *}
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
@@ -152,10 +152,10 @@ object DependencyExplorer extends ZIOAppDefault:
 
   import com.raquo.laminar.api.L.{*, given}
 
-  def run =
+  def logic =
     for
 //      appData <- SharedLogic.fetchAppData // TODO Local version of this?
-      appData <- AppDataHardcoded.getJsData // TODO Call abstract method that delegates
+      appData <- ZioEcosystem.snapshot // TODO Call abstract method that delegates
       _       <- PConsole.zprint(appData.all)
       _ <-
         ZIO {
@@ -164,4 +164,8 @@ object DependencyExplorer extends ZIOAppDefault:
           com.raquo.laminar.api.L.render(appHolder, LaminarApp.app(appData))
         }
     yield ()
+
+  def run =
+      logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), Console.live)
+
 end DependencyExplorer
