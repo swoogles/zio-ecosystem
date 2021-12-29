@@ -1,22 +1,11 @@
 package org.ziverge
 
 import upickle.default.{read, write}
-import com.raquo.waypoint.{param, root}
-import pprint.PPrinter
-//import localized.{Localized}
-import sttp.model.Uri
 import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, durationInt}
-import zio.Console.printLine
-import scalax.collection.Graph
-import scalax.collection.GraphPredef.*
-import scalax.collection.GraphEdge.*
-import scalax.collection.edge.LDiEdge
-import scalax.collection.edge.Implicits.*
 import upickle.default.{macroRW, ReadWriter as RW, *}
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
 
-import java.time.{OffsetDateTime, ZoneId}
 import org.scalajs.dom
 
 object LaminarApp:
@@ -162,41 +151,17 @@ import zio.{Console, ZIO, ZIOAppDefault}
 object DependencyExplorer extends ZIOAppDefault:
 
   import com.raquo.laminar.api.L.{*, given}
-  import org.scalajs.dom
-//  import org.scalajs.dom.experimental.serviceworkers.*
-
-  // TODO: Rope zio-cli into this thing to make
-  // the command line interface The
-  // Right Way (TM). (The following may be the
-  // sloppiest CLI args handling that
-  // I have ever written.)
-  def zprint[T: upickle.default.ReadWriter](x: T) =
-    val pickled   = write(x)
-    val depickled = read[T](pickled)
-    Console.printLine(pprint(x, height = Int.MaxValue))
-
-  val getJsData =
-    val connectedX = JsDataConnected.connected
-    val allX       = JsData.allProjectData
-    for
-      graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allX))
-    yield FullAppData(connectedX, allX, graph)
 
   def run =
     for
-      //      _ <- ZIO.debug(Localized.)
-      //      _ <- ZIO.debug(read[Seq[ProjectMetaData]](Localized.content))
-      //      _ <- ZIO.debug(read[Seq[ConnectedProjectData]](Localized.content2))
-
 //      appData <- SharedLogic.fetchAppData // TODO Local version of this?
-      appData <- getJsData
-      _       <- zprint(appData.all)
+      appData <- AppDataHardcoded.getJsData // TODO Call abstract method that delegates
+      _       <- PConsole.zprint(appData.all)
       _ <-
         ZIO {
           val appHolder = dom.document.getElementById("landing-message")
           appHolder.innerHTML = ""
           com.raquo.laminar.api.L.render(appHolder, LaminarApp.app(appData))
         }
-      _ <- ZIO.debug("Laminar stuff goes here ZZZ")
     yield ()
 end DependencyExplorer
