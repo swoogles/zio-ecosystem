@@ -8,26 +8,25 @@ import urldsl.language.QueryParameters
 
 import org.scalajs.dom
 
-object LaminarApp:
-  import com.raquo.laminar.api.L._
+sealed private trait Page
 
-  import com.raquo.laminar.api.L
+case class DependencyExplorerPage(
+    time: Option[String], // TODO Make this a WallTime instead
+    targetProject: Option[String],
+    dataView: DataView
+) extends Page {}
+
+private case object LoginPageOriginal extends Page
+
+
+object DependencyExplorerRouting:
+  import upickle.default.{macroRW, ReadWriter as RW, *}
   import com.raquo.waypoint._
-  import upickle.default._
-
-  sealed private trait Page
-
-  private case class DependencyExplorerPage(
-      time: Option[String], // TODO Make this a WallTime instead
-      targetProject: Option[String],
-      dataView: DataView
-  ) extends Page {}
-
-  private case object LoginPageOriginal extends Page
+  import com.raquo.laminar.api.L
 
   //  implicit private val AppModeRW: ReadWriter[AppMode] = macroRW
-  implicit private val explorerRW: ReadWriter[DependencyExplorerPage] = macroRW
-  implicit private val rw: ReadWriter[Page]                           = macroRW
+  implicit private val explorerRW: RW[DependencyExplorerPage] = macroRW
+  implicit private val rw: RW[Page]                           = macroRW
 
   private val encodePage
       : DependencyExplorerPage => (Option[String], Option[String], Option[String]) =
@@ -60,7 +59,7 @@ object LaminarApp:
       pattern = (root / endOfSegments) ? params
     )
 
-  private val router =
+  val router =
     new Router[Page](
       routes =
         List(
@@ -83,7 +82,23 @@ object LaminarApp:
       owner = L.unsafeWindowOwner  // this router will live as long as the window
     )
 
-  private def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: FullAppData) =
+  import com.raquo.laminar.api.L._
+  // import com.raquo.laminar.api.L.{div, HtmlElement}
+  
+  def splitter(fullAppData: FullAppData) =
+    SplitRender[Page, HtmlElement](router.$currentPage)
+      .collectSignal[DependencyExplorerPage](LaminarApp.renderMyPage(_, fullAppData))
+      .collectStatic(LoginPageOriginal) {
+        div("Login page")
+      }
+
+object LaminarApp:
+  import com.raquo.laminar.api.L._
+
+  private val router = DependencyExplorerRouting.router
+
+
+  def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: FullAppData) =
 
     val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
     val pageUpdateObserver =
@@ -135,27 +150,20 @@ object LaminarApp:
     )
   end renderMyPage
 
-  private def splitter(fullAppData: FullAppData) =
-    SplitRender[Page, HtmlElement](router.$currentPage)
-      .collectSignal[DependencyExplorerPage](renderMyPage(_, fullAppData))
-      .collectStatic(LoginPageOriginal) {
-        div("Login page")
-      }
-
-  def app(fullAppData: FullAppData): Div = div(child <-- splitter(fullAppData).$view)
+  def app(fullAppData: FullAppData): Div = div(child <-- DependencyExplorerRouting.splitter(fullAppData).$view)
 end LaminarApp
-
-import zio.{Console, ZIO, ZIOAppDefault}
 
 object DependencyExplorer extends ZIOAppDefault:
 
-  import com.raquo.laminar.api.L.{*, given}
+  // import com.raquo.laminar.api.L.{*, given}
 
-  def logic =
+  def logic: ZIO[ZioEcosystem & Console, Throwable, Unit] =
     for
 //      appData <- SharedLogic.fetchAppData // TODO Local version of this?
       appData <- ZioEcosystem.snapshot // TODO Call abstract method that delegates
-      _ <- PConsole.zprint(appData.all)
+      // _ <- PConsole.zprint(appData.all)
+      _ <- Console.printLine("Some plain ole' string")
+      _ <- Console.printLine(appData.all.head)
       _ <-
         ZIO {
           val appHolder = dom.document.getElementById("landing-message")
@@ -164,6 +172,6 @@ object DependencyExplorer extends ZIOAppDefault:
         }
     yield ()
 
-  def run = logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), Console.live)
+  def run = logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), ZLayer.succeed(DevConsole.word))
 
 end DependencyExplorer

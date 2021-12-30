@@ -1,6 +1,6 @@
 package org.ziverge
 
-import zio.ZIO
+import zio.{Console, ZIO}
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 
