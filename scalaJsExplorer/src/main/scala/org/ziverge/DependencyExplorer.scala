@@ -20,80 +20,6 @@ case class DependencyExplorerPage(
 
 private case object LoginPageOriginal extends Page
 
-object DependencyExplorerRouting:
-  import upickle.default.{macroRW, ReadWriter as RW, *}
-  import com.raquo.waypoint._
-  import com.raquo.laminar.api.L
-
-  //  implicit private val AppModeRW: ReadWriter[AppMode] = macroRW
-  implicit private val explorerRW: RW[DependencyExplorerPage] = macroRW
-  implicit private val rw: RW[Page]                           = macroRW
-
-  private val encodePage
-      : DependencyExplorerPage => (Option[String], Option[String], Option[String]) =
-    page => (page.time, page.targetProject, Some(page.dataView.toString))
-
-  private val decodePage
-      : ((Option[String], Option[String], Option[String])) => DependencyExplorerPage = {
-    case (time, targetProject, dataView) =>
-      DependencyExplorerPage(
-        time = time,
-        targetProject = targetProject,
-        dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Blockers)
-      )
-  }
-
-  val params: QueryParameters[(Option[String], Option[String], Option[String]), DummyError] =
-    param[String]("time").? & param[String]("targetProject").? & param[String]("dataView").?
-
-  private val devRoute =
-    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[String])](
-      encode = encodePage,
-      decode = decodePage,
-      pattern = (root / "index_dev.html" / endOfSegments) ? params
-    )
-
-  private val prodRoute =
-    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[String])](
-      encode = encodePage,
-      decode = decodePage,
-      pattern = (root / endOfSegments) ? params
-    )
-
-  val router =
-    new Router[Page](
-      routes =
-        List(
-          prodRoute
-          //      devRoute,
-        ),
-      getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
-      serializePage = page => write(page)(rw), // serialize page data for storage in History API log
-      deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
-      routeFallback =
-        _ =>
-          DependencyExplorerPage(
-            time = None, // TODO Make this a WallTime instead
-            targetProject = None,
-            dataView = DataView.Blockers
-          ),
-    )(
-      $popStateEvent =
-        L.windowEvents.onPopState, // this is how Waypoint avoids an explicit dependency on Laminar
-      owner = L.unsafeWindowOwner  // this router will live as long as the window
-    )
-
-  import com.raquo.laminar.api.L._
-  // import com.raquo.laminar.api.L.{div, HtmlElement}
-
-  def splitter(fullAppData: FullAppData) =
-    SplitRender[Page, HtmlElement](router.$currentPage)
-      .collectSignal[DependencyExplorerPage](DependencyViewerLaminar.renderMyPage(_, fullAppData))
-      .collectStatic(LoginPageOriginal) {
-        div("Login page")
-      }
-end DependencyExplorerRouting
-
 object DependencyViewerLaminar:
   import com.raquo.laminar.api.L._
 
@@ -118,14 +44,12 @@ object DependencyViewerLaminar:
       ),
       button(
         "Select fake proejct",
-        onClick.map(_ => busPageInfo) --> pageUpdateObserver
-
-        //          clickObserver
+        onClick.mapTo(busPageInfo) --> pageUpdateObserver
       ),
-      button("Select ZIO", onClick.map(_ => busPageInfo) --> selectZioObserver)
+      button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
     )
 
-  def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: FullAppData) =
+  def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
 
     val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
     val pageUpdateObserver =
@@ -142,12 +66,23 @@ object DependencyViewerLaminar:
           DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
       )
 
+    def refreshObserver(page: DependencyExplorerPage) =
+      Observer[Int](onNext =
+        dataView =>
+          println("should refresh here")
+          // DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
+      )
+
+    val refresh = EventStream.periodic(5000)
+
 //    val clickBus = new EventBus[]
     div(
       child <--
-        $loginPage.map((busPageInfo: DependencyExplorerPage) =>
-          val res: ReactiveHtmlElement[org.scalajs.dom.html.Div] =
+        $loginPage.map((busPageInfo: DependencyExplorerPage) => {
+            val observer = refreshObserver(busPageInfo) 
             div(
+              // refresh --> refreshObserver(busPageInfo),
+              refresh --> observer,
               select(
                 inContext { thisNode =>
                   onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
@@ -162,30 +97,51 @@ object DependencyViewerLaminar:
                 pageUpdateObserver,
                 selectZioObserver,
                 viewUpdate(busPageInfo),
-                fullAppData
+                fullAppData.fullAppData
               )
             )
-          res
+              }
         )
     )
   end renderMyPage
 
-  def app(fullAppData: FullAppData): Div =
+  def app(fullAppData: AppDataAndEffects): Div =
     div(child <-- DependencyExplorerRouting.splitter(fullAppData).$view)
 end DependencyViewerLaminar
+
+case class AppDataAndEffects(
+  fullAppData: FullAppData, refreshAppData: () => FullAppData
+)
 
 object DependencyExplorer extends ZIOAppDefault:
 
   // import com.raquo.laminar.api.L.{*, given}
 
+  val refreshProjectData =
+    () => 
+      zio.Runtime.default.unsafeRun(ZioEcosystem.snapshot
+        .provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), ZLayer.succeed(DevConsole.word))
+      )
+
   def logic: ZIO[ZioEcosystem & Console, Throwable, Unit] =
     for
       appData <- ZioEcosystem.snapshot
+      bag <- ZIO.environmentWith[ZioEcosystem]( x => x.get)
+      console <- ZIO.environmentWith[Console]( x => x.get)
+
+      refresh =
+
+        () => 
+        zio.Runtime.default.unsafeRun(ZioEcosystem.snapshot
+          .provide(ZLayer.succeed(bag), ZLayer.succeed(console))
+        )
+      // This shows that currently, we're only getting this information once upon loading.
+      // We can envision some small changes that let us 
       _ <-
         ZIO {
           val appHolder = dom.document.getElementById("landing-message")
           appHolder.innerHTML = ""
-          com.raquo.laminar.api.L.render(appHolder, DependencyViewerLaminar.app(appData))
+          com.raquo.laminar.api.L.render(appHolder, DependencyViewerLaminar.app(AppDataAndEffects(appData, refreshProjectData)))
         }
     yield ()
 
