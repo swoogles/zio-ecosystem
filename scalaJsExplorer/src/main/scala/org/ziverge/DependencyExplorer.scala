@@ -7,6 +7,7 @@ import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
 
 import org.scalajs.dom
+import com.raquo.laminar.nodes.ReactiveHtmlElement
 
 sealed private trait Page
 
@@ -14,10 +15,10 @@ case class DependencyExplorerPage(
     time: Option[String], // TODO Make this a WallTime instead
     targetProject: Option[String],
     dataView: DataView
-) extends Page {}
+) extends Page:
+  def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
 
 private case object LoginPageOriginal extends Page
-
 
 object DependencyExplorerRouting:
   import upickle.default.{macroRW, ReadWriter as RW, *}
@@ -84,30 +85,56 @@ object DependencyExplorerRouting:
 
   import com.raquo.laminar.api.L._
   // import com.raquo.laminar.api.L.{div, HtmlElement}
-  
+
   def splitter(fullAppData: FullAppData) =
     SplitRender[Page, HtmlElement](router.$currentPage)
-      .collectSignal[DependencyExplorerPage](LaminarApp.renderMyPage(_, fullAppData))
+      .collectSignal[DependencyExplorerPage](DependencyViewerLaminar.renderMyPage(_, fullAppData))
       .collectStatic(LoginPageOriginal) {
         div("Login page")
       }
+end DependencyExplorerRouting
 
-object LaminarApp:
+object DependencyViewerLaminar:
   import com.raquo.laminar.api.L._
 
   private val router = DependencyExplorerRouting.router
 
+  def constructPage(
+      busPageInfo: DependencyExplorerPage,
+      pageUpdateObserver: Observer[DependencyExplorerPage],
+      selectZioObserver: Observer[DependencyExplorerPage],
+      viewUpdate: Observer[String],
+      fullAppData: FullAppData
+  ) =
+    div(
+      div("time query param value: " + busPageInfo.time),
+      div(
+        // TODO Better result type so we can properly render different schemas
+        SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData) match
+          case content: String =>
+            content.split("\n").map(p(_)).toSeq
+          case other =>
+            other.toString
+      ),
+      button(
+        "Select fake proejct",
+        onClick.map(_ => busPageInfo) --> pageUpdateObserver
+
+        //          clickObserver
+      ),
+      button("Select ZIO", onClick.map(_ => busPageInfo) --> selectZioObserver)
+    )
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: FullAppData) =
 
     val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
     val pageUpdateObserver =
       Observer[DependencyExplorerPage](onNext =
-        page => router.pushState(page.copy(targetProject = Some("fake.click.project")))
+        page => router.pushState(page.changeTarget("fake.click.project"))
       )
     val selectZioObserver =
       Observer[DependencyExplorerPage](onNext =
-        page => router.pushState(page.copy(targetProject = Some("dev.zio.zio")))
+        page => router.pushState(page.changeTarget("dev.zio.zio"))
       )
     def viewUpdate(page: DependencyExplorerPage) =
       Observer[String](onNext =
@@ -119,39 +146,33 @@ object LaminarApp:
     div(
       child <--
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
-          div(
-            div("time query param value: " + busPageInfo.time),
-            select(
-              inContext { thisNode =>
-                onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
-              },
-              DataView
-                .values
-                .map(dataView => option(value := dataView.toString, dataView.toString))
-                .toSeq
-            ),
+          val res: ReactiveHtmlElement[org.scalajs.dom.html.Div] =
             div(
-              // TODO Better result type so we can properly render different schemas
-              SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData) match
-                case content: String =>
-                  content.split("\n").map(p(_)).toSeq
-                case other =>
-                  other.toString
-            ),
-            button(
-              "Select fake proejct",
-              onClick.map(_ => busPageInfo) --> pageUpdateObserver
-
-              //          clickObserver
-            ),
-            button("Select ZIO", onClick.map(_ => busPageInfo) --> selectZioObserver)
-          )
+              select(
+                inContext { thisNode =>
+                  onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
+                },
+                DataView
+                  .values
+                  .map(dataView => option(value := dataView.toString, dataView.toString))
+                  .toSeq
+              ),
+              constructPage(
+                busPageInfo,
+                pageUpdateObserver,
+                selectZioObserver,
+                viewUpdate(busPageInfo),
+                fullAppData
+              )
+            )
+          res
         )
     )
   end renderMyPage
 
-  def app(fullAppData: FullAppData): Div = div(child <-- DependencyExplorerRouting.splitter(fullAppData).$view)
-end LaminarApp
+  def app(fullAppData: FullAppData): Div =
+    div(child <-- DependencyExplorerRouting.splitter(fullAppData).$view)
+end DependencyViewerLaminar
 
 object DependencyExplorer extends ZIOAppDefault:
 
@@ -159,19 +180,16 @@ object DependencyExplorer extends ZIOAppDefault:
 
   def logic: ZIO[ZioEcosystem & Console, Throwable, Unit] =
     for
-//      appData <- SharedLogic.fetchAppData // TODO Local version of this?
-      appData <- ZioEcosystem.snapshot // TODO Call abstract method that delegates
-      // _ <- PConsole.zprint(appData.all)
-      _ <- Console.printLine("Some plain ole' string")
-      _ <- Console.printLine(appData.all.head)
+      appData <- ZioEcosystem.snapshot
       _ <-
         ZIO {
           val appHolder = dom.document.getElementById("landing-message")
           appHolder.innerHTML = ""
-          com.raquo.laminar.api.L.render(appHolder, LaminarApp.app(appData))
+          com.raquo.laminar.api.L.render(appHolder, DependencyViewerLaminar.app(appData))
         }
     yield ()
 
-  def run = logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), ZLayer.succeed(DevConsole.word))
+  def run =
+    logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), ZLayer.succeed(DevConsole.word))
 
 end DependencyExplorer
