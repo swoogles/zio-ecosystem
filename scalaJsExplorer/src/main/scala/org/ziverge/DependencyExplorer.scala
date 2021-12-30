@@ -60,7 +60,6 @@ object LaminarApp:
       pattern = (root / endOfSegments) ? params
     )
 
-
   private val router =
     new Router[Page](
       routes =
@@ -156,7 +155,7 @@ object DependencyExplorer extends ZIOAppDefault:
     for
 //      appData <- SharedLogic.fetchAppData // TODO Local version of this?
       appData <- ZioEcosystem.snapshot // TODO Call abstract method that delegates
-      _       <- PConsole.zprint(appData.all)
+      _ <- PConsole.zprint(appData.all)
       _ <-
         ZIO {
           val appHolder = dom.document.getElementById("landing-message")
@@ -165,7 +164,6 @@ object DependencyExplorer extends ZIOAppDefault:
         }
     yield ()
 
-  def run =
-      logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), Console.live)
+  def run = logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), Console.live)
 
 end DependencyExplorer

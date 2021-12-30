@@ -80,7 +80,7 @@ end ZioDependencyTracker
  * --targetProject */
 
 object SharedLogic:
-  val fetchAppData: ZIO[Any, Object, FullAppData] =
+  val fetchAppData: ZIO[Any, Throwable, FullAppData] =
     for
       currentZioVersion <-
         Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)

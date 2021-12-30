@@ -35,21 +35,25 @@ object Maven:
   def latestProjectOnMaven(
       project: Project,
       scalaVersion: ScalaVersion
-  ): ZIO[Any, String, VersionedProject] =
+  ): ZIO[Any, Throwable, VersionedProject] =
     for
       latestVersion <-
-        latestVersionOfArtifact(project, scalaVersion)
-          .mapError(error => "Failed to get latest version of: " + project.artifactId)
+        latestVersionOfArtifact(project, scalaVersion).mapError(error =>
+          new Exception("Failed to get latest version of: " + project.artifactId)
+        )
       version       = (latestVersion \ "versioning" \ "latest").text
       latestProject = VersionedProject(project, version)
     yield latestProject
 
-  def projectMetaDataFor(project: Project, scalaVersion: ScalaVersion) =
+  def projectMetaDataFor(
+      project: Project,
+      scalaVersion: ScalaVersion
+  ): ZIO[Any, Throwable, ProjectMetaData] =
     for
       versionedProject <- latestProjectOnMaven(project, ScalaVersion.V2_13)
       pomFile <-
         pomFor(versionedProject, ScalaVersion.V2_13)
-          .mapError(error => "Failed to get POM for: " + project.artifactId)
+          .mapError(error => new Exception("Failed to get POM for: " + project.artifactId))
     yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile))
 
   def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) =

@@ -41,3 +41,5 @@ website/static/api
 python-code/.mypy_cache
 python-code/.venv-python-code
 python-code/.python-version
+src/main/resources/compiledJavascript/
+

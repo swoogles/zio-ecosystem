@@ -108,19 +108,24 @@ object ConnectedProjectData:
       allProjectsMetaData: Seq[ProjectMetaData],
       dependendencyGraph: Graph[Project, DiEdge],
       currentZioVersion: Version
-  ): ZIO[Any, Object, ConnectedProjectData] = // TODO More specific error type
+  ): ZIO[Any, Throwable, ConnectedProjectData] = // TODO More specific error type
     for
-      node <- ZIO.fromOption(dependendencyGraph.nodes.find(_.value == projectMetaData.project))
+      node <-
+        ZIO
+          .fromOption(dependendencyGraph.nodes.find(_.value == projectMetaData.project))
+          .mapError(_ => new Exception("Missing value in dependency graph"))
       dependents = node.diSuccessors.map(_.value)
       typedDependants: Set[ProjectMetaData] <-
         ZIO.foreach(dependents)(dependent =>
-          ZIO.fromOption(allProjectsMetaData.find(_.project == dependent))
+          ZIO
+            .fromOption(allProjectsMetaData.find(_.project == dependent))
+            .mapError(_ => new Exception("Missing projects metadata entry"))
         )
       typedDependencies <-
         ZIO.foreach(projectMetaData.dependencies)(dependency =>
           ZIO
             .fromOption(allProjectsMetaData.find(_.project == dependency.project))
-            .mapError(_ => "Missing dependency entry for: " + dependency.project)
+            .mapError(_ => new Exception("Missing dependency entry for: " + dependency.project))
         )
       zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData)
       blockers =
