@@ -5,18 +5,39 @@ import zio.Console.printLine
 import zio.{Chunk, ZIO}
 import upickle.default.{macroRW, ReadWriter as RW, *}
 
-enum DataView:
-  case Dependencies, Dependents, Json, Blockers, DotGraph
+enum DataView(val name: String):
+  case Dependencies(filter: Option[String]) extends DataView("Dependencies")
+  case Dependents extends DataView("Dependents")
+  case Json extends DataView("Json")
+  case Blockers extends DataView("Blockers")
+  case DotGraph extends DataView("DotGraph")
 
 object DataView:
+  val valueStrings =
+    List("Dependencies" , "Dependents" , "Json" , "Blockers" , "DotGraph")
+
   def fromStrings(
       args: Chunk[String]
   ): Option[DataView] = // TODO Decide whether to do with multiple args
     args.flatMap(fromString).headOption
 
-  def fromString(args: String): Option[DataView] = // TODO Decide whether to do with multiple args
-    values.find(_.toString == args)
+  def fromString(args: String): Option[DataView] =  args match {
+    // TODO Decide whether to do with multiple args
+    // TODO YIKES. All these crazy matching issues :/
+    case s"Dependencies(Some($filter))" => Some(Dependencies(filter=None))
+    case s"Dependencies(None)" => Some(Dependencies(filter=None))
+    case s"Dependencies" => Some(Dependencies(filter=None))
+    case "Dependents" => Some(Dependents)
+    case "Json" => Some(Json)
+    case "Blockers" => Some(Blockers)
+    case "DotGraph" => Some(DotGraph)
+    case failedValue => throw new Exception("Unrecognized value: " + failedValue)
+  }
+    // values.find(_.toString == args)
 
+  import upickle.default.ReadWriter.join
+
+  implicit val dependenciesRW: RW[Dependencies] = macroRW
   implicit val explorerRW: RW[DataView] = macroRW
 
 //  val dtWriter: Writer[DataView] ={
@@ -64,10 +85,20 @@ object SummaryLogic:
   def viewLogic(dataView: DataView, fullAppData: FullAppData): Any =
     println("DataView in view logic: " + dataView)
     dataView match
-      case DataView.Dependencies =>
+      case DataView.Dependencies(filterOpt) =>
         SummaryLogic
           .manipulateAndRender(
-            fullAppData.connected,
+            fullAppData.connected.filter(project=>
+              filterOpt match {
+                case Some(filter) => 
+                  // TODO Make this a function in a better spot
+                  // project.dependants.exists(_.project.artifactId.contains(filter)) ||
+                    project.dependencies.exists(_.project.artifactId.contains(filter)) || 
+                    project.project.artifactId.contains(filter)
+                case None => true
+              }
+              
+              ),
             _.dependencies.size,
             p =>
               if (p.dependencies.nonEmpty)
