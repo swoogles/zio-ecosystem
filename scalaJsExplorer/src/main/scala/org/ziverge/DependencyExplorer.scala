@@ -114,9 +114,9 @@ object DependencyViewerLaminar:
                 onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
               },
               DataView
-                .valueStrings
+                .values
                 .map(dataView => 
-                  option(value := dataView.toString, selected :=  (dataView == busPageInfo.dataView.name), dataView.toString)
+                  option(value := dataView.toString, selected :=  (dataView == busPageInfo.dataView), dataView.toString)
                   )
                 .toSeq
             ),

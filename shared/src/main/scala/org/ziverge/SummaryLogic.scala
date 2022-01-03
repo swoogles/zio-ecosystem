@@ -7,16 +7,10 @@ import upickle.default.{macroRW, ReadWriter as RW, *}
 import java.io.ObjectInputStream
 import java.io.ByteArrayInputStream
 
-enum DataView(val name: String):
-  case Dependencies extends DataView("Dependencies")
-  case Dependents extends DataView("Dependents")
-  case Json extends DataView("Json")
-  case Blockers extends DataView("Blockers")
-  case DotGraph extends DataView("DotGraph")
+enum DataView:
+  case Dependencies , Dependents , Json , Blockers , DotGraph
 
 object DataView:
-  val valueStrings =
-    List("Dependencies" , "Dependents" , "Json" , "Blockers" , "DotGraph")
 
   def fromStrings(
       args: Chunk[String]
@@ -24,27 +18,8 @@ object DataView:
     args.flatMap(fromString).headOption
 
   def fromString(args: String): Option[DataView] =  
-    println("fromString custom")
-    // try {
-    //   Some(read[DataView](args))
-    //   // Some(new ObjectInputStream(new ByteArrayInputStream(args.getBytes)).readObject.asInstanceOf[DataView])
-    // } catch {
-    //   case failure => 
-
-    //     println("Could not parse value: " + failure)
-    //     None
-    // }
-    args match {
-    // TODO Decide whether to do with multiple args
-    // TODO YIKES. All these crazy matching issues :/
-    case s"Dependencies" => Some(Dependencies)
-    case "Dependents" => Some(Dependents)
-    case "Json" => Some(Json)
-    case "Blockers" => Some(Blockers)
-    case "DotGraph" => Some(DotGraph)
-    case failedValue => throw new Exception("Unrecognized value: " + failedValue)
-  }
-    // values.find(_.toString == args)
+    println("fromString custom!")
+    values.find(_.toString == args)
 
   import upickle.default.ReadWriter.join
 
