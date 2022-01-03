@@ -48,7 +48,7 @@ object SummaryLogic:
       connectionMessage: ConnectedProjectData => String,
       currentZioVersion: Version,
       filterUpToDateProjects: Boolean
-  ) =
+  ): Seq[String] =
 
     val upToDate: ConnectedProjectData => Boolean =
       p => 
@@ -74,7 +74,7 @@ object SummaryLogic:
       }
   end manipulateAndRender
 
-  def viewLogic(dataView: DataView, fullAppData: FullAppData, filterOpt: Option[String], filterUpToDateProjects: Boolean): Any =
+  def viewLogic(dataView: DataView, fullAppData: FullAppData, filterOpt: Option[String], filterUpToDateProjects: Boolean): String =
     println("DataView in view logic: " + dataView)
     dataView match
       case DataView.Dependencies =>
@@ -148,7 +148,8 @@ object SummaryLogic:
           )
           .mkString("\n")
       case DataView.DotGraph =>
-        DotGraph.render(fullAppData.graph)
+        fullAppData.graph
     end match
   end viewLogic
 end SummaryLogic
+

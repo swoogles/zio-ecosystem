@@ -56,20 +56,24 @@ object ProjectMetaData:
   def getUnderlyingZioDep(
       projectMetaData: ProjectMetaData,
       allProjectsMetaData: Seq[ProjectMetaData]
-  ): ZIO[Any, Throwable, Option[ZioDep]] =
+  ): Either[Throwable, Option[ZioDep]] =
     projectMetaData.zioDep match
       case Some(value) =>
-        ZIO.succeed(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
+        Right(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
       case None =>
-        for
-          rez <-
-            ZIO.foreach(projectMetaData.dependencies)(dependency =>
-              ZIO(allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep))
-            )
-        yield rez
-          .flatten
+        val zioDeps: Set[VersionedProject] = 
+          projectMetaData.dependencies.flatMap(dependency =>
+            allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep)
+          )
+        println("ZIO Deps: " + zioDeps.mkString(","))
+        val res: Option[VersionedProject] =
+          zioDeps
+          // .flatten
           .minByOption(_.typedVersion)
-          .map(project => ZioDep(project, DependencyType.Transitive))
+        Right(res
+          .map(project => Some(ZioDep(project, DependencyType.Transitive)))
+          .getOrElse(None)
+        )
 end ProjectMetaData
 
 enum DependencyType:
@@ -108,24 +112,18 @@ object ConnectedProjectData:
       allProjectsMetaData: Seq[ProjectMetaData],
       dependendencyGraph: Graph[Project, DiEdge],
       currentZioVersion: Version
-  ): ZIO[Any, Throwable, ConnectedProjectData] = // TODO More specific error type
+  ): Either[Throwable, ConnectedProjectData] = // TODO More specific error type
     for
       node <-
-        ZIO
-          .fromOption(dependendencyGraph.nodes.find(_.value == projectMetaData.project))
-          .mapError(_ => new Exception("Missing value in dependency graph"))
+          dependendencyGraph.nodes.find(_.value == projectMetaData.project).toRight(new Exception("Missing value in dependency graph"))
       dependents = node.diSuccessors.map(_.value)
-      typedDependants: Set[ProjectMetaData] <-
-        ZIO.foreach(dependents)(dependent =>
-          ZIO
-            .fromOption(allProjectsMetaData.find(_.project == dependent))
-            .mapError(_ => new Exception("Missing projects metadata entry"))
-        )
+      typedDependants <-
+        Right(dependents.flatMap(dependent =>
+            allProjectsMetaData.find(_.project == dependent).toRight(new Exception("Missing projects metadata entry")).toSeq
+        ))
       typedDependencies <-
-        ZIO.foreach(projectMetaData.dependencies)(dependency =>
-          ZIO
-            .fromOption(allProjectsMetaData.find(_.project == dependency.project))
-            .mapError(_ => new Exception("Missing dependency entry for: " + dependency.project))
+        Right(projectMetaData.dependencies.flatMap(dependency =>
+            allProjectsMetaData.find(_.project == dependency.project).toRight(new Exception("Missing dependency entry for: " + dependency.project)).toSeq)
         )
       zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData)
       blockers =
@@ -139,8 +137,8 @@ object ConnectedProjectData:
     yield ConnectedProjectData(
       projectMetaData.project,
       projectMetaData.typedVersion,
-      typedDependencies,
-      blockers,
+      typedDependencies.toSet,
+      blockers.toSet,
       typedDependants,
       zioDep
     )
@@ -179,7 +177,13 @@ object ScalaGraph:
 case class FullAppData(
     connected: Seq[ConnectedProjectData],
     all: Seq[ProjectMetaData],
-    graph: Graph[Project, DiEdge],
+    graph: String,
     currentZioVersion: Version,
     scalaVersion: ScalaVersion
 )
+
+object FullAppData:
+
+  // implicit val graphRw: RW[Graph[org.ziverge.Project, scalax.collection.GraphEdge.DiEdge]] = macroRW
+    // scalax.collection.Graph[org.ziverge.Project, scalax.collection.GraphEdge.DiEdge]
+  implicit val rw: RW[FullAppData] = macroRW

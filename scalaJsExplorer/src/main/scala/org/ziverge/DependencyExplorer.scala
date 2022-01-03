@@ -45,6 +45,7 @@ object DependencyViewerLaminar:
       viewUpdate: Observer[String],
       fullAppData: FullAppData
   ) =
+    val filterUpToDateProjects = false // TODO Add to DependencyExplorerPage
     div(
       div(
         // TODO Better result type so we can properly render different schemas

@@ -1,9 +1,12 @@
 package org.ziverge
 
+import upickle.default.{macroRW, ReadWriter as RW, *}
+
 case class Version(value: String) extends Comparable[Version]:
   def compareTo(other: Version) = Version.compareVersions(this, other)
 
 object Version:
+  implicit val rw: RW[Version] = macroRW
   def compareVersions(version1: Version, version2: Version): Int =
     var comparisonResult = 0
     // TODO Actually handle Milestones and RCs

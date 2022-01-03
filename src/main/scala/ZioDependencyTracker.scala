@@ -22,8 +22,6 @@ object ZioDependencyTracker extends ZIOAppDefault:
         else
           for
             fullAppData <- SharedLogic.fetchAppData(ScalaVersion.V2_13)
-            currentZioVersion <-
-              Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
 
             // TODO Clear out files before writing new versions
 //            _ <- ZIO.foreach(connected) {connectedProject => FileIO.saveAsResource(connectedProject, s"${Render.sbtStyle(connectedProject.project)}.txt")}
@@ -79,7 +77,6 @@ end ZioDependencyTracker
  * --include-core-deps
  * --include-version-deps
  * --targetProject */
-
 object SharedLogic:
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
