@@ -32,7 +32,9 @@ object ZioDependencyTracker extends ZIOAppDefault:
             _ <- FileIO.saveAsResource(connected, "connectedProjectData.txt")
             _ <- FileIO.saveAsResource(all, "allProjectsMetaData.txt")
           yield FullAppData(connected, all, graph)
+      _ <- ZIO.debug("A")
       selectedView: DataView <- ZIO.fromOption(DataView.fromStrings(args))
+      _ <- ZIO.debug("B")
       _            <- printLine(SummaryLogic.viewLogic(selectedView, fullAppData))
     yield ()
     end for

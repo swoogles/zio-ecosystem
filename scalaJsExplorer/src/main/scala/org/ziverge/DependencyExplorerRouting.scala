@@ -31,6 +31,25 @@ object DependencyExplorerRouting:
       )
   }
 
+  // implicit val dataViewPrinter: urldsl.vocabulary.Printer[org.ziverge.DataView] = new urldsl.vocabulary.Printer[org.ziverge.DataView] {
+  //   def print(t: DataView) =
+  //     write(t)
+  // }
+
+  // implicit val dataViewReader: urldsl.vocabulary.FromString[org.ziverge.DataView, urldsl.errors.DummyError] = new urldsl.vocabulary.FromString[org.ziverge.DataView, urldsl.errors.DummyError] {
+  //   def fromString(str: String): Either[DummyError, DataView] = 
+      
+  //     try {
+  //       Right(read[DataView](str))
+  //     } catch {
+  //       case failure => 
+  //         println("Could not parse value: " + failure)
+  //         Left(DummyError.dummyError)
+  //   }
+
+  // }
+
+
   val params: QueryParameters[(Option[String], Option[String], Option[String]), DummyError] =
     param[String]("time").? & param[String]("targetProject").? & param[String]("dataView").?
 

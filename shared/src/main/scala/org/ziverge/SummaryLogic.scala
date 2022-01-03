@@ -4,9 +4,11 @@ import ujson.Js
 import zio.Console.printLine
 import zio.{Chunk, ZIO}
 import upickle.default.{macroRW, ReadWriter as RW, *}
+import java.io.ObjectInputStream
+import java.io.ByteArrayInputStream
 
 enum DataView(val name: String):
-  case Dependencies(filter: Option[String]) extends DataView("Dependencies")
+  case Dependencies extends DataView("Dependencies")
   case Dependents extends DataView("Dependents")
   case Json extends DataView("Json")
   case Blockers extends DataView("Blockers")
@@ -21,12 +23,21 @@ object DataView:
   ): Option[DataView] = // TODO Decide whether to do with multiple args
     args.flatMap(fromString).headOption
 
-  def fromString(args: String): Option[DataView] =  args match {
+  def fromString(args: String): Option[DataView] =  
+    println("fromString custom")
+    // try {
+    //   Some(read[DataView](args))
+    //   // Some(new ObjectInputStream(new ByteArrayInputStream(args.getBytes)).readObject.asInstanceOf[DataView])
+    // } catch {
+    //   case failure => 
+
+    //     println("Could not parse value: " + failure)
+    //     None
+    // }
+    args match {
     // TODO Decide whether to do with multiple args
     // TODO YIKES. All these crazy matching issues :/
-    case s"Dependencies(Some($filter))" => Some(Dependencies(filter=None))
-    case s"Dependencies(None)" => Some(Dependencies(filter=None))
-    case s"Dependencies" => Some(Dependencies(filter=None))
+    case s"Dependencies" => Some(Dependencies)
     case "Dependents" => Some(Dependents)
     case "Json" => Some(Json)
     case "Blockers" => Some(Blockers)
@@ -37,7 +48,7 @@ object DataView:
 
   import upickle.default.ReadWriter.join
 
-  implicit val dependenciesRW: RW[Dependencies] = macroRW
+  // implicit val dependenciesRW: RW[Dependencies] = macroRW
   implicit val explorerRW: RW[DataView] = macroRW
 
 //  val dtWriter: Writer[DataView] ={
@@ -82,10 +93,10 @@ object SummaryLogic:
       }
   end manipulateAndRender
 
-  def viewLogic(dataView: DataView, fullAppData: FullAppData): Any =
+  def viewLogic(dataView: DataView, fullAppData: FullAppData, filterOpt: Option[String]): Any =
     println("DataView in view logic: " + dataView)
     dataView match
-      case DataView.Dependencies(filterOpt) =>
+      case DataView.Dependencies =>
         SummaryLogic
           .manipulateAndRender(
             fullAppData.connected.filter(project=>

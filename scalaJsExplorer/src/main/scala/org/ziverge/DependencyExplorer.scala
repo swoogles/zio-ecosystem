@@ -21,10 +21,14 @@ case class DependencyExplorerPage(
     dataView: DataView
 ) extends Page:
   def changeTarget(newTarget: String) = 
-    dataView match {
-      case Dependencies(filter) => Option.when(newTarget.nonEmpty)(copy(dataView = Dependencies(Some(newTarget)))).getOrElse(copy(targetProject = Some(newTarget)))
-      case _ => copy(targetProject = Some(newTarget))
-    }
+    // dataView match {
+      // case Dependencies => 
+        // println("DependencyExplorerPage.changeTarget: " + newTarget)
+        // Option.when(newTarget.nonEmpty)(copy(dataView = Dependencies(Some(newTarget))))
+        // .getOrElse(copy(targetProject = Some(newTarget)))
+      // case _ => 
+    // }
+    copy(targetProject = Some(newTarget))
     
 
 private case object LoginPageOriginal extends Page
@@ -44,7 +48,7 @@ object DependencyViewerLaminar:
     div(
       div(
         // TODO Better result type so we can properly render different schemas
-        SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData) match
+        SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData, busPageInfo.targetProject) match
           case content: String =>
             content.split("\n").map(p(_)).toSeq
           case other =>
@@ -68,7 +72,8 @@ object DependencyViewerLaminar:
     def viewUpdate(page: DependencyExplorerPage) =
       Observer[String](onNext =
         dataView =>
-          DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
+          
+          router.pushState(page.copy(dataView = DataView.fromString(dataView).getOrElse(DataView.Blockers)))
       )
 
     def refreshObserver(page: DependencyExplorerPage) =
@@ -97,10 +102,8 @@ object DependencyViewerLaminar:
             refresh --> observer,
             // TextInput().amend(onInput --> printTextInput),
               input(typ := "text", placeholder := busPageInfo.targetProject.getOrElse(""), size := 25, 
-              value := (busPageInfo.dataView match {
-                  case Dependencies(filter) => filter.getOrElse("")
-                  case _ => busPageInfo.targetProject.getOrElse("")
-                }),
+                value := busPageInfo.targetProject.getOrElse("")
+                ,
               onMountFocus,
               inContext { thisNode =>
                 onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)  

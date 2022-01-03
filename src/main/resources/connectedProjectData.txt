@@ -30,6 +30,36 @@ List(
     blockers = HashSet(),
     dependants = HashSet(
       ProjectMetaData(
+        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        version = "3.17.102.6",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
+            version = "1.0.13"
+          )
+        )
+      ),
+      ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
         version = "2.0.0-RC1",
         dependencies = HashSet(
@@ -160,36 +190,6 @@ List(
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
             version = "1.0.13"
-          )
-        )
-      ),
-      ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
-            version = "1.0.12"
           )
         )
       ),
@@ -572,6 +572,36 @@ List(
     blockers = HashSet(),
     dependants = HashSet(
       ProjectMetaData(
+        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        version = "3.17.102.6",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
+            version = "1.0.13"
+          )
+        )
+      ),
+      ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio-json"),
         version = "0.3.0-RC1-1",
         dependencies = HashSet(
@@ -736,36 +766,6 @@ List(
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
             version = "1.0.13"
-          )
-        )
-      ),
-      ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
-            version = "1.0.12"
           )
         )
       ),
@@ -1112,6 +1112,36 @@ List(
     blockers = HashSet(),
     dependants = HashSet(
       ProjectMetaData(
+        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        version = "3.17.102.6",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
+            version = "1.0.13"
+          )
+        )
+      ),
+      ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio-akka-cluster"),
         version = "0.2.0",
         dependencies = HashSet(
@@ -1254,36 +1284,6 @@ List(
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
             version = "1.0.13"
-          )
-        )
-      ),
-      ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
-            version = "1.0.12"
           )
         )
       ),
@@ -1675,24 +1675,6 @@ List(
     blockers = Set(),
     dependants = Set(
       ProjectMetaData(
-        project = Project(group = "dev.zio", artifactId = "zio-interop-cats"),
-        version = "3.3.0-RC1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-stacktracer"),
-            version = "2.0.0-RC1"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "2.0.0-RC1"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "2.0.0-RC1"
-          )
-        )
-      ),
-      ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio"),
         version = "2.0.0-RC1",
         dependencies = HashSet(
@@ -1706,6 +1688,24 @@ List(
           ),
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-internal-macros"),
+            version = "2.0.0-RC1"
+          )
+        )
+      ),
+      ProjectMetaData(
+        project = Project(group = "dev.zio", artifactId = "zio-interop-cats"),
+        version = "3.3.0-RC1",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-stacktracer"),
+            version = "2.0.0-RC1"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "2.0.0-RC1"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
             version = "2.0.0-RC1"
           )
         )
@@ -1774,6 +1774,36 @@ List(
     ),
     blockers = HashSet(),
     dependants = HashSet(
+      ProjectMetaData(
+        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        version = "3.17.102.6",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
+            version = "1.0.13"
+          )
+        )
+      ),
       ProjectMetaData(
         project = Project(group = "io.getquill", artifactId = "quill-zio"),
         version = "3.12.0",
@@ -1865,36 +1895,6 @@ List(
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
             version = "1.0.13"
-          )
-        )
-      ),
-      ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
-            version = "1.0.12"
           )
         )
       ),
@@ -2815,7 +2815,7 @@ List(
   ),
   ConnectedProjectData(
     project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-    version = Version(value = "3.17.101.1"),
+    version = Version(value = "3.17.102.6"),
     dependencies = HashSet(
       ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio"),
@@ -2966,7 +2966,7 @@ List(
       value = ZioDep(
         zioDep = VersionedProject(
           project = Project(group = "dev.zio", artifactId = "zio"),
-          version = "1.0.12"
+          version = "1.0.13"
         ),
         dependencyType = Direct
       )
@@ -3089,36 +3089,6 @@ List(
     blockers = HashSet(),
     dependants = Set(
       ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
-            version = "1.0.12"
-          )
-        )
-      ),
-      ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
         version = "2.0.0-M1",
         dependencies = HashSet(
@@ -3133,6 +3103,36 @@ List(
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-test"),
             version = "1.0.9"
+          )
+        )
+      ),
+      ProjectMetaData(
+        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        version = "3.17.102.6",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
+            version = "1.0.13"
           )
         )
       )
@@ -3220,6 +3220,36 @@ List(
     ),
     dependants = Set(
       ProjectMetaData(
+        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        version = "3.17.102.6",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
+            version = "1.0.13"
+          )
+        )
+      ),
+      ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio-actors"),
         version = "0.0.9",
         dependencies = HashSet(
@@ -3242,36 +3272,6 @@ List(
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
             version = "1.0.0-RC30-1"
-          )
-        )
-      ),
-      ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
-            version = "1.0.12"
           )
         )
       )
@@ -3526,6 +3526,36 @@ List(
     version = Version(value = "5dd51766a6de8d3233c1846ad75deb185e05b8a0"),
     dependencies = HashSet(
       ProjectMetaData(
+        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        version = "3.17.102.6",
+        dependencies = HashSet(
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-streams"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
+            version = "1.0.10"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
+            version = "1.0.13"
+          )
+        )
+      ),
+      ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio"),
         version = "2.0.0-RC1",
         dependencies = HashSet(
@@ -3602,39 +3632,39 @@ List(
             version = "1.0.12"
           )
         )
-      ),
+      )
+    ),
+    blockers = HashSet(
       ProjectMetaData(
         project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
+        version = "3.17.102.6",
         dependencies = HashSet(
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-config"),
             version = "1.0.10"
           ),
           VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
+            version = "1.0.13"
           ),
           VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
+            project = Project(group = "dev.zio", artifactId = "zio-test"),
+            version = "1.0.13"
           ),
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
             version = "1.0.10"
           ),
           VersionedProject(
+            project = Project(group = "dev.zio", artifactId = "zio"),
+            version = "1.0.13"
+          ),
+          VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
-            version = "1.0.12"
+            version = "1.0.13"
           )
         )
-      )
-    ),
-    blockers = HashSet(
+      ),
       ProjectMetaData(
         project = Project(group = "dev.zio", artifactId = "zio-logging"),
         version = "0.5.14",
@@ -3653,36 +3683,6 @@ List(
           ),
           VersionedProject(
             project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          )
-        )
-      ),
-      ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
-        version = "3.17.101.1",
-        dependencies = HashSet(
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-streams"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio"),
-            version = "1.0.12"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-config-typesafe"),
-            version = "1.0.10"
-          ),
-          VersionedProject(
-            project = Project(group = "dev.zio", artifactId = "zio-test-sbt"),
             version = "1.0.12"
           )
         )
