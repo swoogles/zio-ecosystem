@@ -179,5 +179,7 @@ object ScalaGraph:
 case class FullAppData(
     connected: Seq[ConnectedProjectData],
     all: Seq[ProjectMetaData],
-    graph: Graph[Project, DiEdge]
+    graph: Graph[Project, DiEdge],
+    currentZioVersion: Version,
+    scalaVersion: ScalaVersion
 )

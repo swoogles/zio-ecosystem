@@ -18,24 +18,23 @@ object ZioDependencyTracker extends ZIOAppDefault:
             connectedX <- FileIO.readResource[Seq[ConnectedProjectData]]("connectedProjectData.txt")
             allX       <- FileIO.readResource[Seq[ProjectMetaData]]("allProjectsMetaData.txt")
             graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allX))
-          yield FullAppData(connectedX, allX, graph)
+          yield FullAppData(connectedX, allX, graph, Version("2.0.0-RC1"), ScalaVersion.V2_13)
         else
           for
-            FullAppData(connected, all, graph) <- SharedLogic.fetchAppData
+            fullAppData <- SharedLogic.fetchAppData(ScalaVersion.V2_13)
             currentZioVersion <-
               Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
-            filteredProjects =
-              all // .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
 
             // TODO Clear out files before writing new versions
 //            _ <- ZIO.foreach(connected) {connectedProject => FileIO.saveAsResource(connectedProject, s"${Render.sbtStyle(connectedProject.project)}.txt")}
-            _ <- FileIO.saveAsResource(connected, "connectedProjectData.txt")
-            _ <- FileIO.saveAsResource(all, "allProjectsMetaData.txt")
-          yield FullAppData(connected, all, graph)
+            _ <- FileIO.saveAsResource(fullAppData.connected, "connectedProjectData.txt")
+            _ <- FileIO.saveAsResource(fullAppData.all, "allProjectsMetaData.txt")
+          yield fullAppData
       _ <- ZIO.debug("A")
       selectedView: DataView <- ZIO.fromOption(DataView.fromStrings(args))
       _ <- ZIO.debug("B")
-      _            <- printLine(SummaryLogic.viewLogic(selectedView, fullAppData))
+      filterUpToDateProjects = true // parameterize
+      _            <- printLine(SummaryLogic.viewLogic(selectedView, fullAppData, None, filterUpToDateProjects))
     yield ()
     end for
   end run
@@ -82,13 +81,13 @@ end ZioDependencyTracker
  * --targetProject */
 
 object SharedLogic:
-  val fetchAppData: ZIO[Any, Throwable, FullAppData] =
+  def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
       currentZioVersion <-
-        Maven.projectMetaDataFor(Data.zioCore, ScalaVersion.V2_13).map(_.typedVersion)
+        Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData: Seq[ProjectMetaData] <-
         ZIO.foreachPar(Data.projects) { project =>
-          Maven.projectMetaDataFor(project, ScalaVersion.V2_13)
+          Maven.projectMetaDataFor(project, scalaVersion)
         }
       filteredProjects = allProjectsMetaData
       // .filter(p => p.project.artifactId != "zio" || Data.coreProjects.contains(p.project))
@@ -98,5 +97,5 @@ object SharedLogic:
         ZIO.foreach(filteredProjects)(
           ConnectedProjectData(_, allProjectsMetaData, graph, currentZioVersion)
         )
-    yield FullAppData(connectedProjects, allProjectsMetaData, graph)
+    yield FullAppData(connectedProjects, allProjectsMetaData, graph, currentZioVersion, scalaVersion)
 end SharedLogic

@@ -45,15 +45,21 @@ object SummaryLogic:
   def manipulateAndRender(
       connectedProjects: Seq[ConnectedProjectData],
       sort: ConnectedProjectData => Integer,
-      connectionMessage: ConnectedProjectData => String
+      connectionMessage: ConnectedProjectData => String,
+      currentZioVersion: Version,
+      filterUpToDateProjects: Boolean
   ) =
-    val currentZioVersion = Version("2.0.0-RC1")
+
+    val upToDate: ConnectedProjectData => Boolean =
+      p => 
+        if (filterUpToDateProjects)
+          p.blockers.nonEmpty ||
+                  p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) &&
+                  !Data.coreProjects.contains(p.project)
+        else true
+ 
     connectedProjects
-      .filter(p =>
-        p.blockers.nonEmpty ||
-          p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) &&
-          !Data.coreProjects.contains(p.project)
-      ) // TODO Where to best provide this?
+      .filter(upToDate) // TODO Where to best provide this?
       .sortBy(sort)
       .reverse
       .sortBy(p => Render.sbtStyle(p.project)) // TODO remove after demo run
@@ -68,7 +74,7 @@ object SummaryLogic:
       }
   end manipulateAndRender
 
-  def viewLogic(dataView: DataView, fullAppData: FullAppData, filterOpt: Option[String]): Any =
+  def viewLogic(dataView: DataView, fullAppData: FullAppData, filterOpt: Option[String], filterUpToDateProjects: Boolean): Any =
     println("DataView in view logic: " + dataView)
     dataView match
       case DataView.Dependencies =>
@@ -91,7 +97,9 @@ object SummaryLogic:
                 s"Depends on ${p.dependencies.size} projects: " +
                   p.dependencies.map(_.project.artifactId).mkString(",")
               else
-                "Does not depend on any known ecosystem library."
+                "Does not depend on any known ecosystem library.",
+            fullAppData.currentZioVersion,
+            filterUpToDateProjects
           )
           .mkString("\n")
       case DataView.Dependents =>
@@ -104,7 +112,11 @@ object SummaryLogic:
                 f"Required by ${p.dependants.size} projects: " +
                   p.dependants.map(_.project.artifactId).mkString(",")
               else
-                "Has no dependents"
+                "Has no dependents",
+            fullAppData.currentZioVersion,
+            filterUpToDateProjects
+
+
           )
           .mkString("\n")
       case DataView.Json =>
@@ -112,14 +124,27 @@ object SummaryLogic:
       case DataView.Blockers =>
         SummaryLogic
           .manipulateAndRender(
-            fullAppData.connected,
+            fullAppData.connected.filter(project=>
+              filterOpt match {
+                case Some(filter) => 
+                  // TODO Make this a function in a better spot
+                  // project.dependants.exists(_.project.artifactId.contains(filter)) ||
+                    project.blockers.exists(_.project.artifactId.contains(filter)) || 
+                    project.project.artifactId.contains(filter)
+                case None => true
+              }
+              
+              ),
             _.blockers.size,
             p =>
               if (p.blockers.nonEmpty)
                 s"is blocked by ${p.blockers.size} projects: " +
                   p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
               else
-                "Is not blocked by any known ecosystem library."
+                "Is not blocked by any known ecosystem library.",
+            fullAppData.currentZioVersion,
+            filterUpToDateProjects
+
           )
           .mkString("\n")
       case DataView.DotGraph =>

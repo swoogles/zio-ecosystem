@@ -16,9 +16,9 @@ Potential issue with ZIO-2.0.0-RC1 + SBT 1.6.1
 sealed private trait Page
 
 case class DependencyExplorerPage(
-    time: Option[String], // TODO Make this a WallTime instead
     targetProject: Option[String],
-    dataView: DataView
+    dataView: DataView,
+    filterUpToDateProjects: Boolean
 ) extends Page:
   def changeTarget(newTarget: String) = 
     // dataView match {
@@ -48,7 +48,7 @@ object DependencyViewerLaminar:
     div(
       div(
         // TODO Better result type so we can properly render different schemas
-        SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData, busPageInfo.targetProject) match
+        SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData, busPageInfo.targetProject, busPageInfo.filterUpToDateProjects) match
           case content: String =>
             content.split("\n").map(p(_)).toSeq
           case other =>
@@ -90,6 +90,13 @@ object DependencyViewerLaminar:
       // DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
       )
 
+    def upToDateCheckbox(page: DependencyExplorerPage) =
+      Observer[Boolean](onNext =
+        checkboxState => 
+          println("Checkbox state: " + checkboxState)
+          router.pushState(page.copy(filterUpToDateProjects = checkboxState))
+      )
+
     val refresh = EventStream.periodic(5000)
 
 //    val clickBus = new EventBus[]
@@ -100,6 +107,10 @@ object DependencyViewerLaminar:
           div(
             // refresh --> refreshObserver(busPageInfo),
             refresh --> observer,
+            div(
+            span( "Filter up-to-date projects"),
+            input(typ := "checkbox", onClick.mapToChecked --> upToDateCheckbox(busPageInfo), defaultChecked := busPageInfo.filterUpToDateProjects),
+            ),
             // TextInput().amend(onInput --> printTextInput),
               input(typ := "text", placeholder := busPageInfo.targetProject.getOrElse(""), size := 25, 
                 value := busPageInfo.targetProject.getOrElse("")

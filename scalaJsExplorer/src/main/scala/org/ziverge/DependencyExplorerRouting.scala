@@ -18,16 +18,16 @@ object DependencyExplorerRouting:
   implicit private val rw: RW[Page]                           = macroRW
 
   private val encodePage
-      : DependencyExplorerPage => (Option[String], Option[String], Option[String]) =
-    page => (page.time, page.targetProject, Some(page.dataView.toString))
+      : DependencyExplorerPage => (Option[String], Option[String], Option[Boolean]) =
+    page => (page.targetProject, Some(page.dataView.toString), Some(page.filterUpToDateProjects))
 
   private val decodePage
-      : ((Option[String], Option[String], Option[String])) => DependencyExplorerPage = {
-    case (time, targetProject, dataView) =>
+      : ((Option[String], Option[String], Option[Boolean])) => DependencyExplorerPage = {
+    case (targetProject, dataView, filterUpToDateProjects) =>
       DependencyExplorerPage(
-        time = time,
         targetProject = targetProject,
-        dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Blockers)
+        dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Blockers),
+        filterUpToDateProjects = filterUpToDateProjects.getOrElse(false)
       )
   }
 
@@ -50,18 +50,21 @@ object DependencyExplorerRouting:
   // }
 
 
-  val params: QueryParameters[(Option[String], Option[String], Option[String]), DummyError] =
-    param[String]("time").? & param[String]("targetProject").? & param[String]("dataView").?
+  // val params: QueryParameters[(Option[String], Option[String], Option[String], Option[Boolean]), DummyError] =
+  val params: QueryParameters[(Option[String], Option[String], Option[Boolean]), DummyError] =
+    param[String]("targetProject").? & 
+    param[String]("dataView").? & 
+    param[Boolean]("filterUpToDateProjects").?
 
   private val devRoute =
-    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[String])](
+    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[Boolean])](
       encode = encodePage,
       decode = decodePage,
       pattern = (root / "index_dev.html" / endOfSegments) ? params
     )
 
   private val prodRoute =
-    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[String])](
+    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[Boolean])](
       encode = encodePage,
       decode = decodePage,
       pattern = (root / endOfSegments) ? params
@@ -80,9 +83,9 @@ object DependencyExplorerRouting:
       routeFallback =
         _ =>
           DependencyExplorerPage(
-            time = None, // TODO Make this a WallTime instead
             targetProject = None,
-            dataView = DataView.Blockers
+            dataView = DataView.Blockers,
+            filterUpToDateProjects = false
           ),
     )(
       $popStateEvent =
