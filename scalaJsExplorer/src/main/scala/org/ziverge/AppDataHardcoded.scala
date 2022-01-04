@@ -10,6 +10,12 @@ object AppDataHardcoded extends ZioEcosystem:
     val allX       = JsData.allProjectData
     for
       graph: Graph[Project, DiEdge] <- ZIO.succeed(ScalaGraph(allX))
-    yield FullAppData(connectedX, allX, DotGraph.render(graph), Version("2.0.0-RC1"), ScalaVersion.V2_13)
+    yield FullAppData(
+      connectedX,
+      allX,
+      DotGraph.render(graph),
+      Version("2.0.0-RC1"),
+      ScalaVersion.V2_13
+    )
 
   val snapshot: ZIO[Any, Nothing, FullAppData] = getJsData

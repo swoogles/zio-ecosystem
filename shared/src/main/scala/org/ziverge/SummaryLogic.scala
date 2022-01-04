@@ -8,7 +8,7 @@ import java.io.ObjectInputStream
 import java.io.ByteArrayInputStream
 
 enum DataView:
-  case Dependencies , Dependents , Json , Blockers , DotGraph
+  case Dependencies, Dependents, Json, Blockers, DotGraph
 
 object DataView:
 
@@ -17,7 +17,7 @@ object DataView:
   ): Option[DataView] = // TODO Decide whether to do with multiple args
     args.flatMap(fromString).headOption
 
-  def fromString(args: String): Option[DataView] =  
+  def fromString(args: String): Option[DataView] =
     println("fromString custom!#")
     values.find(_.toString == args)
 
@@ -51,13 +51,14 @@ object SummaryLogic:
   ): Seq[String] =
 
     val upToDate: ConnectedProjectData => Boolean =
-      p => 
+      p =>
         if (filterUpToDateProjects)
           p.blockers.nonEmpty ||
-                  p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) &&
-                  !Data.coreProjects.contains(p.project)
-        else true
- 
+          p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(currentZioVersion) < 0) &&
+          !Data.coreProjects.contains(p.project)
+        else
+          true
+
     connectedProjects
       .filter(upToDate) // TODO Where to best provide this?
       .sortBy(sort)
@@ -74,22 +75,28 @@ object SummaryLogic:
       }
   end manipulateAndRender
 
-  def viewLogic(dataView: DataView, fullAppData: FullAppData, filterOpt: Option[String], filterUpToDateProjects: Boolean): String =
+  def viewLogic(
+      dataView: DataView,
+      fullAppData: FullAppData,
+      filterOpt: Option[String],
+      filterUpToDateProjects: Boolean
+  ): String =
     println("DataView in view logic: " + dataView)
     dataView match
       case DataView.Dependencies =>
         SummaryLogic
           .manipulateAndRender(
-            fullAppData.connected.filter(project=>
-              filterOpt match {
-                case Some(filter) => 
-                  // TODO Make this a function in a better spot
-                  // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-                    project.dependencies.exists(_.project.artifactId.contains(filter)) || 
-                    project.project.artifactId.contains(filter)
-                case None => true
-              }
-              
+            fullAppData
+              .connected
+              .filter(project =>
+                filterOpt match
+                  case Some(filter) =>
+                    // TODO Make this a function in a better spot
+                    // project.dependants.exists(_.project.artifactId.contains(filter)) ||
+                    project.dependencies.exists(_.project.artifactId.contains(filter)) ||
+                      project.project.artifactId.contains(filter)
+                  case None =>
+                    true
               ),
             _.dependencies.size,
             p =>
@@ -115,8 +122,6 @@ object SummaryLogic:
                 "Has no dependents",
             fullAppData.currentZioVersion,
             filterUpToDateProjects
-
-
           )
           .mkString("\n")
       case DataView.Json =>
@@ -124,16 +129,17 @@ object SummaryLogic:
       case DataView.Blockers =>
         SummaryLogic
           .manipulateAndRender(
-            fullAppData.connected.filter(project=>
-              filterOpt match {
-                case Some(filter) => 
-                  // TODO Make this a function in a better spot
-                  // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-                    project.blockers.exists(_.project.artifactId.contains(filter)) || 
-                    project.project.artifactId.contains(filter)
-                case None => true
-              }
-              
+            fullAppData
+              .connected
+              .filter(project =>
+                filterOpt match
+                  case Some(filter) =>
+                    // TODO Make this a function in a better spot
+                    // project.dependants.exists(_.project.artifactId.contains(filter)) ||
+                    project.blockers.exists(_.project.artifactId.contains(filter)) ||
+                      project.project.artifactId.contains(filter)
+                  case None =>
+                    true
               ),
             _.blockers.size,
             p =>
@@ -144,7 +150,6 @@ object SummaryLogic:
                 "Is not blocked by any known ecosystem library.",
             fullAppData.currentZioVersion,
             filterUpToDateProjects
-
           )
           .mkString("\n")
       case DataView.DotGraph =>
@@ -152,4 +157,3 @@ object SummaryLogic:
     end match
   end viewLogic
 end SummaryLogic
-

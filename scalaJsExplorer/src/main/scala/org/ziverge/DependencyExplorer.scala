@@ -10,9 +10,7 @@ import org.scalajs.dom
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.ziverge.DataView.*
 
-/*
-Potential issue with ZIO-2.0.0-RC1 + SBT 1.6.1
-*/
+/* Potential issue with ZIO-2.0.0-RC1 + SBT 1.6.1 */
 sealed private trait Page
 
 case class DependencyExplorerPage(
@@ -20,16 +18,15 @@ case class DependencyExplorerPage(
     dataView: DataView,
     filterUpToDateProjects: Boolean
 ) extends Page:
-  def changeTarget(newTarget: String) = 
+  def changeTarget(newTarget: String) =
     // dataView match {
-      // case Dependencies => 
-        // println("DependencyExplorerPage.changeTarget: " + newTarget)
-        // Option.when(newTarget.nonEmpty)(copy(dataView = Dependencies(Some(newTarget))))
-        // .getOrElse(copy(targetProject = Some(newTarget)))
-      // case _ => 
+    // case Dependencies =>
+    // println("DependencyExplorerPage.changeTarget: " + newTarget)
+    // Option.when(newTarget.nonEmpty)(copy(dataView = Dependencies(Some(newTarget))))
+    // .getOrElse(copy(targetProject = Some(newTarget)))
+    // case _ =>
     // }
     copy(targetProject = Some(newTarget))
-    
 
 private case object LoginPageOriginal extends Page
 
@@ -49,15 +46,21 @@ object DependencyViewerLaminar:
     div(
       div(
         // TODO Better result type so we can properly render different schemas
-        SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData, busPageInfo.targetProject, busPageInfo.filterUpToDateProjects) match
+        SummaryLogic.viewLogic(
+          busPageInfo.dataView,
+          fullAppData,
+          busPageInfo.targetProject,
+          busPageInfo.filterUpToDateProjects
+        ) match
           case content: String =>
             content.split("\n").map(p(_)).toSeq
-          // case other =>
-            // other.toString
+        // case other =>
+        // other.toString
       ),
       button("Select fake proejct", onClick.mapTo(busPageInfo) --> pageUpdateObserver),
       button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
     )
+  end constructPage
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
 
@@ -73,8 +76,9 @@ object DependencyViewerLaminar:
     def viewUpdate(page: DependencyExplorerPage) =
       Observer[String](onNext =
         dataView =>
-          
-          router.pushState(page.copy(dataView = DataView.fromString(dataView).getOrElse(DataView.Blockers)))
+          router.pushState(
+            page.copy(dataView = DataView.fromString(dataView).getOrElse(DataView.Blockers))
+          )
       )
 
     def refreshObserver(page: DependencyExplorerPage) =
@@ -85,7 +89,7 @@ object DependencyViewerLaminar:
 
     def printTextInput(page: DependencyExplorerPage) =
       Observer[String](onNext =
-        text => 
+        text =>
           router.pushState(page.changeTarget(text))
           println("Text: " + text)
       // DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
@@ -93,7 +97,7 @@ object DependencyViewerLaminar:
 
     def upToDateCheckbox(page: DependencyExplorerPage) =
       Observer[Boolean](onNext =
-        checkboxState => 
+        checkboxState =>
           println("Checkbox state: " + checkboxState)
           router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
@@ -109,27 +113,37 @@ object DependencyViewerLaminar:
             // refresh --> refreshObserver(busPageInfo),
             refresh --> observer,
             div(
-            span( "Filter up-to-date projects"),
-            input(typ := "checkbox", onClick.mapToChecked --> upToDateCheckbox(busPageInfo), defaultChecked := busPageInfo.filterUpToDateProjects),
+              span("Filter up-to-date projects"),
+              input(
+                typ := "checkbox",
+                onClick.mapToChecked --> upToDateCheckbox(busPageInfo),
+                defaultChecked := busPageInfo.filterUpToDateProjects
+              )
             ),
             // TextInput().amend(onInput --> printTextInput),
-              input(typ := "text", placeholder := busPageInfo.targetProject.getOrElse(""), size := 25, 
-                value := busPageInfo.targetProject.getOrElse("")
-                ,
+            input(
+              typ         := "text",
+              placeholder := busPageInfo.targetProject.getOrElse(""),
+              size        := 25,
+              value       := busPageInfo.targetProject.getOrElse(""),
               onMountFocus,
               inContext { thisNode =>
-                onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)  
+                onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)
               }
-              ),
+            ),
             select(
               inContext { thisNode =>
                 onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
               },
               DataView
                 .values
-                .map(dataView => 
-                  option(value := dataView.toString, selected :=  (dataView == busPageInfo.dataView), dataView.toString)
+                .map(dataView =>
+                  option(
+                    value    := dataView.toString,
+                    selected := (dataView == busPageInfo.dataView),
+                    dataView.toString
                   )
+                )
                 .toSeq
             ),
             constructPage(

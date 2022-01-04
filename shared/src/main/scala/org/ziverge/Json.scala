@@ -7,6 +7,5 @@ object Json:
 //      io.circe.Json.fromString(a.toString)
 //  }
 
-  def render(connectedProjects: Seq[ConnectedProjectData]) = 
-    ???
-    // connectedProjects.asJson Previously used circe here
+  def render(connectedProjects: Seq[ConnectedProjectData]) = ???
+// connectedProjects.asJson Previously used circe here
