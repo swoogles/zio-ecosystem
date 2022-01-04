@@ -18,7 +18,7 @@ object DataView:
     args.flatMap(fromString).headOption
 
   def fromString(args: String): Option[DataView] =  
-    println("fromString custom!")
+    println("fromString custom!#")
     values.find(_.toString == args)
 
   import upickle.default.ReadWriter.join

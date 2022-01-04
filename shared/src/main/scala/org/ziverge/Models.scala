@@ -186,4 +186,5 @@ object FullAppData:
 
   // implicit val graphRw: RW[Graph[org.ziverge.Project, scalax.collection.GraphEdge.DiEdge]] = macroRW
     // scalax.collection.Graph[org.ziverge.Project, scalax.collection.GraphEdge.DiEdge]
+  implicit val scalaVersion: RW[ScalaVersion] = macroRW
   implicit val rw: RW[FullAppData] = macroRW

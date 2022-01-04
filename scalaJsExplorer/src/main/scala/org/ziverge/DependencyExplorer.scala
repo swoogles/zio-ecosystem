@@ -52,8 +52,8 @@ object DependencyViewerLaminar:
         SummaryLogic.viewLogic(busPageInfo.dataView, fullAppData, busPageInfo.targetProject, busPageInfo.filterUpToDateProjects) match
           case content: String =>
             content.split("\n").map(p(_)).toSeq
-          case other =>
-            other.toString
+          // case other =>
+            // other.toString
       ),
       button("Select fake proejct", onClick.mapTo(busPageInfo) --> pageUpdateObserver),
       button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
