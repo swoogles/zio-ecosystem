@@ -34,8 +34,8 @@ object DependencyServer extends App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     (for
       // port <- zio.System.env("PORT")(ZTraceElement.empty)
-      // port <- ZIO(sys.env.get("PORT"))
-      port <- ZIO(Some("8090"))
+      port <- ZIO(sys.env.get("PORT"))
+      // port <- ZIO(Some("8090"))
       _ <- ZIO.debug("PORT result: " + port)
       _ <- Server.start(port.map(_.toInt).getOrElse(8090), app)
     yield ()).exitCode
