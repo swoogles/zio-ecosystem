@@ -1,7 +1,5 @@
 package org.ziverge
 
-import java.lang.module.ModuleDescriptor.Version
-
 object Json:
 
 //  implicit val encodeFoo: Encoder[Version] = new Encoder[Version] {
