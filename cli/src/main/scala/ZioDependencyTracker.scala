@@ -25,12 +25,10 @@ object ZioDependencyTracker extends ZIOAppDefault:
 
             // TODO Clear out files before writing new versions
 //            _ <- ZIO.foreach(connected) {connectedProject => FileIO.saveAsResource(connectedProject, s"${Render.sbtStyle(connectedProject.project)}.txt")}
-            _ <- FileIO.saveAsResource(fullAppData.connected, "connectedProjectData.txt")
-            _ <- FileIO.saveAsResource(fullAppData.all, "allProjectsMetaData.txt")
+            // _ <- FileIO.saveAsResource(fullAppData.connected, "connectedProjectData.txt")
+            // _ <- FileIO.saveAsResource(fullAppData.all, "allProjectsMetaData.txt")
           yield fullAppData
-      _ <- ZIO.debug("A")
       selectedView: DataView <- ZIO.fromOption(DataView.fromStrings(args))
-      _ <- ZIO.debug("B")
       filterUpToDateProjects = true // parameterize
       _            <- printLine(SummaryLogic.viewLogic(selectedView, fullAppData, None, filterUpToDateProjects))
     yield ()

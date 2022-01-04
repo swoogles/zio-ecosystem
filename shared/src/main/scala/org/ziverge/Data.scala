@@ -49,7 +49,7 @@ object Data:
         Project("io.d11", "zhttp"),
         Project("dev.zio", "zio-interop-cats"),
         Project("dev.zio", "zio-nio"),
-        Project("dev.zio", "zio-zmx"),
+        // Project("dev.zio", "zio-zmx"),
         Project("dev.zio", "zio-actors"),
         Project("dev.zio", "zio-logging"),
         Project("dev.zio", "zio-metrics"),

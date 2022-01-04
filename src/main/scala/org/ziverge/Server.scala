@@ -14,6 +14,7 @@ object DependencyServer extends App {
     case Method.GET -> !! / "projectData" => 
         for 
             appData <- SharedLogic.fetchAppData(ScalaVersion.V2_13).orDie
+            _ <- ZIO.debug("Ready to return all this sweet data: " + appData)
         yield Response.json(write(appData))
   }
 
@@ -31,11 +32,15 @@ object SharedLogic:
         ZIO.foreach(Data.projects) { project =>
           Maven.projectMetaDataFor(project, scalaVersion)
         }
-      _ <- ZIO.debug("got first project")
+      _ <- ZIO.debug("got first project!")
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
       connectedProjects: Seq[ConnectedProjectData] <-
         ZIO.foreach(allProjectsMetaData)( x => 
-          ZIO.debug("Getting data for " + x.project.artifactId) *> ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
+          for
+            _ <- ZIO.debug("Getting Data for " + x.project.artifactId) 
+            res <- ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
+            _ <- ZIO.debug("Res: " + res)
+          yield res
         )
     yield FullAppData(connectedProjects, allProjectsMetaData, DotGraph.render(graph), currentZioVersion, scalaVersion)
 end SharedLogic
