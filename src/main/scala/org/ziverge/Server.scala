@@ -1,10 +1,13 @@
 package org.ziverge
 
-import zhttp.http._
-import zhttp.service.Server
-import zio._
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
+
+import zhttp.http._
+import zhttp.http.Header
+import zhttp.service.Server
+import zio._
+import zio.stream.ZStream
 
 object DependencyServer extends App {
 
@@ -15,7 +18,14 @@ object DependencyServer extends App {
         for 
             appData <- SharedLogic.fetchAppData(ScalaVersion.V2_13).orDie
             _ <- ZIO.debug("Ready to return all this sweet data: " + appData)
-        yield Response.json(write(appData))
+            responseText = Chunk.fromArray(write(appData).getBytes)
+        yield 
+                Response.http(
+                  status = Status.OK,
+                  headers = Headers.contentLength(responseText.length.toLong),
+                  data = HttpData.fromStream(ZStream.fromChunk(responseText)), 
+                      // Encoding content using a ZStream
+                )
   }
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
