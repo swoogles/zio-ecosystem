@@ -44,28 +44,62 @@ object DependencyViewerLaminar:
       fullAppData: AppDataAndEffects
   ) =
     val filterUpToDateProjects = false // TODO Add to DependencyExplorerPage
+    val upToDate: ConnectedProjectData => Boolean =
+      p =>
+        if (busPageInfo.filterUpToDateProjects)
+          println("Only getting out-of-date projects")
+          p.blockers.nonEmpty ||
+          p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) < 0) &&
+          !Data.coreProjects.contains(p.project)
+        else
+          println("Accepting all projects")
+          true
+
     div(
       div(
-        child <-- fullAppData.dataSignal.map { fullAppDataLive =>
+        child <--
+          fullAppData
+            .dataSignal
+            .map { fullAppDataLive =>
+              val manipulatedData =
+                fullAppDataLive
+                  .connected
+                  .filter(upToDate)
+              div(
+                table(
+                  tr(
+                    th("Artifact"),
+                    th("Group"),
+                    th("Version"),
+                    th("ZIO Dep"),
+                    th("Blockers"),
+                    th("Dependencies"),
+                  ),
+                  manipulatedData.map{case ConnectedProjectData(
 
-          div(
-          SummaryLogic.viewLogic(
-            busPageInfo.dataView,
-            fullAppDataLive,
-            busPageInfo.targetProject,
-            busPageInfo.filterUpToDateProjects
-          ) match
-            case content: String =>
-              content.split("\n").map(p(_)).toSeq
-          // case other =>
-          // other.toString
-
-          )
-        }
-        ),
-        // TODO Better result type so we can properly render different schemas
-      button("Select fake proejct", onClick.mapTo(busPageInfo) --> pageUpdateObserver),
-      button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
+                    project,
+                    version,
+                    dependencies,
+                    blockers,
+                    dependants,
+                    zioDep
+                  ) =>
+                    tr(
+                      td(project.artifactId),
+                      td(project.group),
+                      td(version.value.replace("Version(", "").replace(")","")), // TODO Why does Version show up after the live data load?
+                      td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
+                      td(blockers.map(_.project.artifactId).mkString(",")),
+                      td(dependencies.map(_.project.artifactId).mkString(",")),
+                    )
+                    },
+                )
+              )
+            }
+      ),
+      // TODO Better result type so we can properly render different schemas
+      // button("Select fake proejct", onClick.mapTo(busPageInfo) --> pageUpdateObserver),
+      // button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
     )
   end constructPage
 
@@ -195,10 +229,13 @@ object DependencyExplorer extends ZIOAppDefault:
             )
         )
   val serverResponse =
-  AjaxEventStream
-  .get(url = "/api/kittens", responseType = "application/json") // EventStream[dom.XMLHttpRequest]
-  .map(req => req.responseText) // EventStream[String]
-  
+    AjaxEventStream
+      .get(
+        url = "/api/kittens",
+        responseType = "application/json"
+      )                             // EventStream[dom.XMLHttpRequest]
+      .map(req => req.responseText) // EventStream[String]
+
   def logic: ZIO[ZioEcosystem & Console, Throwable, Unit] =
     for
       appData <- ZioEcosystem.snapshot
@@ -219,7 +256,7 @@ object DependencyExplorer extends ZIOAppDefault:
           import com.raquo.laminar.api.L.{*, given}
           val dataSignal: Signal[FullAppData] =
             AjaxEventStream
-              .get("/projectData") // EventStream[dom.XMLHttpRequest]
+              .get("/projectData")                             // EventStream[dom.XMLHttpRequest]
               .map(req => read[FullAppData](req.responseText)) // EventStream[String]
               .toSignal(appData)
           appHolder.innerHTML = ""
@@ -230,7 +267,8 @@ object DependencyExplorer extends ZIOAppDefault:
             .L
             .render(
               appHolder,
-              DependencyViewerLaminar.app(AppDataAndEffects(appData, refreshProjectData, dataSignal))
+              DependencyViewerLaminar
+                .app(AppDataAndEffects(appData, refreshProjectData, dataSignal))
             )
         }
     yield ()

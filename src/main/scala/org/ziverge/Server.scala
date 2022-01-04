@@ -17,20 +17,27 @@ object DependencyServer extends App:
     Http.collectM[Request] {
       case Method.GET -> Root / "text" =>
         ZIO.succeed(Response.text("Hello World!"))
-      case Method.GET -> Root / "files" / fileName =>
+      case Method.GET -> Root =>
         ZIO.succeed {
-          println("retrieving file: " + fileName)
           val content =
             HttpData.fromStream {
-              ZStream.fromFile(Paths.get("src/main/resources/index.html")).refineOrDie(_ => ???).provideLayer(zio.blocking.Blocking.live)
+              ZStream
+                .fromFile(Paths.get("src/main/resources/index.html"))
+                .refineOrDie(_ => ???)
+                .provideLayer(zio.blocking.Blocking.live)
             }
           Response.http(data = content)
         }
-      case Method.GET -> Root / "files" / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
+      case Method.GET -> Root / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
         ZIO.succeed {
           val content =
             HttpData.fromStream {
-              ZStream.fromFile(Paths.get("src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")).refineOrDie(_ => ???).provideLayer(zio.blocking.Blocking.live)
+              ZStream
+                .fromFile(
+                  Paths.get("src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")
+                )
+                .refineOrDie(_ => ???)
+                .provideLayer(zio.blocking.Blocking.live)
             }
           Response.http(data = content)
         }
@@ -41,7 +48,10 @@ object DependencyServer extends App:
           responseText = Chunk.fromArray(write(appData).getBytes)
         yield Response.http(
           status = Status.OK,
-          headers = Headers.contentLength(responseText.length.toLong).combine(Headers.contentType("application/json")),
+          headers =
+            Headers
+              .contentLength(responseText.length.toLong)
+              .combine(Headers.contentType("application/json")),
           data = HttpData.fromStream(ZStream.fromChunk(responseText))
           // Encoding content using a ZStream
         )

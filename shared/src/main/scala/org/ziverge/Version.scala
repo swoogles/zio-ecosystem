@@ -10,8 +10,16 @@ object Version:
   def compareVersions(version1: Version, version2: Version): Int =
     var comparisonResult = 0
     // TODO Actually handle Milestones and RCs
-    val version1Splits           = version1.value.split("\\.").filter(!_.contains("RC"))
-    val version2Splits           = version2.value.split("\\.").filter(!_.contains("RC"))
+    val version1Splits =
+      version1
+        .value
+        .split("\\.")
+        .filter(segment => !segment.contains("RC") && !segment.contains("M"))
+    val version2Splits =
+      version2
+        .value
+        .split("\\.")
+        .filter(segment => !segment.contains("RC") && !segment.contains("M"))
     val maxLengthOfVersionSplits = Math.max(version1Splits.length, version2Splits.length)
     var i                        = 0
     while (i < maxLengthOfVersionSplits && comparisonResult == 0) {
