@@ -55,16 +55,46 @@ object DependencyViewerLaminar:
           println("Accepting all projects")
           true
 
+    val dynamicHeader =
+      busPageInfo.dataView match {
+        case Dependencies => "Dependencies"
+        case Dependents => "Dependendents"
+        case Json => "N/A"
+        case Blockers => "Blockers"
+        case DotGraph => "N/A"
+      }
+
     div(
       div(
         child <--
           fullAppData
             .dataSignal
             .map { fullAppDataLive =>
+
+              val userFilter: ConnectedProjectData => Boolean =
+                busPageInfo.targetProject match
+                  case Some(filter) =>
+                    project =>
+
+
+                      val artifactMatches = project.project.artifactId.contains(filter)
+                    // TODO Make this a function in a better spot
+                    // project.dependants.exists(_.project.artifactId.contains(filter)) ||
+                      busPageInfo.dataView match {
+                        case Dependencies => artifactMatches || project.dependencies.exists(_.project.artifactId.contains(filter))
+                        case Dependents => artifactMatches || project.dependants.exists(_.project.artifactId.contains(filter))
+                        case Blockers => artifactMatches || project.blockers.exists(_.project.artifactId.contains(filter))
+                        case Json => artifactMatches 
+                        case DotGraph => artifactMatches 
+                      }
+                  case None =>
+                    project => true
+
+
               val manipulatedData =
                 fullAppDataLive
                   .connected
-                  .filter(upToDate)
+                  .filter(p=> upToDate(p) && userFilter(p))
 
               val dynamicHeader =
                 busPageInfo.dataView match {
