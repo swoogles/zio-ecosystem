@@ -41,7 +41,7 @@ object DependencyServer extends App:
           responseText = Chunk.fromArray(write(appData).getBytes)
         yield Response.http(
           status = Status.OK,
-          headers = Headers.contentLength(responseText.length.toLong),
+          headers = Headers.contentLength(responseText.length.toLong).combine(Headers.contentType("application/json")),
           data = HttpData.fromStream(ZStream.fromChunk(responseText))
           // Encoding content using a ZStream
         )
@@ -67,7 +67,7 @@ object SharedLogic:
     for
       currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData: Seq[ProjectMetaData] <-
-        ZIO.foreach(Data.projects) { project =>
+        ZIO.foreachPar(Data.projects) { project =>
           Maven.projectMetaDataFor(project, scalaVersion)
         }
       _                             <- ZIO.debug("got first project!")

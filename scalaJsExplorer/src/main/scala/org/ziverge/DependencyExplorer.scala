@@ -9,6 +9,7 @@ import urldsl.language.QueryParameters
 import org.scalajs.dom
 import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.ziverge.DataView.*
+import com.raquo.airstream.web.AjaxEventStream
 
 /* Potential issue with ZIO-2.0.0-RC1 + SBT 1.6.1 */
 sealed private trait Page
@@ -40,23 +41,29 @@ object DependencyViewerLaminar:
       pageUpdateObserver: Observer[DependencyExplorerPage],
       selectZioObserver: Observer[DependencyExplorerPage],
       viewUpdate: Observer[String],
-      fullAppData: FullAppData
+      fullAppData: AppDataAndEffects
   ) =
     val filterUpToDateProjects = false // TODO Add to DependencyExplorerPage
     div(
       div(
+        child <-- fullAppData.dataSignal.map { fullAppDataLive =>
+
+          div(
+          SummaryLogic.viewLogic(
+            busPageInfo.dataView,
+            fullAppDataLive,
+            busPageInfo.targetProject,
+            busPageInfo.filterUpToDateProjects
+          ) match
+            case content: String =>
+              content.split("\n").map(p(_)).toSeq
+          // case other =>
+          // other.toString
+
+          )
+        }
+        ),
         // TODO Better result type so we can properly render different schemas
-        SummaryLogic.viewLogic(
-          busPageInfo.dataView,
-          fullAppData,
-          busPageInfo.targetProject,
-          busPageInfo.filterUpToDateProjects
-        ) match
-          case content: String =>
-            content.split("\n").map(p(_)).toSeq
-        // case other =>
-        // other.toString
-      ),
       button("Select fake proejct", onClick.mapTo(busPageInfo) --> pageUpdateObserver),
       button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
     )
@@ -151,7 +158,7 @@ object DependencyViewerLaminar:
               pageUpdateObserver,
               selectZioObserver,
               viewUpdate(busPageInfo),
-              fullAppData.fullAppData
+              fullAppData
             )
           )
         )
@@ -162,10 +169,12 @@ object DependencyViewerLaminar:
     div(child <-- DependencyExplorerRouting.splitter(fullAppData).$view)
 end DependencyViewerLaminar
 
+import com.raquo.laminar.api.L.Signal
 case class AppDataAndEffects(
     // TODO Get rid of redundant first field
     fullAppData: FullAppData,
-    refreshAppData: () => FullAppData
+    refreshAppData: () => FullAppData,
+    dataSignal: Signal[FullAppData]
 )
 
 object DependencyExplorer extends ZIOAppDefault:
@@ -185,7 +194,11 @@ object DependencyExplorer extends ZIOAppDefault:
               ZLayer.succeed(DevConsole.word)
             )
         )
-
+  val serverResponse =
+  AjaxEventStream
+  .get(url = "/api/kittens", responseType = "application/json") // EventStream[dom.XMLHttpRequest]
+  .map(req => req.responseText) // EventStream[String]
+  
   def logic: ZIO[ZioEcosystem & Console, Throwable, Unit] =
     for
       appData <- ZioEcosystem.snapshot
@@ -203,6 +216,12 @@ object DependencyExplorer extends ZIOAppDefault:
       _ <-
         ZIO {
           val appHolder = dom.document.getElementById("landing-message")
+          import com.raquo.laminar.api.L.{*, given}
+          val dataSignal: Signal[FullAppData] =
+            AjaxEventStream
+              .get("/projectData") // EventStream[dom.XMLHttpRequest]
+              .map(req => read[FullAppData](req.responseText)) // EventStream[String]
+              .toSignal(appData)
           appHolder.innerHTML = ""
           com
             .raquo
@@ -211,7 +230,7 @@ object DependencyExplorer extends ZIOAppDefault:
             .L
             .render(
               appHolder,
-              DependencyViewerLaminar.app(AppDataAndEffects(appData, refreshProjectData))
+              DependencyViewerLaminar.app(AppDataAndEffects(appData, refreshProjectData, dataSignal))
             )
         }
     yield ()
