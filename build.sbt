@@ -77,11 +77,8 @@ lazy val cbBuild = taskKey[Unit]("Execute the shell script")
 
 cbBuild := {
   (scalaJsExplorer/Compile/fastOptJS).value
-//  (Compile/scalafmt).value
   import scala.sys.process._
-  //  "ls ./target/scala-2.13" !
   (
-//    Process("mkdir ./src/main/resources/compiledJavascript") #||
     Process("cp /home/bfrasure/Repositories/ziverge-hack-day-dec-2021/scalaJsExplorer/target/scala-3.1.0/zioecosystemtracker-fastopt.js ./src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js") #||
     Process("echo \"there\"")
     )!

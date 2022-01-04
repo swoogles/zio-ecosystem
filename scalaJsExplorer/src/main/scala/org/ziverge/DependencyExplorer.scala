@@ -65,6 +65,15 @@ object DependencyViewerLaminar:
                 fullAppDataLive
                   .connected
                   .filter(upToDate)
+
+              val dynamicHeader =
+                busPageInfo.dataView match {
+                  case Dependencies => "Dependencies"
+                  case Dependents => "Dependendents"
+                  case Json => "N/A"
+                  case Blockers => "Blockers"
+                  case DotGraph => "N/A"
+                }
               div(
                 table(
                   tr(
@@ -72,8 +81,7 @@ object DependencyViewerLaminar:
                     th("Group"),
                     th("Version"),
                     th("ZIO Dep"),
-                    th("Blockers"),
-                    th("Dependencies"),
+                    th(dynamicHeader),
                   ),
                   manipulatedData.map{case ConnectedProjectData(
 
@@ -84,13 +92,20 @@ object DependencyViewerLaminar:
                     dependants,
                     zioDep
                   ) =>
+                    val dataColumn: Set[String] =
+                      busPageInfo.dataView match {
+                        case Dependencies =>dependencies.map(_.project.artifactId)
+                        case Dependents =>dependants.map(_.project.artifactId)
+                        case Json => Set()
+                        case Blockers => blockers.map(_.project.artifactId)
+                        case DotGraph => Set()
+                      }
                     tr(
                       td(project.artifactId),
                       td(project.group),
                       td(version.value.replace("Version(", "").replace(")","")), // TODO Why does Version show up after the live data load?
                       td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
-                      td(blockers.map(_.project.artifactId).mkString(",")),
-                      td(dependencies.map(_.project.artifactId).mkString(",")),
+                      td(dataColumn.mkString(",")),
                     )
                     },
                 )
