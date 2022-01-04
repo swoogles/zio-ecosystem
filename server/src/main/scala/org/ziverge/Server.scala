@@ -28,13 +28,19 @@ object SharedLogic:
       currentZioVersion <-
         Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData: Seq[ProjectMetaData] <-
-        ZIO.foreachPar(Data.projects) { project =>
+        ZIO.foreach(Data.projects) { project =>
           Maven.projectMetaDataFor(project, scalaVersion)
         }
+      _ <- ZIO.debug("got first project")
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
       connectedProjects: Seq[ConnectedProjectData] <-
         ZIO.foreach(allProjectsMetaData)( x => 
-          ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
+          ZIO.debug("Getting data for " + x.project.artifactId) *> ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
         )
     yield FullAppData(connectedProjects, allProjectsMetaData, DotGraph.render(graph), currentZioVersion, scalaVersion)
 end SharedLogic
+
+// object DumbMain {
+//   final def main(args: Array[String]): Unit =
+//     DependencyServer.main(args)
+// }
