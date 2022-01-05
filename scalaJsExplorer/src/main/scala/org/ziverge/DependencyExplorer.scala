@@ -44,6 +44,9 @@ object DependencyViewerLaminar:
       fullAppData: AppDataAndEffects
   ) =
     val filterUpToDateProjects = false // TODO Add to DependencyExplorerPage
+    val filterCoreProjects: ConnectedProjectData => Boolean = 
+      p => !Data.coreProjects.contains(p.project)
+
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (busPageInfo.filterUpToDateProjects)
@@ -58,10 +61,8 @@ object DependencyViewerLaminar:
     val dynamicHeader =
       busPageInfo.dataView match {
         case Dependencies => "Dependencies"
-        case Dependents => "Dependendents"
-        case Json => "N/A"
+        case Dependents => "Dependents"
         case Blockers => "Blockers"
-        case DotGraph => "N/A"
       }
 
     div(
@@ -84,8 +85,6 @@ object DependencyViewerLaminar:
                         case Dependencies => artifactMatches || project.dependencies.exists(_.project.artifactId.contains(filter))
                         case Dependents => artifactMatches || project.dependants.exists(_.project.artifactId.contains(filter))
                         case Blockers => artifactMatches || project.blockers.exists(_.project.artifactId.contains(filter))
-                        case Json => artifactMatches 
-                        case DotGraph => artifactMatches 
                       }
                   case None =>
                     project => true
@@ -94,23 +93,23 @@ object DependencyViewerLaminar:
               val manipulatedData =
                 fullAppDataLive
                   .connected
-                  .filter(p=> upToDate(p) && userFilter(p))
+                  .filter(p=> upToDate(p) && userFilter(p) && filterCoreProjects(p))
 
               val dynamicHeader =
                 busPageInfo.dataView match {
                   case Dependencies => "Dependencies"
-                  case Dependents => "Dependendents"
-                  case Json => "N/A"
+                  case Dependents => "Dependents"
                   case Blockers => "Blockers"
-                  case DotGraph => "N/A"
                 }
               div(
                 table(
+                  cls := "table",
+                  tbody(
                   tr(
                     th("Artifact"),
                     th("Group"),
-                    th("Version"),
-                    th("ZIO Dep"),
+                    th("Latest Release"),
+                    th("Depends on ZIO Version"),
                     th(dynamicHeader),
                   ),
                   manipulatedData.map{case ConnectedProjectData(
@@ -126,18 +125,17 @@ object DependencyViewerLaminar:
                       busPageInfo.dataView match {
                         case Dependencies =>dependencies.map(_.project.artifactId)
                         case Dependents =>dependants.map(_.project.artifactId)
-                        case Json => Set()
                         case Blockers => blockers.map(_.project.artifactId)
-                        case DotGraph => Set()
                       }
                     tr(
                       td(project.artifactId),
                       td(project.group),
                       td(version.value.replace("Version(", "").replace(")","")), // TODO Why does Version show up after the live data load?
                       td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
-                      td(dataColumn.mkString(",")),
+                      td(dataColumn.mkString("\n")),
                     )
                     },
+                  )
                 )
               )
             }
@@ -200,10 +198,12 @@ object DependencyViewerLaminar:
             refresh --> observer,
             div(
               span("Filter up-to-date projects"),
-              input(
-                typ := "checkbox",
-                onClick.mapToChecked --> upToDateCheckbox(busPageInfo),
-                defaultChecked := busPageInfo.filterUpToDateProjects
+              label(cls:="checkbox",
+                input(
+                  typ := "checkbox",
+                  onClick.mapToChecked --> upToDateCheckbox(busPageInfo),
+                  defaultChecked := busPageInfo.filterUpToDateProjects
+                )
               )
             ),
             // TextInput().amend(onInput --> printTextInput),
