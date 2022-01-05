@@ -58,24 +58,18 @@ object DependencyServer extends App:
                 .contentLength(responseText.length.toLong)
                 .combine(Headers.contentType("application/json")),
             data = HttpData.fromStream(ZStream.fromChunk(responseText))
-            // Encoding content using a ZStream
           )
         )
     }
 
-  // val empty: ZTraceElement =
-  // Tracer.instance.empty
-  // implicit val trace: ZTraceElement = zio.ZTraceElement.empty
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     (
       for
-        // port <- zio.System.env("PORT")(ZTraceElement.empty)
         port <- ZIO(sys.env.get("PORT"))
-        // port <- ZIO(Some("8090"))
         _ <- ZIO.debug("PORT result: " + port)
         _ <-
           SharedLogic
-            .fetchAppDataIfOld(ScalaVersion.V2_13)
+            .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
             .orDie
             .repeat(Schedule.spaced(30.minutes))
             .fork
@@ -85,7 +79,7 @@ object DependencyServer extends App:
 end DependencyServer
 
 object SharedLogic:
-  def fetchAppDataIfOld(scalaVersion: ScalaVersion) =
+  def fetchAppDataAndRefreshCache(scalaVersion: ScalaVersion) =
     for
       now <- ZIO(Instant.now())
       ageOfCache = java.time.Duration.between(now, CrappySideEffectingCache.timestamp)
@@ -133,8 +127,3 @@ object SharedLogic:
     yield res
   end fetchAppData
 end SharedLogic
-
-// object DumbMain {
-//   final def main(args: Array[String]): Unit =
-//     DependencyServer.main(args)
-// }
