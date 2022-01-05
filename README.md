@@ -15,3 +15,8 @@ docker build -t zio-ecosystem .
 ```bash
 docker run -it zio-ecosystem
 ```
+
+Hey all! Previously we were using a hand-managed Google docto track the Zio Ecosystem and what version of ZIO each library depends on.
+
+Now that has been replaced by a web app that queries/inspects Maven Central data to get this info so that it is always accurate.
+

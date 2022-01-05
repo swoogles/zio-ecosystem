@@ -26,7 +26,7 @@ object DependencyExplorerRouting:
     case (targetProject, dataView, filterUpToDateProjects) =>
       DependencyExplorerPage(
         targetProject = targetProject,
-        dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Blockers),
+        dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Dependencies),
         filterUpToDateProjects = filterUpToDateProjects.getOrElse(false)
       )
   }
