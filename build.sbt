@@ -84,3 +84,14 @@ cbBuild := {
     Process("echo \"there\"")
     )!
 }
+
+lazy val cbPublish = taskKey[Unit]("Compile and copy JS app")
+
+cbPublish := {
+  (scalaJsExplorer/Compile/fullOptJS).value
+  import scala.sys.process._
+  (
+    Process("cp /home/bfrasure/Repositories/ziverge-hack-day-dec-2021/scalaJsExplorer/target/scala-3.1.0/zioecosystemtracker-opt/main.js ./src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js") #||
+    Process("echo \"there\"")
+    )!
+}
