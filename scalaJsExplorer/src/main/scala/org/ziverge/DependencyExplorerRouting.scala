@@ -86,7 +86,7 @@ object DependencyExplorerRouting:
         _ =>
           DependencyExplorerPage(
             targetProject = None,
-            dataView = DataView.Blockers,
+            dataView = DataView.Dependencies,
             filterUpToDateProjects = false
           ),
     )(
