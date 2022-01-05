@@ -77,14 +77,15 @@ object DependencyViewerLaminar:
                   case Some(filter) =>
                     project =>
 
+                      val normalizedFilter = filter.toLowerCase
 
-                      val artifactMatches = project.project.artifactId.contains(filter)
+                      val artifactMatches = project.project.artifactId.toLowerCase.contains(filter)
                     // TODO Make this a function in a better spot
                     // project.dependants.exists(_.project.artifactId.contains(filter)) ||
                       busPageInfo.dataView match {
-                        case Dependencies => artifactMatches || project.dependencies.exists(_.project.artifactId.contains(filter))
-                        case Dependents => artifactMatches || project.dependants.exists(_.project.artifactId.contains(filter))
-                        case Blockers => artifactMatches || project.blockers.exists(_.project.artifactId.contains(filter))
+                        case Dependencies => artifactMatches || project.dependencies.exists(_.project.artifactId.toLowerCase.contains(filter))
+                        case Dependents => artifactMatches || project.dependants.exists(_.project.artifactId.toLowerCase.contains(filter))
+                        case Blockers => artifactMatches || project.blockers.exists(_.project.artifactId.toLowerCase.contains(filter))
                       }
                   case None =>
                     project => true
@@ -107,7 +108,6 @@ object DependencyViewerLaminar:
                   tbody(
                   tr(
                     th("Artifact"),
-                    th("Group"),
                     th("Latest Release"),
                     th("Depends on ZIO Version"),
                     th(dynamicHeader),
@@ -123,13 +123,12 @@ object DependencyViewerLaminar:
                   ) =>
                     val dataColumn: Set[String] =
                       busPageInfo.dataView match {
-                        case Dependencies =>dependencies.map(_.project.artifactId)
-                        case Dependents =>dependants.map(_.project.artifactId)
-                        case Blockers => blockers.map(_.project.artifactId)
+                        case Dependencies =>dependencies.map(_.project.artifactIdQualifiedWhenNecessary)
+                        case Dependents =>dependants.map(_.project.artifactIdQualifiedWhenNecessary)
+                        case Blockers => blockers.map(_.project.artifactIdQualifiedWhenNecessary)
                       }
                     tr(
-                      td(project.artifactId),
-                      td(project.group),
+                      td(project.artifactIdQualifiedWhenNecessary),
                       td(version.renderForWeb), // TODO Why does Version show up after the live data load?
                       td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
                       td(dataColumn.mkString("\n")),

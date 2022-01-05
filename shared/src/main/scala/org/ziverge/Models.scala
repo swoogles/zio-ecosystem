@@ -17,6 +17,12 @@ case class Project(group: String, artifactId: String):
   val groupUrl = group.replaceAll("\\.", "/")
   def versionedArtifactId(scalaVersion: ScalaVersion) =
     artifactId + "_" + scalaVersion.mvnFriendlyVersion
+  lazy val artifactIdQualifiedWhenNecessary =
+    if (!Data.coreProjects.contains(this) && artifactId == "zio")
+      s"${group}.${artifactId}"
+    else
+      artifactId
+
 
 object Project:
   implicit val rw: RW[Project] = macroRW
