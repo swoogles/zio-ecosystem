@@ -158,21 +158,12 @@ object DependencyViewerLaminar:
   end constructPage
 
   def labelledInput(labelContent: String, inputElement: ReactiveHtmlElement[dom.html.Element]) =
-            // Param Type: DomHtmlElement
-            div(
-              cls := "field is-horizontal",
-              div(cls := "field-label is-normal", label(cls := "label",labelContent)),
-              div(
-                cls := "field-body",
-                div(
-                  cls := "field",
-                  p(
-                    cls := "control",
-                    inputElement
-                  )
-                )
-              )
-            )
+    // Param Type: DomHtmlElement
+    div(
+      cls := "field is-horizontal",
+      div(cls := "field-label is-normal", label(cls := "label", labelContent)),
+      div(cls := "field-body", div(cls := "field", p(cls := "control", inputElement)))
+    )
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
 
@@ -218,51 +209,54 @@ object DependencyViewerLaminar:
 
 //    val clickBus = new EventBus[]
     div(
-      h2(cls:="title is-2", "Zio Ecosystem"),
+      h2(cls := "title is-2", "Zio Ecosystem"),
       child <--
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
           val observer = refreshObserver(busPageInfo)
           div(
             // refresh --> refreshObserver(busPageInfo),
             refresh --> observer,
-            labelledInput( "Hide up-to-date projects",
-                input(
-                  typ := "checkbox",
-                  onClick.mapToChecked --> upToDateCheckbox(busPageInfo),
-                  defaultChecked := busPageInfo.filterUpToDateProjects
-                )
-              ),
+            labelledInput(
+              "Hide up-to-date projects",
+              input(
+                typ := "checkbox",
+                onClick.mapToChecked --> upToDateCheckbox(busPageInfo),
+                defaultChecked := busPageInfo.filterUpToDateProjects
+              )
+            ),
             // TextInput().amend(onInput --> printTextInput),
             // Param Type: DomHtmlElement
-            labelledInput( "Filter results by",
-                    input(
-                      typ         := "text",
-                      placeholder := busPageInfo.targetProject.getOrElse(""),
-                      size        := 25,
-                      value       := busPageInfo.targetProject.getOrElse(""),
-                      placeholder := "Search for...",
-                      onMountFocus,
-                      inContext { thisNode =>
-                        onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)
-                      }
-                    )
+            labelledInput(
+              "Filter results by",
+              input(
+                typ         := "text",
+                placeholder := busPageInfo.targetProject.getOrElse(""),
+                size        := 25,
+                value       := busPageInfo.targetProject.getOrElse(""),
+                placeholder := "Search for...",
+                onMountFocus,
+                inContext { thisNode =>
+                  onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)
+                }
+              )
             ),
-            labelledInput( "Project introspection", 
-                    select(
-                      inContext { thisNode =>
-                        onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
-                      },
-                      DataView
-                        .values
-                        .map(dataView =>
-                          option(
-                            value    := dataView.toString,
-                            selected := (dataView == busPageInfo.dataView),
-                            dataView.toString
-                          )
-                        )
-                        .toSeq
+            labelledInput(
+              "Project introspection",
+              select(
+                inContext { thisNode =>
+                  onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
+                },
+                DataView
+                  .values
+                  .map(dataView =>
+                    option(
+                      value    := dataView.toString,
+                      selected := (dataView == busPageInfo.dataView),
+                      dataView.toString
                     )
+                  )
+                  .toSeq
+              )
             ),
             constructPage(
               busPageInfo,

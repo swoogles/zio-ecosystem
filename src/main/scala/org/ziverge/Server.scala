@@ -7,13 +7,14 @@ import zhttp.http._
 import zhttp.http.Header
 import zhttp.service.Server
 import zio._
+import zio.duration.durationInt
 import zio.stream.ZStream
 import java.nio.file.Paths
 import java.time.Instant
 
 object CrappySideEffectingCache:
   var fullAppData: Option[FullAppData] = None
-  var timestamp: Instant = Instant.parse("2018-11-30T18:35:24.00Z")
+  var timestamp: Instant               = Instant.parse("2018-11-30T18:35:24.00Z")
 
 object DependencyServer extends App:
 
@@ -47,17 +48,18 @@ object DependencyServer extends App:
           Response.http(data = content)
         }
       case Method.GET -> !! / "projectData" =>
-        for
-          appData <- SharedLogic.fetchAppDataIfOld(ScalaVersion.V2_13).orDie
-          responseText = Chunk.fromArray(write(appData).getBytes)
-        yield Response.http(
-          status = Status.OK,
-          headers =
-            Headers
-              .contentLength(responseText.length.toLong)
-              .combine(Headers.contentType("application/json")),
-          data = HttpData.fromStream(ZStream.fromChunk(responseText))
-          // Encoding content using a ZStream
+        val appData      = CrappySideEffectingCache.fullAppData.get
+        val responseText = Chunk.fromArray(write(appData).getBytes)
+        ZIO.succeed(
+          Response.http(
+            status = Status.OK,
+            headers =
+              Headers
+                .contentLength(responseText.length.toLong)
+                .combine(Headers.contentType("application/json")),
+            data = HttpData.fromStream(ZStream.fromChunk(responseText))
+            // Encoding content using a ZStream
+          )
         )
     }
 
@@ -71,6 +73,12 @@ object DependencyServer extends App:
         port <- ZIO(sys.env.get("PORT"))
         // port <- ZIO(Some("8090"))
         _ <- ZIO.debug("PORT result: " + port)
+        _ <-
+          SharedLogic
+            .fetchAppDataIfOld(ScalaVersion.V2_13)
+            .orDie
+            .repeat(Schedule.spaced(30.minutes))
+            .fork
         _ <- Server.start(port.map(_.toInt).getOrElse(8090), app)
       yield ()
     ).exitCode
@@ -78,21 +86,24 @@ end DependencyServer
 
 object SharedLogic:
   def fetchAppDataIfOld(scalaVersion: ScalaVersion) =
-
     for
       now <- ZIO(Instant.now())
       ageOfCache = java.time.Duration.between(now, CrappySideEffectingCache.timestamp)
       res <-
-        if (ageOfCache.compareTo(java.time.Duration.ofHours(1)) > 0 || CrappySideEffectingCache.fullAppData.isEmpty)
+        if (
+          ageOfCache.compareTo(java.time.Duration.ofHours(1)) > 0 ||
+          CrappySideEffectingCache.fullAppData.isEmpty
+        )
           println("Getting fresh data")
           fetchAppData(scalaVersion)
         else
           println("Using cached data")
           ZIO(CrappySideEffectingCache.fullAppData.get)
-      _ <- ZIO {
+      _ <-
+        ZIO {
           CrappySideEffectingCache.fullAppData = Some(res)
           CrappySideEffectingCache.timestamp = now
-      }
+        }
     yield res
 
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
@@ -111,13 +122,14 @@ object SharedLogic:
               ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
           yield res
         )
-      res = FullAppData(
-      connectedProjects,
-      allProjectsMetaData,
-      DotGraph.render(graph),
-      currentZioVersion,
-      scalaVersion
-    )
+      res =
+        FullAppData(
+          connectedProjects,
+          allProjectsMetaData,
+          DotGraph.render(graph),
+          currentZioVersion,
+          scalaVersion
+        )
     yield res
   end fetchAppData
 end SharedLogic
