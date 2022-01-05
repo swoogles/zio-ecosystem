@@ -9,6 +9,11 @@ import zhttp.service.Server
 import zio._
 import zio.stream.ZStream
 import java.nio.file.Paths
+import java.time.Instant
+
+object CrappySideEffectingCache:
+  var fullAppData: Option[FullAppData] = None
+  var timestamp: Instant = Instant.parse("2018-11-30T18:35:24.00Z")
 
 object DependencyServer extends App:
 
@@ -43,8 +48,7 @@ object DependencyServer extends App:
         }
       case Method.GET -> !! / "projectData" =>
         for
-          appData <- SharedLogic.fetchAppData(ScalaVersion.V2_13).orDie
-          _       <- ZIO.debug("Ready to return all this sweet data: " + appData)
+          appData <- SharedLogic.fetchAppDataIfOld(ScalaVersion.V2_13).orDie
           responseText = Chunk.fromArray(write(appData).getBytes)
         yield Response.http(
           status = Status.OK,
@@ -73,6 +77,24 @@ object DependencyServer extends App:
 end DependencyServer
 
 object SharedLogic:
+  def fetchAppDataIfOld(scalaVersion: ScalaVersion) =
+
+    for
+      now <- ZIO(Instant.now())
+      ageOfCache = java.time.Duration.between(now, CrappySideEffectingCache.timestamp)
+      res <-
+        if (ageOfCache.compareTo(java.time.Duration.ofHours(1)) > 0 || CrappySideEffectingCache.fullAppData.isEmpty)
+          println("Getting fresh data")
+          fetchAppData(scalaVersion)
+        else
+          println("Using cached data")
+          ZIO(CrappySideEffectingCache.fullAppData.get)
+      _ <- ZIO {
+          CrappySideEffectingCache.fullAppData = Some(res)
+          CrappySideEffectingCache.timestamp = now
+      }
+    yield res
+
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
       currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
@@ -85,19 +107,19 @@ object SharedLogic:
       connectedProjects: Seq[ConnectedProjectData] <-
         ZIO.foreach(allProjectsMetaData)(x =>
           for
-            _ <- ZIO.debug("Getting Data for " + x.project.artifactId)
             res <-
               ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
-            _ <- ZIO.debug("Res: " + res)
           yield res
         )
-    yield FullAppData(
+      res = FullAppData(
       connectedProjects,
       allProjectsMetaData,
       DotGraph.render(graph),
       currentZioVersion,
       scalaVersion
     )
+    yield res
+  end fetchAppData
 end SharedLogic
 
 // object DumbMain {

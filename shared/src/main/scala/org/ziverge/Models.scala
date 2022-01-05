@@ -23,7 +23,6 @@ case class Project(group: String, artifactId: String):
     else
       artifactId
 
-
 object Project:
   implicit val rw: RW[Project] = macroRW
 
@@ -73,7 +72,6 @@ object ProjectMetaData:
             .flatMap(dependency =>
               allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep)
             )
-        println("ZIO Deps: " + zioDeps.mkString(","))
         val res: Option[VersionedProject] =
           zioDeps
             // .flatten

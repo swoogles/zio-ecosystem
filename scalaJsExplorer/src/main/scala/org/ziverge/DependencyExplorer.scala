@@ -44,7 +44,7 @@ object DependencyViewerLaminar:
       fullAppData: AppDataAndEffects
   ) =
     val filterUpToDateProjects = false // TODO Add to DependencyExplorerPage
-    val filterCoreProjects: ConnectedProjectData => Boolean = 
+    val filterCoreProjects: ConnectedProjectData => Boolean =
       p => !Data.coreProjects.contains(p.project)
 
     val upToDate: ConnectedProjectData => Boolean =
@@ -52,18 +52,13 @@ object DependencyViewerLaminar:
         if (busPageInfo.filterUpToDateProjects)
           println("Only getting out-of-date projects")
           p.blockers.nonEmpty ||
-          p.zioDep.fold(true)(zDep => zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) < 0) &&
-          !Data.coreProjects.contains(p.project)
+          p.zioDep
+            .fold(true)(zDep =>
+              zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) < 0
+            ) && !Data.coreProjects.contains(p.project)
         else
           println("Accepting all projects")
           true
-
-    val dynamicHeader =
-      busPageInfo.dataView match {
-        case Dependencies => "Dependencies"
-        case Dependents => "Dependents"
-        case Blockers => "Blockers"
-      }
 
     div(
       div(
@@ -79,71 +74,105 @@ object DependencyViewerLaminar:
 
                       val normalizedFilter = filter.toLowerCase
 
-                      val artifactMatches = project.project.artifactId.toLowerCase.contains(filter)
-                    // TODO Make this a function in a better spot
-                    // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-                      busPageInfo.dataView match {
-                        case Dependencies => artifactMatches || project.dependencies.exists(_.project.artifactId.toLowerCase.contains(filter))
-                        case Dependents => artifactMatches || project.dependants.exists(_.project.artifactId.toLowerCase.contains(filter))
-                        case Blockers => artifactMatches || project.blockers.exists(_.project.artifactId.toLowerCase.contains(filter))
-                      }
+                      val artifactMatches =
+                        project.project.artifactId.toLowerCase.contains(normalizedFilter)
+                      // TODO Make this a function in a better spot
+                      // project.dependants.exists(_.project.artifactId.contains(filter)) ||
+                      busPageInfo.dataView match
+                        case Dependencies =>
+                          artifactMatches ||
+                            project
+                              .dependencies
+                              .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+                        case Dependents =>
+                          artifactMatches ||
+                            project
+                              .dependants
+                              .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+                        case Blockers =>
+                          artifactMatches ||
+                            project
+                              .blockers
+                              .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
                   case None =>
                     project => true
-
 
               val manipulatedData =
                 fullAppDataLive
                   .connected
-                  .filter(p=> upToDate(p) && userFilter(p) && filterCoreProjects(p))
+                  .filter(p => upToDate(p) && userFilter(p) && filterCoreProjects(p))
 
               val dynamicHeader =
-                busPageInfo.dataView match {
-                  case Dependencies => "Dependencies"
-                  case Dependents => "Dependents"
-                  case Blockers => "Blockers"
-                }
+                busPageInfo.dataView match
+                  case Dependencies =>
+                    "Dependencies"
+                  case Dependents =>
+                    "Dependents"
+                  case Blockers =>
+                    "Blockers"
               div(
                 table(
                   cls := "table",
                   tbody(
-                  tr(
-                    th("Artifact"),
-                    th("Latest Release"),
-                    th("Depends on ZIO Version"),
-                    th(dynamicHeader),
-                  ),
-                  manipulatedData.map{case ConnectedProjectData(
-
-                    project,
-                    version,
-                    dependencies,
-                    blockers,
-                    dependants,
-                    zioDep
-                  ) =>
-                    val dataColumn: Set[String] =
-                      busPageInfo.dataView match {
-                        case Dependencies =>dependencies.map(_.project.artifactIdQualifiedWhenNecessary)
-                        case Dependents =>dependants.map(_.project.artifactIdQualifiedWhenNecessary)
-                        case Blockers => blockers.map(_.project.artifactIdQualifiedWhenNecessary)
-                      }
                     tr(
-                      td(project.artifactIdQualifiedWhenNecessary),
-                      td(version.renderForWeb), // TODO Why does Version show up after the live data load?
-                      td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
-                      td(dataColumn.mkString("\n")),
-                    )
-                    },
+                      th("Artifact"),
+                      th("Latest Release"),
+                      th("Depends on ZIO Version"),
+                      th(dynamicHeader)
+                    ),
+                    manipulatedData.map {
+                      case ConnectedProjectData(
+                            project,
+                            version,
+                            dependencies,
+                            blockers,
+                            dependants,
+                            zioDep
+                          ) =>
+                        val dataColumn: Set[String] =
+                          busPageInfo.dataView match
+                            case Dependencies =>
+                              dependencies.map(_.project.artifactIdQualifiedWhenNecessary)
+                            case Dependents =>
+                              dependants.map(_.project.artifactIdQualifiedWhenNecessary)
+                            case Blockers =>
+                              blockers.map(_.project.artifactIdQualifiedWhenNecessary)
+                        tr(
+                          td(project.artifactIdQualifiedWhenNecessary),
+                          td(
+                            version.renderForWeb
+                          ), // TODO Why does Version show up after the live data load?
+                          td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
+                          td(dataColumn.mkString("\n"))
+                        )
+                    }
                   )
                 )
               )
             }
-      ),
+      )
       // TODO Better result type so we can properly render different schemas
       // button("Select fake proejct", onClick.mapTo(busPageInfo) --> pageUpdateObserver),
       // button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
     )
   end constructPage
+
+  def labelledInput(labelContent: String, inputElement: ReactiveHtmlElement[dom.html.Element]) =
+            // Param Type: DomHtmlElement
+            div(
+              cls := "field is-horizontal",
+              div(cls := "field-label is-normal", label(cls := "label",labelContent)),
+              div(
+                cls := "field-body",
+                div(
+                  cls := "field",
+                  p(
+                    cls := "control",
+                    inputElement
+                  )
+                )
+              )
+            )
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
 
@@ -189,60 +218,51 @@ object DependencyViewerLaminar:
 
 //    val clickBus = new EventBus[]
     div(
+      h2(cls:="title is-2", "Zio Ecosystem"),
       child <--
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
           val observer = refreshObserver(busPageInfo)
           div(
             // refresh --> refreshObserver(busPageInfo),
             refresh --> observer,
-            div(
-              span("Filter up-to-date projects"),
-              label(cls:="checkbox",
+            labelledInput( "Hide up-to-date projects",
                 input(
                   typ := "checkbox",
                   onClick.mapToChecked --> upToDateCheckbox(busPageInfo),
                   defaultChecked := busPageInfo.filterUpToDateProjects
                 )
-              )
-            ),
-            // TextInput().amend(onInput --> printTextInput),
-            div(cls:="field is-horizontal",
-              div(cls:="field-label is-normal",
-                label(cls:="label", "Filter results by")
               ),
-              div(cls:="field-body",
-                div(cls:="field",
-                  p(cls:="control",
+            // TextInput().amend(onInput --> printTextInput),
+            // Param Type: DomHtmlElement
+            labelledInput( "Filter results by",
                     input(
                       typ         := "text",
                       placeholder := busPageInfo.targetProject.getOrElse(""),
                       size        := 25,
                       value       := busPageInfo.targetProject.getOrElse(""),
-                      placeholder:="Search for...",
+                      placeholder := "Search for...",
                       onMountFocus,
                       inContext { thisNode =>
                         onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)
                       }
-                    ),
-
-                  )
-                )
-              )
-              ),
-            select(
-              inContext { thisNode =>
-                onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
-              },
-              DataView
-                .values
-                .map(dataView =>
-                  option(
-                    value    := dataView.toString,
-                    selected := (dataView == busPageInfo.dataView),
-                    dataView.toString
-                  )
-                )
-                .toSeq
+                    )
+            ),
+            labelledInput( "Project introspection", 
+                    select(
+                      inContext { thisNode =>
+                        onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
+                      },
+                      DataView
+                        .values
+                        .map(dataView =>
+                          option(
+                            value    := dataView.toString,
+                            selected := (dataView == busPageInfo.dataView),
+                            dataView.toString
+                          )
+                        )
+                        .toSeq
+                    )
             ),
             constructPage(
               busPageInfo,
