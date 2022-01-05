@@ -130,7 +130,7 @@ object DependencyViewerLaminar:
                     tr(
                       td(project.artifactId),
                       td(project.group),
-                      td(version.value.replace("Version(", "").replace(")","")), // TODO Why does Version show up after the live data load?
+                      td(version.renderForWeb), // TODO Why does Version show up after the live data load?
                       td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
                       td(dataColumn.mkString("\n")),
                     )
@@ -207,16 +207,29 @@ object DependencyViewerLaminar:
               )
             ),
             // TextInput().amend(onInput --> printTextInput),
-            input(
-              typ         := "text",
-              placeholder := busPageInfo.targetProject.getOrElse(""),
-              size        := 25,
-              value       := busPageInfo.targetProject.getOrElse(""),
-              onMountFocus,
-              inContext { thisNode =>
-                onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)
-              }
-            ),
+            div(cls:="field is-horizontal",
+              div(cls:="field-label is-normal",
+                label(cls:="label", "Filter results by")
+              ),
+              div(cls:="field-body",
+                div(cls:="field",
+                  p(cls:="control",
+                    input(
+                      typ         := "text",
+                      placeholder := busPageInfo.targetProject.getOrElse(""),
+                      size        := 25,
+                      value       := busPageInfo.targetProject.getOrElse(""),
+                      placeholder:="Search for...",
+                      onMountFocus,
+                      inContext { thisNode =>
+                        onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)
+                      }
+                    ),
+
+                  )
+                )
+              )
+              ),
             select(
               inContext { thisNode =>
                 onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)

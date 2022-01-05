@@ -42,6 +42,7 @@ libraryDependencies ++= Seq(
   ("org.scala-graph" %%% "graph-core" % "1.13.3").cross(CrossVersion.for3Use2_13),
   ("com.softwaremill.sttp.client3" %%% "core" % "3.3.18"),
   "dev.zio" %%% "zio" % "1.0.13",
+  // "dev.zio" %%% "zio-cache" % "0.2.0-RC1" // TODO Blows up with a dotty error :(
 )
     
 

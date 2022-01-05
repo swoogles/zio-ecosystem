@@ -8,7 +8,7 @@ import java.io.ObjectInputStream
 import java.io.ByteArrayInputStream
 
 enum DataView:
-  case Dependencies, Dependents, Json, Blockers, DotGraph
+  case Dependencies, Dependents, Blockers
 
 object DataView:
 
@@ -123,8 +123,6 @@ object SummaryLogic:
             filterUpToDateProjects
           )
           .mkString("\n")
-      case DataView.Json =>
-        Json.render(fullAppData.connected)
       case DataView.Blockers =>
         SummaryLogic
           .manipulateAndRender(
@@ -151,89 +149,7 @@ object SummaryLogic:
             filterUpToDateProjects
           )
           .mkString("\n")
-      case DataView.DotGraph =>
-        fullAppData.graph
     end match
   end viewLogic
 
-  def viewLogicTyped(
-      dataView: DataView,
-      fullAppData: FullAppData,
-      filterOpt: Option[String],
-      filterUpToDateProjects: Boolean
-  ): String =
-    dataView match
-      case DataView.Dependencies =>
-        SummaryLogic
-          .manipulateAndRender(
-            fullAppData
-              .connected
-              .filter(project =>
-                filterOpt match
-                  case Some(filter) =>
-                    // TODO Make this a function in a better spot
-                    // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-                    project.dependencies.exists(_.project.artifactId.contains(filter)) ||
-                      project.project.artifactId.contains(filter)
-                  case None =>
-                    true
-              ),
-            _.dependencies.size,
-            p =>
-              if (p.dependencies.nonEmpty)
-                s"Depends on ${p.dependencies.size} projects: " +
-                  p.dependencies.map(_.project.artifactId).mkString(",")
-              else
-                "Does not depend on any known ecosystem library.",
-            fullAppData.currentZioVersion,
-            filterUpToDateProjects
-          )
-          .mkString("\n")
-      case DataView.Dependents =>
-        SummaryLogic
-          .manipulateAndRender(
-            fullAppData.connected,
-            _.dependants.size,
-            p =>
-              if (p.dependants.nonEmpty)
-                f"Required by ${p.dependants.size} projects: " +
-                  p.dependants.map(_.project.artifactId).mkString(",")
-              else
-                "Has no dependents",
-            fullAppData.currentZioVersion,
-            filterUpToDateProjects
-          )
-          .mkString("\n")
-      case DataView.Json =>
-        Json.render(fullAppData.connected)
-      case DataView.Blockers =>
-        SummaryLogic
-          .manipulateAndRender(
-            fullAppData
-              .connected
-              .filter(project =>
-                filterOpt match
-                  case Some(filter) =>
-                    // TODO Make this a function in a better spot
-                    // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-                    project.blockers.exists(_.project.artifactId.contains(filter)) ||
-                      project.project.artifactId.contains(filter)
-                  case None =>
-                    true
-              ),
-            _.blockers.size,
-            p =>
-              if (p.blockers.nonEmpty)
-                s"is blocked by ${p.blockers.size} projects: " +
-                  p.blockers.map(blocker => Render.sbtStyle(blocker.project)).mkString(",")
-              else
-                "Is not blocked by any known ecosystem library.",
-            fullAppData.currentZioVersion,
-            filterUpToDateProjects
-          )
-          .mkString("\n")
-      case DataView.DotGraph =>
-        fullAppData.graph
-    end match
-  end viewLogicTyped
 end SummaryLogic
