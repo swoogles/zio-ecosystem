@@ -30,7 +30,7 @@ object Data:
         Project("dev.zio", "zio-config-typesafe"),
         Project("dev.zio", "zio-kafka"),
         Project("dev.zio", "zio-ftp"),
-        Project("io.github.vigoo", "zio-aws-core"),
+        Project("dev.zio", "zio-aws-core"),
         Project("dev.zio", "zio-prelude"),
         Project("dev.zio", "zio-prelude-macros"),
         Project("dev.zio", "zio-interop-reactivestreams"),
@@ -77,11 +77,11 @@ object Data:
 
   val awsSubprojects =
     List(
-      Project("io.github.vigoo", "zio-aws-dynamodb"),
-      Project("io.github.vigoo", "zio-aws-netty"),
-      Project("io.github.vigoo", "zio-aws-sqs"),
-      Project("io.github.vigoo", "zio-aws-kinesis"),
-      Project("io.github.vigoo", "zio-aws-cloudwatch"),
+      Project("dev.zio", "zio-aws-dynamodb"),
+      Project("dev.zio", "zio-aws-netty"),
+      Project("dev.zio", "zio-aws-sqs"),
+      Project("dev.zio", "zio-aws-kinesis"),
+      Project("dev.zio", "zio-aws-cloudwatch"),
       Project("io.github.neurodyne", "zio-aws-s3")
     )
 
@@ -393,7 +393,7 @@ object Data:
           )
       ),
       ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+        project = Project(group = "dev.zio", artifactId = "zio-aws-core"),
         version = "3.17.100.3",
         dependencies =
           HashSet(
@@ -428,12 +428,12 @@ object Data:
           )
       ),
       ProjectMetaData(
-        project = Project(group = "io.github.vigoo", artifactId = "zio-aws-dynamodb"),
+        project = Project(group = "dev.zio", artifactId = "zio-aws-dynamodb"),
         version = "3.17.100.3",
         dependencies =
           Set(
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-core"),
               version = "3.17.100.3"
             ),
             VersionedProject(
@@ -748,15 +748,15 @@ object Data:
               version = "1.0.4-2"
             ),
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-netty"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-netty"),
               version = "3.15.82.2"
             ),
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-dynamodb"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-dynamodb"),
               version = "3.15.82.2"
             ),
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-kinesis"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-kinesis"),
               version = "3.15.82.2"
             ),
             VersionedProject(
@@ -768,7 +768,7 @@ object Data:
               version = "1.3.0.7-2"
             ),
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-cloudwatch"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-cloudwatch"),
               version = "3.15.82.2"
             ),
             VersionedProject(
@@ -776,7 +776,7 @@ object Data:
               version = "1.0.4-2"
             ),
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-core"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-core"),
               version = "3.15.82.2"
             )
           )
@@ -1152,11 +1152,11 @@ object Data:
               version = "1.0.4"
             ),
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-netty"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-netty"),
               version = "3.15.79.1"
             ),
             VersionedProject(
-              project = Project(group = "io.github.vigoo", artifactId = "zio-aws-sqs"),
+              project = Project(group = "dev.zio", artifactId = "zio-aws-sqs"),
               version = "3.15.79.1"
             )
           )
