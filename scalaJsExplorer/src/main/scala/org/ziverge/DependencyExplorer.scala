@@ -43,19 +43,40 @@ object DependencyViewerLaminar:
       viewUpdate: Observer[String],
       fullAppData: AppDataAndEffects
   ) =
-    val filterUpToDateProjects = false // TODO Add to DependencyExplorerPage
     val filterCoreProjects: ConnectedProjectData => Boolean =
       p => !Data.coreProjects.contains(p.project)
+
+
+    val onLatestZioDep: Option[ZioDep] => Boolean =
+      zioDep => zioDep
+            .fold(true)(zDep =>
+              println("Project ZIO version: " + zDep.zioDep.typedVersion + "  Current ZIO Version: " + fullAppData.fullAppData.currentZioVersion)
+              val res = zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) == 0
+              println("Res: " + res)
+              res
+            )
+
+    val onLatestZio: ProjectMetaData => Boolean =
+      p => p.zioDep
+            .fold(true)(zDep =>
+              println("Project ZIO version: " + zDep.typedVersion + "  Current ZIO Version: " + fullAppData.fullAppData.currentZioVersion)
+              val res = zDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) == 0
+              println("Res: " + res)
+              res
+            )
+
+    val onLatestZioConnected: ConnectedProjectData => Boolean =
+      p => p.zioDep
+            .fold(true)(zDep =>
+              zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) < 0 // TODO Fix comparison?
+            )
 
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (busPageInfo.filterUpToDateProjects)
           println("Only getting out-of-date projects")
           p.blockers.nonEmpty ||
-          p.zioDep
-            .fold(true)(zDep =>
-              zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) < 0
-            ) && !Data.coreProjects.contains(p.project)
+          onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
         else
           println("Accepting all projects")
           true
@@ -129,21 +150,40 @@ object DependencyViewerLaminar:
                             dependants,
                             zioDep
                           ) =>
-                        val dataColumn: Set[String] =
+                        // TODO Colorize out-of-date dependencies
+                        val dataColumn: Set[Div] =
                           busPageInfo.dataView match
                             case Dependencies =>
-                              dependencies.map(_.project.artifactIdQualifiedWhenNecessary)
+                              dependencies.foreach(dep =>
+                                println("On latest ZIO: " + onLatestZio(dep))
+                                )
+                              dependencies.map(dep => div(
+                                backgroundColor := 
+                                  (if (onLatestZio(dep))
+                                    "darkseagreen"
+                                  else
+                                    "orange"),
+                              dep.project.artifactIdQualifiedWhenNecessary, 
+                              ))
                             case Dependents =>
-                              dependants.map(_.project.artifactIdQualifiedWhenNecessary)
+                              dependants.map(_.project.artifactIdQualifiedWhenNecessary).map(div(_))
                             case Blockers =>
-                              blockers.map(_.project.artifactIdQualifiedWhenNecessary)
+                              blockers.map(_.project.artifactIdQualifiedWhenNecessary).map(div(_))
                         tr(
                           td(project.artifactIdQualifiedWhenNecessary),
                           td(
                             version.renderForWeb
                           ), // TODO Why does Version show up after the live data load?
-                          td(zioDep.map(_.zioDep.version).getOrElse("N/A")),
-                          td(dataColumn.mkString("\n"))
+                          td(
+                                backgroundColor := 
+                                  (if (onLatestZioDep(zioDep))
+                                    "darkseagreen"
+                                  else
+                                    "orange"),
+
+                            zioDep.map(_.zioDep.version).getOrElse("N/A")
+                            ),
+                          td(div(dataColumn.toSeq))
                         )
                     }
                   )
