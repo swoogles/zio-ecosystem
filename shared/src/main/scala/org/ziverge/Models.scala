@@ -231,22 +231,21 @@ object FullAppData:
               project.project.artifactId.toLowerCase.contains(normalizedFilter)
             // TODO Make this a function in a better spot
             // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-            dataView match
-              case Dependencies =>
-                artifactMatches ||
-                  project
-                    .dependencies
-                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-              case Dependents =>
-                artifactMatches ||
-                  project
-                    .dependants
-                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-              case Blockers =>
-                artifactMatches ||
-                  project
-                    .blockers
-                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+            val introspectedDataMatches = 
+              dataView match
+                case Dependencies =>
+                    project
+                      .dependencies
+                      .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+                case Dependents =>
+                    project
+                      .dependants
+                      .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+                case Blockers =>
+                    project
+                      .blockers
+                      .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+            artifactMatches && introspectedDataMatches
         case None =>
           project => true
 
