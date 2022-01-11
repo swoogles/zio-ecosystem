@@ -150,6 +150,7 @@ object DependencyViewerLaminar:
                                 println("On latest ZIO: " + onLatestZio(dep))
                                 )
                               dependencies.map(dep => div(
+                                cls := "box",
                                 backgroundColor := 
                                   (if (onLatestZio(dep))
                                     "darkseagreen"
@@ -167,13 +168,15 @@ object DependencyViewerLaminar:
                           //   version.renderForWeb
                           // ), 
                           td(
+                            span(
+                                cls := "box",
                                 backgroundColor := 
                                   (if (onLatestZioDep(zioDep))
                                     "darkseagreen"
                                   else
                                     "orange"),
 
-                            zioDep.map(_.zioDep.version).getOrElse("N/A")
+                            zioDep.map(_.zioDep.version).getOrElse("N/A"))
                             ),
                           td(div(dataColumn.toSeq))
                         )
@@ -262,6 +265,7 @@ object DependencyViewerLaminar:
               "Filter results by",
               input(
                 typ         := "text",
+                cls := "input",
                 placeholder := busPageInfo.targetProject.getOrElse(""),
                 size        := 25,
                 value       := busPageInfo.targetProject.getOrElse(""),
@@ -275,6 +279,7 @@ object DependencyViewerLaminar:
             labelledInput(
               "Project introspection",
               select(
+                cls := "select",
                 inContext { thisNode =>
                   onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
                 },
