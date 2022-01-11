@@ -52,9 +52,7 @@ object DependencyServer extends App:
           val content =
             HttpData.fromStream {
               ZStream
-                .fromFile(
-                  Paths.get(s"src/main/resources/images/$path")
-                )
+                .fromFile(Paths.get(s"src/main/resources/images/$path"))
                 .refineOrDie(_ => ???)
                 .provideLayer(zio.blocking.Blocking.live)
             }
@@ -79,7 +77,7 @@ object DependencyServer extends App:
     (
       for
         port <- ZIO(sys.env.get("PORT"))
-        _ <- ZIO.debug("PORT result: " + port)
+        _    <- ZIO.debug("PORT result: " + port)
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)

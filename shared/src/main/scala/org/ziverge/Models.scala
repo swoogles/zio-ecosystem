@@ -104,7 +104,8 @@ case class ConnectedProjectData(
     dependencies: Set[ProjectMetaData],
     blockers: Set[ProjectMetaData],
     dependants: Set[ProjectMetaData],
-    zioDep: Option[ZioDep]
+    zioDep: Option[ZioDep],
+    latestZio: Version
 )
 object ConnectedProjectData:
   implicit val versionRw: RW[Version] = readwriter[String].bimap[Version](_.toString, Version(_))
@@ -158,7 +159,8 @@ object ConnectedProjectData:
       typedDependencies.toSet,
       blockers.toSet,
       typedDependants,
-      zioDep
+      zioDep,
+      currentZioVersion
     )
   end apply
 end ConnectedProjectData
@@ -208,14 +210,20 @@ object FullAppData:
   implicit val scalaVersion: RW[ScalaVersion] = macroRW
   implicit val rw: RW[FullAppData]            = macroRW
 
-
-  def filterData(fullAppData: FullAppData, dataView: DataView, filterUpToDateProjects: Boolean, userFilterFromPage: Option[String]) =
+  def filterData(
+      fullAppData: FullAppData,
+      dataView: DataView,
+      filterUpToDateProjects: Boolean,
+      userFilterFromPage: Option[String]
+  ) =
     import org.ziverge.DataView.*
     val onLatestZioConnected: ConnectedProjectData => Boolean =
-      p => p.zioDep
-            .fold(true)(zDep =>
-              zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) < 0 // TODO Fix comparison?
-            )
+      p =>
+        p.zioDep
+          .fold(true)(zDep =>
+            zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) <
+              0 // TODO Fix comparison?
+          )
 
     val filterCoreProjects: ConnectedProjectData => Boolean =
       p => !Data.coreProjects.contains(p.project)
@@ -227,24 +235,23 @@ object FullAppData:
 
             val normalizedFilter = filter.toLowerCase
 
-            val artifactMatches =
-              project.project.artifactId.toLowerCase.contains(normalizedFilter)
+            val artifactMatches = project.project.artifactId.toLowerCase.contains(normalizedFilter)
             // TODO Make this a function in a better spot
             // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-            val introspectedDataMatches = 
+            val introspectedDataMatches =
               dataView match
                 case Dependencies =>
-                    project
-                      .dependencies
-                      .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+                  project
+                    .dependencies
+                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
                 case Dependents =>
-                    project
-                      .dependants
-                      .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+                  project
+                    .dependants
+                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
                 case Blockers =>
-                    project
-                      .blockers
-                      .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+                  project
+                    .blockers
+                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
             artifactMatches && introspectedDataMatches
         case None =>
           project => true
@@ -252,12 +259,10 @@ object FullAppData:
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (filterUpToDateProjects)
-          p.blockers.nonEmpty ||
-          onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
+          p.blockers.nonEmpty || onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
         else
           true && !Data.coreProjects.contains(p.project)
 
-
-    fullAppData
-      .connected
-      .filter(p => upToDate(p) && userFilter(p) && filterCoreProjects(p))
+    fullAppData.connected.filter(p => upToDate(p) && userFilter(p) && filterCoreProjects(p))
+  end filterData
+end FullAppData

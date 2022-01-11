@@ -19,8 +19,7 @@ case class DependencyExplorerPage(
     dataView: DataView,
     filterUpToDateProjects: Boolean
 ) extends Page:
-  def changeTarget(newTarget: String) =
-    copy(targetProject = Some(newTarget))
+  def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
 
 private case object LoginPageOriginal extends Page
 
@@ -36,33 +35,24 @@ object DependencyViewerLaminar:
       viewUpdate: Observer[String],
       fullAppData: AppDataAndEffects
   ) =
-
     div(
       div(
         child <--
           fullAppData
             .dataSignal
             .map { fullAppDataLive =>
-
-              fullAppDataLive match {
-                case None => div("No info to display!")
+              fullAppDataLive match
+                case None =>
+                  div("No info to display!")
                 case Some(fullAppDataLive) =>
-                  val onLatestZioDep: Option[ZioDep] => Boolean =
-                    zioDep => zioDep
-                          .fold(true)(zDep =>
-                            // TODO 
-                            zDep.zioDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
-                          )
-
-                  val onLatestZio: ProjectMetaData => Boolean =
-                    p => p.zioDep
-                          .fold(true)(zDep =>
-                            zDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
-                          )
 
                   val manipulatedData: Seq[ConnectedProjectData] =
-                    FullAppData.filterData(fullAppDataLive, busPageInfo.dataView, busPageInfo.filterUpToDateProjects, busPageInfo.targetProject)
-
+                    FullAppData.filterData(
+                      fullAppDataLive,
+                      busPageInfo.dataView,
+                      busPageInfo.filterUpToDateProjects,
+                      busPageInfo.targetProject
+                    )
 
                   div(
                     table(
@@ -80,63 +70,88 @@ object DependencyViewerLaminar:
                                 dependencies,
                                 blockers,
                                 dependants,
-                                zioDep
+                                zioDep,
+                                latestZio // TODO Use
                               ) =>
-                            val projectIsUpToDate = 
+                            val onLatestZioDep: Option[ZioDep] => Boolean =
+                              zioDep =>
+                                zioDep.fold(true)(zDep =>
+                                  // TODO
+                                  zDep.zioDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+                                )
+
+                            val onLatestZio: ProjectMetaData => Boolean =
+                              p =>
+                                p.zioDep
+                                  .fold(true)(zDep =>
+                                    zDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+                                  )
+                            val projectIsUpToDate =
                               dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
 
                             // TODO Colorize out-of-date dependencies
                             val dataColumn: Set[Div] =
                               busPageInfo.dataView match
                                 case Dependencies =>
-                                  dependencies.map(dep => div(
-                                    cls := s"box ${colorUpToDate(onLatestZio(dep))}",
-                                    dep.project.artifactIdQualifiedWhenNecessary, 
-                                  ))
+                                  dependencies.map(dep =>
+                                    div(
+                                      cls := s"box ${colorUpToDate(onLatestZio(dep))}",
+                                      dep.project.artifactIdQualifiedWhenNecessary
+                                    )
+                                  )
                                 case Dependents =>
-                                  dependants.map(_.project.artifactIdQualifiedWhenNecessary).map(div(_))
+                                  dependants
+                                    .map(_.project.artifactIdQualifiedWhenNecessary)
+                                    .map(div(_))
                                 case Blockers =>
-                                  blockers.map(_.project.artifactIdQualifiedWhenNecessary).map(div(_))
+                                  blockers
+                                    .map(_.project.artifactIdQualifiedWhenNecessary)
+                                    .map(div(_))
                             tr(
-                              td(div(
-                                span(cls:="icon",
-                                  img(src := 
-                                    (if (projectIsUpToDate)
-                                      "/images/glyphicons-basic-739-check.svg"
-                                    else
-                                      "/images/glyphicons-basic-847-square-alert.svg"
-                                    )),
-                                  ),
-                                span(cls:="is-size-4", project.artifactIdQualifiedWhenNecessary))),
+                              td(
+                                div(
+                                  UpToDateIcon(projectIsUpToDate),
+                                  span(cls := "is-size-4", project.artifactIdQualifiedWhenNecessary)
+                                )
+                              ),
                               // td(
                               //   version.renderForWeb
-                              // ), 
+                              // ),
                               td(
                                 span(
-                                    cls := s"box ${colorUpToDate(onLatestZioDep(zioDep))}",
-                                    zioDep.map(_.zioDep.version).getOrElse("N/A"))
-                                ),
+                                  cls := s"box ${colorUpToDate(onLatestZioDep(zioDep))}",
+                                  zioDep.map(_.zioDep.version).getOrElse("N/A")
+                                )
+                              ),
                               td(div(dataColumn.toSeq))
                             )
                         }
                       )
                     )
                   )
-              }
 
             }
       )
-      // TODO Better result type so we can properly render different schemas
-      // button("Select fake proejct", onClick.mapTo(busPageInfo) --> pageUpdateObserver),
-      // button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
     )
   end constructPage
 
+  def UpToDateIcon(upToDate: Boolean) =
+    span(
+      cls := "icon",
+      img(
+        src :=
+          (if (upToDate)
+             "/images/glyphicons-basic-739-check.svg"
+           else
+             "/images/glyphicons-basic-847-square-alert.svg")
+      )
+    )
+
   def colorUpToDate(upToDate: Boolean) =
-                                  (if (upToDate)
-                                    "has-background-primary"
-                                  else
-                                    "has-background-warning")
+    if (upToDate)
+      "has-background-primary"
+    else
+      "has-background-warning"
 
   def labelledInput(labelContent: String, inputElement: ReactiveHtmlElement[dom.html.Element]) =
     // Param Type: DomHtmlElement
@@ -190,12 +205,13 @@ object DependencyViewerLaminar:
 
 //    val clickBus = new EventBus[]
     div(
-      section(cls:="hero is-primary",
-        div(cls:="hero-body",
-          p(cls:="title",
-            "ZIO Ecosystem"
-          ),
-          p(cls:="subtitle",
+      section(
+        cls := "hero is-primary",
+        div(
+          cls := "hero-body",
+          p(cls := "title", "ZIO Ecosystem"),
+          p(
+            cls := "subtitle",
             "Check which projects are on the latest and greatest version of ZIO!"
           )
         )
@@ -205,7 +221,7 @@ object DependencyViewerLaminar:
           val observer = refreshObserver(busPageInfo)
           div(
             // refresh --> refreshObserver(busPageInfo),
-            refresh --> observer,
+            // refresh --> observer,
             labelledInput(
               "Hide up-to-date projects",
               input(
@@ -220,7 +236,7 @@ object DependencyViewerLaminar:
               "Filter results by",
               input(
                 typ         := "text",
-                cls := "input",
+                cls         := "input",
                 placeholder := busPageInfo.targetProject.getOrElse(""),
                 size        := 25,
                 value       := busPageInfo.targetProject.getOrElse(""),
@@ -269,72 +285,38 @@ end DependencyViewerLaminar
 import com.raquo.laminar.api.L.Signal
 case class AppDataAndEffects(
     // TODO Get rid of redundant first field
-    refreshAppData: () => FullAppData,
     dataSignal: Signal[Option[FullAppData]]
 )
 
 object DependencyExplorer extends ZIOAppDefault:
 
-  // import com.raquo.laminar.api.L.{*, given}
-
-  val refreshProjectData =
-    () =>
-      zio
-        .Runtime
-        .default
-        .unsafeRun(
-          ZioEcosystem
-            .snapshot
-            .provide(
-              ZLayer.succeed[ZioEcosystem](AppDataHardcoded),
-              ZLayer.succeed(DevConsole.word)
-            )
-        )
-  val serverResponse =
-    AjaxEventStream
-      .get(
-        url = "/api/kittens",
-        responseType = "application/json"
-      )                             // EventStream[dom.XMLHttpRequest]
-      .map(req => req.responseText) // EventStream[String]
-
-  def logic: ZIO[ZioEcosystem & Console, Throwable, Unit] =
+  def logic: ZIO[Console, Throwable, Unit] =
     for
-      bag     <- ZIO.environmentWith[ZioEcosystem](x => x.get)
       console <- ZIO.environmentWith[Console](x => x.get)
 
-      refresh =
-        () =>
-          zio
-            .Runtime
-            .default
-            .unsafeRun(ZioEcosystem.snapshot.provide(ZLayer.succeed(bag), ZLayer.succeed(console)))
       // This shows that currently, we're only getting this information once upon loading.
       // We can envision some small changes that let us
       _ <-
         ZIO {
           val appHolder = dom.document.getElementById("landing-message")
           import com.raquo.laminar.api.L.{*, given}
-          val dataSignal: Signal[Option[FullAppData]] = // TODO Maybe make this Signal[Option[FullAppData]] ?
+          val dataSignal
+              : Signal[Option[FullAppData]] = // TODO Maybe make this Signal[Option[FullAppData]] ?
             AjaxEventStream
-              .get("/projectData")                             // EventStream[dom.XMLHttpRequest]
+              .get("/projectData") // EventStream[dom.XMLHttpRequest]
               .map(req => Some(read[FullAppData](req.responseText))) // EventStream[String]
-              .toSignal(None) // TODO Maybe make this 
+              .toSignal(None)                                        // TODO Maybe make this
           appHolder.innerHTML = ""
           com
             .raquo
             .laminar
             .api
             .L
-            .render(
-              appHolder,
-              DependencyViewerLaminar
-                .app(AppDataAndEffects(refreshProjectData, dataSignal))
-            )
+            .render(appHolder, DependencyViewerLaminar.app(AppDataAndEffects(dataSignal)))
         }
     yield ()
 
   def run =
-    logic.provide(ZLayer.succeed[ZioEcosystem](AppDataHardcoded), ZLayer.succeed(DevConsole.word))
+    logic.provide(ZLayer.succeed(DevConsole.word))
 
 end DependencyExplorer
