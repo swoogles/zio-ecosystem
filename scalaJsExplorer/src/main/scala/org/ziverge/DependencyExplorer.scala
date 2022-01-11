@@ -116,7 +116,12 @@ object DependencyViewerLaminar:
                               td(
                                 div(
                                   UpToDateIcon(projectIsUpToDate),
-                                  span(cls := "is-size-4", project.artifactIdQualifiedWhenNecessary)
+                                  span(cls := "is-size-4", 
+                                    project.githubUrl match {
+                                      case Some(githubUrl) => a(href := githubUrl, project.artifactIdQualifiedWhenNecessary)
+                                      case None => project.artifactIdQualifiedWhenNecessary
+                                    }
+                                  )
                                 )
                               ),
                               // td(

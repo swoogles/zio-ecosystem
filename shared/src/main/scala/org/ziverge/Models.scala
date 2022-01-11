@@ -13,7 +13,7 @@ import upickle.default.{macroRW, ReadWriter as RW, *}
 import java.time.{OffsetDateTime, ZoneId}
 
 class Models {}
-case class Project(group: String, artifactId: String):
+case class Project(group: String, artifactId: String, githubUrl: Option[String] = None):
   val groupUrl = group.replaceAll("\\.", "/")
   def versionedArtifactId(scalaVersion: ScalaVersion) =
     artifactId + "_" + scalaVersion.mvnFriendlyVersion
@@ -122,7 +122,14 @@ object ConnectedProjectData:
         dependendencyGraph
           .nodes
           .find(_.value == projectMetaData.project)
-          .toRight(new Exception("Missing value in dependency graph"))
+          .toRight{
+            new Exception(s"Missing value in dependency graph for ${projectMetaData.project}. Available nodes: \n" + 
+              dependendencyGraph
+                .nodes
+                .map(_.value)
+                .filter(_.toString.contains("mag"))
+            )
+          }
       dependents = node.diSuccessors.map(_.value)
       typedDependants <-
         Right(
