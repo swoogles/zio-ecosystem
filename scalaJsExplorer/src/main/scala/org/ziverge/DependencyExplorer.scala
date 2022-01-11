@@ -30,8 +30,6 @@ object DependencyViewerLaminar:
 
   def constructPage(
       busPageInfo: DependencyExplorerPage,
-      pageUpdateObserver: Observer[DependencyExplorerPage],
-      selectZioObserver: Observer[DependencyExplorerPage],
       viewUpdate: Observer[String],
       fullAppData: AppDataAndEffects
   ) =
@@ -101,12 +99,19 @@ object DependencyViewerLaminar:
                                   )
                                 case Dependents =>
                                   dependants
-                                    .map(_.project.artifactIdQualifiedWhenNecessary)
-                                    .map(div(_))
+                                    .map(dep => 
+                                      div(
+                                        cls := s"box ${colorUpToDate(onLatestZio(dep))}",
+                                        dep.project.artifactIdQualifiedWhenNecessary
+                                        )
+                                      )
                                 case Blockers =>
                                   blockers
-                                    .map(_.project.artifactIdQualifiedWhenNecessary)
-                                    .map(div(_))
+                                    .map(dep => 
+                                      div(
+                                        cls := s"box ${colorUpToDate(onLatestZio(dep))}",
+                                      dep.project.artifactIdQualifiedWhenNecessary)
+                                    )
                             tr(
                               td(
                                 div(
@@ -164,14 +169,6 @@ object DependencyViewerLaminar:
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
 
     val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
-    val pageUpdateObserver =
-      Observer[DependencyExplorerPage](onNext =
-        page => router.pushState(page.changeTarget("fake.click.project"))
-      )
-    val selectZioObserver =
-      Observer[DependencyExplorerPage](onNext =
-        page => router.pushState(page.changeTarget("dev.zio.zio"))
-      )
     def viewUpdate(page: DependencyExplorerPage) =
       Observer[String](onNext =
         dataView =>
@@ -183,15 +180,12 @@ object DependencyViewerLaminar:
     def refreshObserver(page: DependencyExplorerPage) =
       Observer[Int](onNext =
         dataView => println("should refresh here")
-      // DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
       )
 
     def printTextInput(page: DependencyExplorerPage) =
       Observer[String](onNext =
         text =>
           router.pushState(page.changeTarget(text))
-          println("Text: " + text)
-      // DataView.fromString(dataView).foreach(x => router.pushState(page.copy(dataView = x)))
       )
 
     def upToDateCheckbox(page: DependencyExplorerPage) =
@@ -268,8 +262,6 @@ object DependencyViewerLaminar:
             ),
             constructPage(
               busPageInfo,
-              pageUpdateObserver,
-              selectZioObserver,
               viewUpdate(busPageInfo),
               fullAppData
             )
@@ -284,7 +276,6 @@ end DependencyViewerLaminar
 
 import com.raquo.laminar.api.L.Signal
 case class AppDataAndEffects(
-    // TODO Get rid of redundant first field
     dataSignal: Signal[Option[FullAppData]]
 )
 

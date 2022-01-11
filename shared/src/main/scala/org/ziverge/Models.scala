@@ -252,7 +252,7 @@ object FullAppData:
                   project
                     .blockers
                     .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-            artifactMatches && introspectedDataMatches
+            artifactMatches || introspectedDataMatches
         case None =>
           project => true
 
