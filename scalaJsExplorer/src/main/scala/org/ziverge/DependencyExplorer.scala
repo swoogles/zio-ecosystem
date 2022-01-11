@@ -33,6 +33,16 @@ object DependencyViewerLaminar:
       viewUpdate: Observer[String],
       fullAppData: AppDataAndEffects
   ) =
+    def upToDateCheckbox(page: DependencyExplorerPage) =
+      Observer[String](onNext =
+        checkboxState =>
+
+          println("Clicked on artifactId : " + checkboxState)
+          val element = dom.document.getElementById(checkboxState)
+          if (dom.document.getElementById(checkboxState) != null)
+            element.scrollIntoView(top = true)
+      )
+
     div(
       div(
         child <--
@@ -94,6 +104,7 @@ object DependencyViewerLaminar:
                                   dependencies.map(dep =>
                                     div(
                                       cls := s"box ${colorUpToDate(onLatestZio(dep))}",
+                                      onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) --> upToDateCheckbox(busPageInfo),
                                       dep.project.artifactIdQualifiedWhenNecessary
                                     )
                                   )
@@ -113,6 +124,7 @@ object DependencyViewerLaminar:
                                       dep.project.artifactIdQualifiedWhenNecessary)
                                     )
                             tr(
+                              idAttr := project.artifactIdQualifiedWhenNecessary,
                               td(
                                 div(
                                   UpToDateIcon(projectIsUpToDate),

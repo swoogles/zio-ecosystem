@@ -122,7 +122,7 @@ object ConnectedProjectData:
         dependendencyGraph
           .nodes
           .find{node => 
-            println("Node.value: " + node.value)
+            // TODO Do we need this?
             val nodeProject: Project = node.value.asInstanceOf[Project]
             nodeProject.artifactId == projectMetaData.project.artifactId && nodeProject.group == projectMetaData.project.group
             }
