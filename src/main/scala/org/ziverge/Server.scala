@@ -47,6 +47,19 @@ object DependencyServer extends App:
             }
           Response.http(data = content)
         }
+      case Method.GET -> Root / "images" / path =>
+        ZIO.succeed {
+          val content =
+            HttpData.fromStream {
+              ZStream
+                .fromFile(
+                  Paths.get(s"src/main/resources/images/$path")
+                )
+                .refineOrDie(_ => ???)
+                .provideLayer(zio.blocking.Blocking.live)
+            }
+          Response.http(data = content)
+        }
       case Method.GET -> !! / "projectData" =>
         val appData      = CrappySideEffectingCache.fullAppData.get
         val responseText = Chunk.fromArray(write(appData).getBytes)

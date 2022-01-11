@@ -142,15 +142,15 @@ object DependencyViewerLaminar:
                             dependants,
                             zioDep
                           ) =>
+                        val projectIsUpToDate = 
+                          dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
+
                         // TODO Colorize out-of-date dependencies
                         val dataColumn: Set[Div] =
                           busPageInfo.dataView match
                             case Dependencies =>
-                              dependencies.foreach(dep =>
-                                println("On latest ZIO: " + onLatestZio(dep))
-                                )
                               dependencies.map(dep => div(
-                                cls := "box",
+                                cls := s"box ${colorUpToDate(onLatestZio(dep))}",
                                 backgroundColor := 
                                   (if (onLatestZio(dep))
                                     "darkseagreen"
@@ -163,20 +163,23 @@ object DependencyViewerLaminar:
                             case Blockers =>
                               blockers.map(_.project.artifactIdQualifiedWhenNecessary).map(div(_))
                         tr(
-                          td(cls:="is-size-4", project.artifactIdQualifiedWhenNecessary),
+                          td(div(
+                            span(cls:="icon",
+                              img(src := 
+                                (if (projectIsUpToDate)
+                                  "/images/glyphicons-basic-739-check.svg"
+                                else
+                                  "/images/glyphicons-basic-847-square-alert.svg"
+                                )),
+                              ),
+                            span(cls:="is-size-4", project.artifactIdQualifiedWhenNecessary))),
                           // td(
                           //   version.renderForWeb
                           // ), 
                           td(
                             span(
-                                cls := "box",
-                                backgroundColor := 
-                                  (if (onLatestZioDep(zioDep))
-                                    "darkseagreen"
-                                  else
-                                    "orange"),
-
-                            zioDep.map(_.zioDep.version).getOrElse("N/A"))
+                                cls := s"box ${colorUpToDate(onLatestZioDep(zioDep))}",
+                                zioDep.map(_.zioDep.version).getOrElse("N/A"))
                             ),
                           td(div(dataColumn.toSeq))
                         )
@@ -191,6 +194,12 @@ object DependencyViewerLaminar:
       // button("Select ZIO", onClick.mapTo(busPageInfo) --> selectZioObserver)
     )
   end constructPage
+
+  def colorUpToDate(upToDate: Boolean) =
+                                  (if (upToDate)
+                                    "has-background-primary"
+                                  else
+                                    "has-background-danger")
 
   def labelledInput(labelContent: String, inputElement: ReactiveHtmlElement[dom.html.Element]) =
     // Param Type: DomHtmlElement
