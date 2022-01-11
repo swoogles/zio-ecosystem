@@ -163,7 +163,7 @@ object DependencyViewerLaminar:
                             case Blockers =>
                               blockers.map(_.project.artifactIdQualifiedWhenNecessary).map(div(_))
                         tr(
-                          td(project.artifactIdQualifiedWhenNecessary),
+                          td(cls:="is-size-4", project.artifactIdQualifiedWhenNecessary),
                           // td(
                           //   version.renderForWeb
                           // ), 
@@ -244,7 +244,16 @@ object DependencyViewerLaminar:
 
 //    val clickBus = new EventBus[]
     div(
-      h2(cls := "title is-2", "Zio Ecosystem"),
+      section(cls:="hero is-primary",
+        div(cls:="hero-body",
+          p(cls:="title",
+            "ZIO Ecosystem"
+          ),
+          p(cls:="subtitle",
+            "Check which projects are on the latest and greatest version of ZIO!"
+          )
+        )
+      ),
       child <--
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
           val observer = refreshObserver(busPageInfo)
