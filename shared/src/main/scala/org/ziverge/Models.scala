@@ -44,7 +44,7 @@ object VersionedProject:
       )
       .getOrElse(project)
 
-case class ProjectMetaData(project: Project, version: String, dependencies: Set[VersionedProject]):
+case class ProjectMetaData(project: Project, version: String, dependencies: Seq[VersionedProject]):
   val zioDep: Option[VersionedProject] =
     dependencies
       .find(project => project.project.artifactId == "zio" && project.project.group == "dev.zio")
@@ -54,7 +54,7 @@ object ProjectMetaData:
   implicit val rw: RW[ProjectMetaData] = macroRW
   def withZioDependenciesOnly(
       project: VersionedProject,
-      dependencies: Set[VersionedProject]
+      dependencies: Seq[VersionedProject]
   ): ProjectMetaData =
     ProjectMetaData(project.project, project.version.toString, dependencies.filter(isAZioLibrary))
 
@@ -66,7 +66,7 @@ object ProjectMetaData:
       case Some(value) =>
         Right(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
       case None =>
-        val zioDeps: Set[VersionedProject] =
+        val zioDeps: Seq[VersionedProject] =
           projectMetaData
             .dependencies
             .flatMap(dependency =>
@@ -101,9 +101,9 @@ object ZioDep:
 case class ConnectedProjectData(
     project: Project,
     version: Version,
-    dependencies: Set[ProjectMetaData],
-    blockers: Set[ProjectMetaData],
-    dependants: Set[ProjectMetaData],
+    dependencies: Seq[ProjectMetaData],
+    blockers: Seq[ProjectMetaData],
+    dependants: Seq[ProjectMetaData],
     zioDep: Option[ZioDep],
     latestZio: Version
 )
@@ -121,7 +121,11 @@ object ConnectedProjectData:
       node <-
         dependendencyGraph
           .nodes
-          .find(_.value == projectMetaData.project)
+          .find{node => 
+            println("Node.value: " + node.value)
+            val nodeProject: Project = node.value.asInstanceOf[Project]
+            nodeProject.artifactId == projectMetaData.project.artifactId && nodeProject.group == projectMetaData.project.group
+            }
           .toRight{
             new Exception(s"Missing value in dependency graph for ${projectMetaData.project}. Available nodes: \n" + 
               dependendencyGraph
@@ -138,7 +142,7 @@ object ConnectedProjectData:
               .find(_.project == dependent)
               .toRight(new Exception("Missing projects metadata entry"))
               .toSeq
-          )
+          ).toSeq
         )
       typedDependencies <-
         Right(
@@ -163,8 +167,8 @@ object ConnectedProjectData:
     yield ConnectedProjectData(
       projectMetaData.project,
       projectMetaData.typedVersion,
-      typedDependencies.toSet,
-      blockers.toSet,
+      typedDependencies,
+      blockers,
       typedDependants,
       zioDep,
       currentZioVersion

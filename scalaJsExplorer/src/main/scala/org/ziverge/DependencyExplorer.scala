@@ -88,7 +88,7 @@ object DependencyViewerLaminar:
                               dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
 
                             // TODO Colorize out-of-date dependencies
-                            val dataColumn: Set[Div] =
+                            val dataColumn: Seq[Div] =
                               busPageInfo.dataView match
                                 case Dependencies =>
                                   dependencies.map(dep =>

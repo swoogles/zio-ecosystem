@@ -81,5 +81,5 @@ object Maven:
         VersionedProject
           .stripped(Project((node \ "groupId").text, (node \ "artifactId").text), version)
       }
-      .toSet
+      .toSeq
 end Maven
