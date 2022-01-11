@@ -4,7 +4,7 @@ import upickle.default.{macroRW, ReadWriter as RW, *}
 
 case class Version(value: String) extends Comparable[Version]:
   def compareTo(other: Version) = Version.compareVersions(this, other)
-  val renderForWeb =
+  val renderForWeb = // TODO Why does Version show up after the live data load?
     if (!value.contains("."))
       "Hash Snapshot"
     else

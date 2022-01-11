@@ -50,19 +50,13 @@ object DependencyViewerLaminar:
     val onLatestZioDep: Option[ZioDep] => Boolean =
       zioDep => zioDep
             .fold(true)(zDep =>
-              println("Project ZIO version: " + zDep.zioDep.typedVersion + "  Current ZIO Version: " + fullAppData.fullAppData.currentZioVersion)
-              val res = zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) == 0
-              println("Res: " + res)
-              res
+              zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) == 0
             )
 
     val onLatestZio: ProjectMetaData => Boolean =
       p => p.zioDep
             .fold(true)(zDep =>
-              println("Project ZIO version: " + zDep.typedVersion + "  Current ZIO Version: " + fullAppData.fullAppData.currentZioVersion)
-              val res = zDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) == 0
-              println("Res: " + res)
-              res
+              zDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) == 0
             )
 
     val onLatestZioConnected: ConnectedProjectData => Boolean =
@@ -74,11 +68,9 @@ object DependencyViewerLaminar:
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (busPageInfo.filterUpToDateProjects)
-          println("Only getting out-of-date projects")
           p.blockers.nonEmpty ||
           onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
         else
-          println("Accepting all projects")
           true
 
     div(
@@ -137,7 +129,7 @@ object DependencyViewerLaminar:
                   tbody(
                     tr(
                       th("Artifact"),
-                      th("Latest Release"),
+                      // th("Latest Release"),
                       th("Depends on ZIO Version"),
                       th(dynamicHeader)
                     ),
@@ -171,9 +163,9 @@ object DependencyViewerLaminar:
                               blockers.map(_.project.artifactIdQualifiedWhenNecessary).map(div(_))
                         tr(
                           td(project.artifactIdQualifiedWhenNecessary),
-                          td(
-                            version.renderForWeb
-                          ), // TODO Why does Version show up after the live data load?
+                          // td(
+                          //   version.renderForWeb
+                          // ), 
                           td(
                                 backgroundColor := 
                                   (if (onLatestZioDep(zioDep))
