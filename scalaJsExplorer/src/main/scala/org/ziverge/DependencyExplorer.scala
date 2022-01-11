@@ -43,8 +43,6 @@ object DependencyViewerLaminar:
       viewUpdate: Observer[String],
       fullAppData: AppDataAndEffects
   ) =
-    val filterCoreProjects: ConnectedProjectData => Boolean =
-      p => !Data.coreProjects.contains(p.project)
 
 
     val onLatestZioDep: Option[ZioDep] => Boolean =
@@ -59,20 +57,6 @@ object DependencyViewerLaminar:
               zDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) == 0
             )
 
-    val onLatestZioConnected: ConnectedProjectData => Boolean =
-      p => p.zioDep
-            .fold(true)(zDep =>
-              zDep.zioDep.typedVersion.compareTo(fullAppData.fullAppData.currentZioVersion) < 0 // TODO Fix comparison?
-            )
-
-    val upToDate: ConnectedProjectData => Boolean =
-      p =>
-        if (busPageInfo.filterUpToDateProjects)
-          p.blockers.nonEmpty ||
-          onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
-        else
-          true
-
     div(
       div(
         child <--
@@ -80,58 +64,18 @@ object DependencyViewerLaminar:
             .dataSignal
             .map { fullAppDataLive =>
 
-              val userFilter: ConnectedProjectData => Boolean =
-                busPageInfo.targetProject match
-                  case Some(filter) =>
-                    project =>
+              val manipulatedData: Seq[ConnectedProjectData] =
+                FullAppData.filterData(fullAppDataLive, busPageInfo.dataView, busPageInfo.filterUpToDateProjects, busPageInfo.targetProject)
 
-                      val normalizedFilter = filter.toLowerCase
 
-                      val artifactMatches =
-                        project.project.artifactId.toLowerCase.contains(normalizedFilter)
-                      // TODO Make this a function in a better spot
-                      // project.dependants.exists(_.project.artifactId.contains(filter)) ||
-                      busPageInfo.dataView match
-                        case Dependencies =>
-                          artifactMatches ||
-                            project
-                              .dependencies
-                              .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-                        case Dependents =>
-                          artifactMatches ||
-                            project
-                              .dependants
-                              .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-                        case Blockers =>
-                          artifactMatches ||
-                            project
-                              .blockers
-                              .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-                  case None =>
-                    project => true
-
-              val manipulatedData =
-                fullAppDataLive
-                  .connected
-                  .filter(p => upToDate(p) && userFilter(p) && filterCoreProjects(p))
-
-              val dynamicHeader =
-                busPageInfo.dataView match
-                  case Dependencies =>
-                    "Dependencies"
-                  case Dependents =>
-                    "Dependents"
-                  case Blockers =>
-                    "Blockers"
               div(
                 table(
                   cls := "table",
                   tbody(
                     tr(
                       th("Artifact"),
-                      // th("Latest Release"),
                       th("Depends on ZIO Version"),
-                      th(dynamicHeader)
+                      th(busPageInfo.dataView.toString)
                     ),
                     manipulatedData.map {
                       case ConnectedProjectData(
@@ -199,7 +143,7 @@ object DependencyViewerLaminar:
                                   (if (upToDate)
                                     "has-background-primary"
                                   else
-                                    "has-background-danger")
+                                    "has-background-warning")
 
   def labelledInput(labelContent: String, inputElement: ReactiveHtmlElement[dom.html.Element]) =
     // Param Type: DomHtmlElement

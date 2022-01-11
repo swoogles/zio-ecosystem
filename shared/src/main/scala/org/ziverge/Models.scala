@@ -207,3 +207,58 @@ object FullAppData:
   // scalax.collection.Graph[org.ziverge.Project, scalax.collection.GraphEdge.DiEdge]
   implicit val scalaVersion: RW[ScalaVersion] = macroRW
   implicit val rw: RW[FullAppData]            = macroRW
+
+
+  def filterData(fullAppData: FullAppData, dataView: DataView, filterUpToDateProjects: Boolean, userFilterFromPage: Option[String]) =
+    import org.ziverge.DataView.*
+    val onLatestZioConnected: ConnectedProjectData => Boolean =
+      p => p.zioDep
+            .fold(true)(zDep =>
+              zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) < 0 // TODO Fix comparison?
+            )
+
+    val filterCoreProjects: ConnectedProjectData => Boolean =
+      p => !Data.coreProjects.contains(p.project)
+
+    val userFilter: ConnectedProjectData => Boolean =
+      userFilterFromPage match
+        case Some(filter) =>
+          project =>
+
+            val normalizedFilter = filter.toLowerCase
+
+            val artifactMatches =
+              project.project.artifactId.toLowerCase.contains(normalizedFilter)
+            // TODO Make this a function in a better spot
+            // project.dependants.exists(_.project.artifactId.contains(filter)) ||
+            dataView match
+              case Dependencies =>
+                artifactMatches ||
+                  project
+                    .dependencies
+                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+              case Dependents =>
+                artifactMatches ||
+                  project
+                    .dependants
+                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+              case Blockers =>
+                artifactMatches ||
+                  project
+                    .blockers
+                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+        case None =>
+          project => true
+
+    val upToDate: ConnectedProjectData => Boolean =
+      p =>
+        if (filterUpToDateProjects)
+          p.blockers.nonEmpty ||
+          onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
+        else
+          true && !Data.coreProjects.contains(p.project)
+
+
+    fullAppData
+      .connected
+      .filter(p => upToDate(p) && userFilter(p) && filterCoreProjects(p))
