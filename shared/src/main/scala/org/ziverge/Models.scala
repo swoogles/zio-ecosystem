@@ -60,23 +60,27 @@ object ProjectMetaData:
 
   def getUnderlyingZioDep(
       projectMetaData: ProjectMetaData,
-      allProjectsMetaData: Seq[ProjectMetaData]
+      allProjectsMetaData: Seq[ProjectMetaData],
+      currentZioVersion: Version
   ): Either[Throwable, Option[ZioDep]] =
     projectMetaData.zioDep match
       case Some(value) =>
         Right(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
       case None =>
-        val zioDeps: Seq[VersionedProject] =
-          projectMetaData
-            .dependencies
-            .flatMap(dependency =>
-              allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep)
-            )
-        val res: Option[VersionedProject] =
-          zioDeps
-            // .flatten
-            .minByOption(_.typedVersion)
-        Right(res.map(project => Some(ZioDep(project, DependencyType.Transitive))).getOrElse(None))
+        if(Data.coreProjects.contains( projectMetaData.project))
+          Right(Some(ZioDep(zioDep = VersionedProject(Data.zioCore, currentZioVersion.value), dependencyType = DependencyType.Direct)))
+        else
+          val zioDeps: Seq[VersionedProject] =
+            projectMetaData
+              .dependencies
+              .flatMap(dependency =>
+                allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep)
+              )
+          val res: Option[VersionedProject] =
+            zioDeps
+              // .flatten
+              .minByOption(_.typedVersion)
+          Right(res.map(project => Some(ZioDep(project, DependencyType.Transitive))).getOrElse(None))
 end ProjectMetaData
 
 enum DependencyType:
@@ -155,7 +159,7 @@ object ConnectedProjectData:
                 .toSeq
             )
         )
-      zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData)
+      zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
       blockers =
         typedDependencies.filter(p =>
           p.zioDep.map(_.typedVersion) match
@@ -236,9 +240,6 @@ object FullAppData:
               0 // TODO Fix comparison?
           )
 
-    val filterCoreProjects: ConnectedProjectData => Boolean =
-      p => !Data.coreProjects.contains(p.project)
-
     val userFilter: ConnectedProjectData => Boolean =
       userFilterFromPage match
         case Some(filter) =>
@@ -272,8 +273,8 @@ object FullAppData:
         if (filterUpToDateProjects)
           p.blockers.nonEmpty || onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
         else
-          true && !Data.coreProjects.contains(p.project)
+          true
 
-    fullAppData.connected.filter(p => upToDate(p) && userFilter(p) && filterCoreProjects(p))
+    fullAppData.connected.filter(p => upToDate(p) && userFilter(p))
   end filterData
 end FullAppData
