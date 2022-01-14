@@ -34,7 +34,11 @@ object Data:
         Project("dev.zio", "zio-aws-core", Some("https://github.com/zio/zio-aws")),
         Project("dev.zio", "zio-prelude"),
         Project("dev.zio", "zio-prelude-macros"),
-        Project("dev.zio", "zio-interop-reactivestreams", Some("https://github.com/zio/interop-reactive-streams")),
+        Project(
+          "dev.zio",
+          "zio-interop-reactivestreams",
+          Some("https://github.com/zio/interop-reactive-streams")
+        ),
         Project("dev.zio", "zio-interop-scalaz7x", Some("https://github.com/zio/interop-scalaz")),
         Project("dev.zio", "zio-interop-twitter", Some("https://github.com/zio/interop-twitter")),
         Project("nl.vroste", "zio-amqp", Some("https://github.com/svroonland/zio-amqp")),
@@ -44,8 +48,16 @@ object Data:
         Project("com.github.poslegm", "munit-zio", Some("https://github.com/poslegm/munit-zio")),
         Project("com.coralogix", "zio-k8s-client", Some("https://github.com/coralogix/zio-k8s")),
         Project("com.softwaremill.sttp.client3", "zio"),
-        Project("com.softwaremill.sttp.client3", "httpclient-backend-zio", Some("https://github.com/softwaremill/sttp")),
-        Project("com.softwaremill.sttp.client3", "async-http-client-backend-zio", Some("https://github.com/softwaremill/sttp")),
+        Project(
+          "com.softwaremill.sttp.client3",
+          "httpclient-backend-zio",
+          Some("https://github.com/softwaremill/sttp")
+        ),
+        Project(
+          "com.softwaremill.sttp.client3",
+          "async-http-client-backend-zio",
+          Some("https://github.com/softwaremill/sttp")
+        ),
         Project("com.softwaremill.sttp.shared", "zio"),
         Project("io.d11", "zhttp", Some("https://github.com/dream11/zio-http")),
         Project("dev.zio", "zio-interop-cats", Some("https://github.com/zio/interop-cats")),
@@ -62,8 +74,16 @@ object Data:
         Project("dev.zio", "zio-opentelemetry", Some("https://github.com/zio/zio-telemetry")),
         Project("dev.zio", "zio-opentracing", Some("https://github.com/zio/zio-telemetry")),
         Project("io.github.ollls", "zio-tls-http", Some("https://github.com/ollls/zio-tls-http")),
-        Project("com.vladkopanev", "zio-saga-core", Some("https://github.com/VladKopanev/zio-saga")),
-        Project("io.scalac", "zio-slick-interop", Some("https://github.com/ScalaConsultants/zio-slick-interop")),
+        Project(
+          "com.vladkopanev",
+          "zio-saga-core",
+          Some("https://github.com/VladKopanev/zio-saga")
+        ),
+        Project(
+          "io.scalac",
+          "zio-slick-interop",
+          Some("https://github.com/ScalaConsultants/zio-slick-interop")
+        ),
         Project("dev.zio", "zio-sqs", Some("https://github.com/zio/zio-sqs")),
         Project("dev.zio", "zio-webhooks", Some("https://github.com/zio/zio-webhooks")),
         // Project("com.github.jczuchnowski", "zio-pulsar"), // Scala 3 Only
@@ -71,8 +91,16 @@ object Data:
         Project("nl.vroste", "zio-kinesis", Some("https://github.com/svroonland/zio-kinesis")),
         Project("io.getquill", "quill-zio"),
         Project("io.getquill", "quill-jdbc-zio"),
-        Project("io.github.gaelrenoux", "tranzactio", Some("https://github.com/gaelrenoux/tranzactio")),
-        Project("info.senia", "zio-test-akka-http", Some("https://github.com/senia-psm/zio-test-akka-http")),
+        Project(
+          "io.github.gaelrenoux",
+          "tranzactio",
+          Some("https://github.com/gaelrenoux/tranzactio")
+        ),
+        Project(
+          "info.senia",
+          "zio-test-akka-http",
+          Some("https://github.com/senia-psm/zio-test-akka-http")
+        ),
         Project("io.github.neurodyne", "zio-arrow", Some("https://github.com/zio-mesh/zio-arrow"))
       ).sortBy(_.artifactId)
 

@@ -28,6 +28,144 @@ object DependencyViewerLaminar:
 
   private val router = DependencyExplorerRouting.router
 
+  def ExpandableProjectCard(
+      project: ConnectedProjectData,
+      busPageInfo: DependencyExplorerPage,
+      fullAppDataLive: FullAppData
+  ) =
+
+    val toggleContentVisibility =
+      Observer[org.scalajs.dom.html.Anchor](onNext =
+        anchor =>
+          println("Click click boom.")
+          anchor
+            .parentElement
+            .parentElement
+            .querySelector(".card-content")
+            .classList
+            .toggle("is-hidden")
+      // router.pushState(page.copy(filterUpToDateProjects = checkboxState))
+      )
+
+    def upToDateCheckbox(page: DependencyExplorerPage) =
+      Observer[String](onNext =
+        checkboxState =>
+
+          println("Clicked on artifactId : " + checkboxState)
+          val element = dom.document.getElementById(checkboxState)
+          if (dom.document.getElementById(checkboxState) != null)
+            element.scrollIntoView(top = true)
+      )
+    div(
+      section(
+        cls := "section",
+        div(
+          cls := "container",
+          div(
+            cls := "card is-fullwidth",
+            header(
+              cls := "card-header",
+              p(cls := "card-header-title", "Card #1"),
+              a(
+                cls := "card-header-icon card-toggle",
+                inContext { thisNode =>
+                  val blah: org.scalajs.dom.html.Anchor = thisNode.ref
+                  onClick.mapTo(thisNode.ref) --> toggleContentVisibility
+                },
+                // onClick := ( click => ???),
+                i(cls := "fa fa-angle-down")
+              )
+            ),
+            div(
+              cls := "card-content is-hidden",
+              div(
+                cls := "content",
+                project match
+                  case ConnectedProjectData(
+                        project,
+                        version,
+                        dependencies,
+                        blockers,
+                        dependants,
+                        zioDep,
+                        latestZio // TODO Use
+                      ) =>
+                    val onLatestZioDep: Option[ZioDep] => Boolean =
+                      zioDep =>
+                        zioDep.fold(true)(zDep =>
+                          // TODO
+                          zDep.zioDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+                        )
+
+                    val onLatestZio: ProjectMetaData => Boolean =
+                      p =>
+                        p.zioDep
+                          .fold(true)(zDep =>
+                            zDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+                          )
+                    val projectIsUpToDate =
+                      dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
+
+                    // TODO Colorize out-of-date dependencies
+                    val dataColumn: Seq[Div] =
+                      busPageInfo.dataView match
+                        case Dependencies =>
+                          dependencies.map(dep =>
+                            div(
+                              cls := s"box ${colorUpToDate(onLatestZio(dep))}",
+                              onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
+                                upToDateCheckbox(busPageInfo),
+                              dep.project.artifactIdQualifiedWhenNecessary
+                            )
+                          )
+                        case Dependents =>
+                          dependants.map(dep =>
+                            div(
+                              cls := s"box ${colorUpToDate(onLatestZio(dep))}",
+                              dep.project.artifactIdQualifiedWhenNecessary
+                            )
+                          )
+                        case Blockers =>
+                          blockers.map(dep =>
+                            div(
+                              cls := s"box ${colorUpToDate(onLatestZio(dep))}",
+                              dep.project.artifactIdQualifiedWhenNecessary
+                            )
+                          )
+                    div(
+                      idAttr := project.artifactIdQualifiedWhenNecessary,
+                      cls    := "columns",
+                      div(
+                        cls := "column",
+                        div(
+                          UpToDateIcon(projectIsUpToDate),
+                          span(
+                            cls := "is-size-4",
+                            project.githubUrl match
+                              case Some(githubUrl) =>
+                                a(href := githubUrl, project.artifactIdQualifiedWhenNecessary)
+                              case None =>
+                                project.artifactIdQualifiedWhenNecessary
+                          )
+                        )
+                      ),
+                      div(
+                        cls := "column",
+                        span(
+                          cls := s"box ${colorUpToDate(onLatestZioDep(zioDep))}",
+                          zioDep.map(_.zioDep.version).getOrElse("N/A")
+                        )
+                      ),
+                      div(cls := "column", div(dataColumn.toSeq))
+                    )
+              )
+            )
+          )
+        )
+      )
+    )
+  end ExpandableProjectCard
+
   def constructPage(
       busPageInfo: DependencyExplorerPage,
       viewUpdate: Observer[String],
@@ -53,7 +191,6 @@ object DependencyViewerLaminar:
                 case None =>
                   div("No info to display!")
                 case Some(fullAppDataLive) =>
-
                   val manipulatedData: Seq[ConnectedProjectData] =
                     FullAppData.filterData(
                       fullAppDataLive,
@@ -64,91 +201,15 @@ object DependencyViewerLaminar:
 
                   div(
                     div(
-                        // tr(
-                        //   th("Artifact"),
-                        //   th("Depends on ZIO Version"),
-                        //   th(busPageInfo.dataView.toString)
-                        // ),
-                        manipulatedData.map {
-                          case ConnectedProjectData(
-                                project,
-                                version,
-                                dependencies,
-                                blockers,
-                                dependants,
-                                zioDep,
-                                latestZio // TODO Use
-                              ) =>
-                            val onLatestZioDep: Option[ZioDep] => Boolean =
-                              zioDep =>
-                                zioDep.fold(true)(zDep =>
-                                  // TODO
-                                  zDep.zioDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
-                                )
+                      // tr(
+                      //   th("Artifact"),
+                      //   th("Depends on ZIO Version"),
+                      //   th(busPageInfo.dataView.toString)
+                      // ),
+                      manipulatedData.map { connectedProject =>
+                        ExpandableProjectCard(connectedProject, busPageInfo, fullAppDataLive)
 
-                            val onLatestZio: ProjectMetaData => Boolean =
-                              p =>
-                                p.zioDep
-                                  .fold(true)(zDep =>
-                                    zDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
-                                  )
-                            val projectIsUpToDate =
-                              dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
-
-                            // TODO Colorize out-of-date dependencies
-                            val dataColumn: Seq[Div] =
-                              busPageInfo.dataView match
-                                case Dependencies =>
-                                  dependencies.map(dep =>
-                                    div(
-                                      cls := s"box ${colorUpToDate(onLatestZio(dep))}",
-                                      onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) --> upToDateCheckbox(busPageInfo),
-                                      dep.project.artifactIdQualifiedWhenNecessary
-                                    )
-                                  )
-                                case Dependents =>
-                                  dependants
-                                    .map(dep => 
-                                      div(
-                                        cls := s"box ${colorUpToDate(onLatestZio(dep))}",
-                                        dep.project.artifactIdQualifiedWhenNecessary
-                                        )
-                                      )
-                                case Blockers =>
-                                  blockers
-                                    .map(dep => 
-                                      div(
-                                        cls := s"box ${colorUpToDate(onLatestZio(dep))}",
-                                      dep.project.artifactIdQualifiedWhenNecessary)
-                                    )
-                            div(
-                              idAttr := project.artifactIdQualifiedWhenNecessary,
-                              cls := "columns",
-                              div(
-                                cls:="column",
-                                div(
-                                  UpToDateIcon(projectIsUpToDate),
-                                  span(cls := "is-size-4", 
-                                    project.githubUrl match {
-                                      case Some(githubUrl) => a(href := githubUrl, project.artifactIdQualifiedWhenNecessary)
-                                      case None => project.artifactIdQualifiedWhenNecessary
-                                    }
-                                  )
-                                )
-                              ),
-                              div(
-                                cls:="column",
-                                span(
-                                  cls := s"box ${colorUpToDate(onLatestZioDep(zioDep))}",
-                                  zioDep.map(_.zioDep.version).getOrElse("N/A")
-                                )
-                              ),
-                              div(
-                                cls:="column",
-                                div(dataColumn.toSeq)
-                                )
-                            )
-                        }
+                      }
                     )
                   )
 
@@ -195,15 +256,10 @@ object DependencyViewerLaminar:
       )
 
     def refreshObserver(page: DependencyExplorerPage) =
-      Observer[Int](onNext =
-        dataView => println("should refresh here")
-      )
+      Observer[Int](onNext = dataView => println("should refresh here"))
 
     def printTextInput(page: DependencyExplorerPage) =
-      Observer[String](onNext =
-        text =>
-          router.pushState(page.changeTarget(text))
-      )
+      Observer[String](onNext = text => router.pushState(page.changeTarget(text)))
 
     def upToDateCheckbox(page: DependencyExplorerPage) =
       Observer[Boolean](onNext =
@@ -277,11 +333,7 @@ object DependencyViewerLaminar:
                   .toSeq
               )
             ),
-            constructPage(
-              busPageInfo,
-              viewUpdate(busPageInfo),
-              fullAppData
-            )
+            constructPage(busPageInfo, viewUpdate(busPageInfo), fullAppData)
           )
         )
     )
@@ -292,9 +344,7 @@ object DependencyViewerLaminar:
 end DependencyViewerLaminar
 
 import com.raquo.laminar.api.L.Signal
-case class AppDataAndEffects(
-    dataSignal: Signal[Option[FullAppData]]
-)
+case class AppDataAndEffects(dataSignal: Signal[Option[FullAppData]])
 
 object DependencyExplorer extends ZIOAppDefault:
 
@@ -324,7 +374,6 @@ object DependencyExplorer extends ZIOAppDefault:
         }
     yield ()
 
-  def run =
-    logic.provide(ZLayer.succeed(DevConsole.word))
+  def run = logic.provide(ZLayer.succeed(DevConsole.word))
 
 end DependencyExplorer

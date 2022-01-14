@@ -17,8 +17,7 @@ object DataView:
   ): Option[DataView] = // TODO Decide whether to do with multiple args
     args.flatMap(fromString).headOption
 
-  def fromString(args: String): Option[DataView] =
-    values.find(_.toString == args)
+  def fromString(args: String): Option[DataView] = values.find(_.toString == args)
 
   import upickle.default.ReadWriter.join
 

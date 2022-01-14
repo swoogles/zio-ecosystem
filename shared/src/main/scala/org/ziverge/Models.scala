@@ -67,8 +67,15 @@ object ProjectMetaData:
       case Some(value) =>
         Right(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
       case None =>
-        if(Data.coreProjects.contains( projectMetaData.project))
-          Right(Some(ZioDep(zioDep = VersionedProject(Data.zioCore, currentZioVersion.value), dependencyType = DependencyType.Direct)))
+        if (Data.coreProjects.contains(projectMetaData.project))
+          Right(
+            Some(
+              ZioDep(
+                zioDep = VersionedProject(Data.zioCore, currentZioVersion.value),
+                dependencyType = DependencyType.Direct
+              )
+            )
+          )
         else
           val zioDeps: Seq[VersionedProject] =
             projectMetaData
@@ -80,7 +87,9 @@ object ProjectMetaData:
             zioDeps
               // .flatten
               .minByOption(_.typedVersion)
-          Right(res.map(project => Some(ZioDep(project, DependencyType.Transitive))).getOrElse(None))
+          Right(
+            res.map(project => Some(ZioDep(project, DependencyType.Transitive))).getOrElse(None)
+          )
 end ProjectMetaData
 
 enum DependencyType:
@@ -125,28 +134,29 @@ object ConnectedProjectData:
       node <-
         dependendencyGraph
           .nodes
-          .find{node => 
+          .find { node =>
             // TODO Do we need this?
             val nodeProject: Project = node.value.asInstanceOf[Project]
-            nodeProject.artifactId == projectMetaData.project.artifactId && nodeProject.group == projectMetaData.project.group
-            }
-          .toRight{
-            new Exception(s"Missing value in dependency graph for ${projectMetaData.project}. Available nodes: \n" + 
-              dependendencyGraph
-                .nodes
-                .map(_.value)
-                .filter(_.toString.contains("mag"))
+            nodeProject.artifactId == projectMetaData.project.artifactId &&
+            nodeProject.group == projectMetaData.project.group
+          }
+          .toRight {
+            new Exception(
+              s"Missing value in dependency graph for ${projectMetaData.project}. Available nodes: \n" +
+                dependendencyGraph.nodes.map(_.value).filter(_.toString.contains("mag"))
             )
           }
       dependents = node.diSuccessors.map(_.value)
       typedDependants <-
         Right(
-          dependents.flatMap(dependent =>
-            allProjectsMetaData
-              .find(_.project == dependent)
-              .toRight(new Exception("Missing projects metadata entry"))
-              .toSeq
-          ).toSeq
+          dependents
+            .flatMap(dependent =>
+              allProjectsMetaData
+                .find(_.project == dependent)
+                .toRight(new Exception("Missing projects metadata entry"))
+                .toSeq
+            )
+            .toSeq
         )
       typedDependencies <-
         Right(
@@ -159,7 +169,8 @@ object ConnectedProjectData:
                 .toSeq
             )
         )
-      zioDep <- ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
+      zioDep <-
+        ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
       blockers =
         typedDependencies.filter(p =>
           p.zioDep.map(_.typedVersion) match
