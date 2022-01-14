@@ -63,14 +63,12 @@ object DependencyViewerLaminar:
                     )
 
                   div(
-                    table(
-                      cls := "table",
-                      tbody(
-                        tr(
-                          th("Artifact"),
-                          th("Depends on ZIO Version"),
-                          th(busPageInfo.dataView.toString)
-                        ),
+                    div(
+                        // tr(
+                        //   th("Artifact"),
+                        //   th("Depends on ZIO Version"),
+                        //   th(busPageInfo.dataView.toString)
+                        // ),
                         manipulatedData.map {
                           case ConnectedProjectData(
                                 project,
@@ -123,9 +121,11 @@ object DependencyViewerLaminar:
                                         cls := s"box ${colorUpToDate(onLatestZio(dep))}",
                                       dep.project.artifactIdQualifiedWhenNecessary)
                                     )
-                            tr(
+                            div(
                               idAttr := project.artifactIdQualifiedWhenNecessary,
-                              td(
+                              cls := "columns",
+                              div(
+                                cls:="column",
                                 div(
                                   UpToDateIcon(projectIsUpToDate),
                                   span(cls := "is-size-4", 
@@ -136,19 +136,19 @@ object DependencyViewerLaminar:
                                   )
                                 )
                               ),
-                              // td(
-                              //   version.renderForWeb
-                              // ),
-                              td(
+                              div(
+                                cls:="column",
                                 span(
                                   cls := s"box ${colorUpToDate(onLatestZioDep(zioDep))}",
                                   zioDep.map(_.zioDep.version).getOrElse("N/A")
                                 )
                               ),
-                              td(div(dataColumn.toSeq))
+                              div(
+                                cls:="column",
+                                div(dataColumn.toSeq)
+                                )
                             )
                         }
-                      )
                     )
                   )
 
