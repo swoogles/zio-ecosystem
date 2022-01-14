@@ -204,7 +204,7 @@ object Render:
         .mkString("\n")
 
   def sbtStyle(project: Project, version: Version) =
-    project.group + "::" + project.artifactId + ":" + version
+    s""" "${project.group}" %% "${project.artifactId}" % "${version.renderForWeb}" """
 
   def sbtStyle(project: Project) = project.group + "::" + project.artifactId
 
