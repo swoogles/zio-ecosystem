@@ -79,7 +79,7 @@ object Maven:
           .split(",")
           .last
         VersionedProject
-          .stripped(Project((node \ "groupId").text, (node \ "artifactId").text), version)
+          .stripped(Project.fromMaven((node \ "groupId").text, (node \ "artifactId").text), version)
       }
       .toSeq
 end Maven

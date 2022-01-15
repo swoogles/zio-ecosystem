@@ -3,7 +3,7 @@ package org.ziverge
 import scala.collection.immutable.HashSet
 
 object Data:
-  val zioCore = Project("dev.zio", "zio")
+  val zioCore = Project("dev.zio", "zio", Some("https://github.com/zio/zio-query"))
   val coreProjects =
     List(
       zioCore,
@@ -28,7 +28,7 @@ object Data:
         Project("dev.zio", "zio-query", Some("https://github.com/zio/zio-query")),
         Project("dev.zio", "zio-schema", Some("https://github.com/zio/zio-schema")),
         Project("dev.zio", "zio-config", Some("https://github.com/zio/zio-config")),
-        Project("dev.zio", "zio-config-typesafe", Some("https://github.com/zio/zio-config")),
+        Project("dev.zio", "zio-config-typesafe"), // , Some("https://github.com/zio/zio-config")),
         Project("dev.zio", "zio-kafka", Some("https://github.com/zio/zio-kafka")),
         Project("dev.zio", "zio-ftp", Some("https://github.com/zio/zio-ftp")),
         Project("dev.zio", "zio-aws-core", Some("https://github.com/zio/zio-aws")),
@@ -59,7 +59,7 @@ object Data:
           Some("https://github.com/softwaremill/sttp")
         ),
         Project("com.softwaremill.sttp.shared", "zio"),
-        Project("io.d11", "zhttp", Some("https://github.com/dream11/zio-http")),
+        Project("io.d11", "zhttp"), // , Some("https://github.com/dream11/zio-http")),
         Project("dev.zio", "zio-interop-cats", Some("https://github.com/zio/interop-cats")),
         Project("dev.zio", "zio-nio", Some("https://github.com/zio/zio-nio")),
         Project("dev.zio", "zio-zmx", Some("https://github.com/zio/zio-zmx")),
