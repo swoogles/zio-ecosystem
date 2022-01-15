@@ -25,10 +25,16 @@ case class Project(group: String, artifactId: String, githubUrl: Option[String] 
 
 object Project:
   def fromMaven(groupId: String, artifactId: String): Project =
-    val strippedProject = VersionedProject.stripScalaVersionFromArtifact(Project(groupId, artifactId))
-    if(artifactId.contains("config"))
-      println("Looking for: "+ groupId + "." + artifactId)
-    Data.projects.find(knownProject => knownProject.group == strippedProject.group && knownProject.artifactId == strippedProject.artifactId)
+    val strippedProject =
+      VersionedProject.stripScalaVersionFromArtifact(Project(groupId, artifactId))
+    if (artifactId.contains("config"))
+      println("Looking for: " + groupId + "." + artifactId)
+    Data
+      .projects
+      .find(knownProject =>
+        knownProject.group == strippedProject.group &&
+          knownProject.artifactId == strippedProject.artifactId
+      )
       .getOrElse(Project(groupId, artifactId))
   implicit val rw: RW[Project] = macroRW
 

@@ -38,11 +38,7 @@ object DependencyViewerLaminar:
       Observer[org.scalajs.dom.html.Element](onNext =
         anchor =>
           println("Click click boom.")
-          anchor
-            .parentElement
-            .querySelector(".card-content")
-            .classList
-            .toggle("is-hidden")
+          anchor.parentElement.querySelector(".card-content").classList.toggle("is-hidden")
       // router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
 
@@ -66,103 +62,126 @@ object DependencyViewerLaminar:
             latestZio // TODO Use
           ) => {
 
-                      val onLatestZioDep: Option[ZioDep] => Boolean =
-                        zioDep =>
-                          zioDep.fold(true)(zDep =>
-                            // TODO
-                            zDep.zioDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) ==
-                              0
-                          )
+        val onLatestZioDep: Option[ZioDep] => Boolean =
+          zioDep =>
+            zioDep.fold(true)(zDep =>
+              // TODO
+              zDep.zioDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+            )
 
-                      val onLatestZio: ProjectMetaData => Boolean =
-                        p =>
-                          p.zioDep
-                            .fold(true)(zDep =>
-                              zDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
-                            )
-                      val projectIsUpToDate =
-                        dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
+        val onLatestZio: ProjectMetaData => Boolean =
+          p =>
+            p.zioDep
+              .fold(true)(zDep =>
+                zDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+              )
+        val projectIsUpToDate =
+          dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
+        div(
+          div(
+            cls    := "container",
+            idAttr := project.artifactIdQualifiedWhenNecessary,
+            div(
+              cls := "card is-fullwidth",
+              header(
+                cls := "card-header",
+                inContext { thisNode => // TODO Move to header
+                  val blah: org.scalajs.dom.html.Element = thisNode.ref
+                  onClick.mapTo(thisNode.ref) --> toggleContentVisibility
+                },
+                p(
+                  cls := "card-header-title",
+                  UpToDateIcon(projectIsUpToDate),
+                  project.artifactIdQualifiedWhenNecessary
+                ),
+                a(
+                  cls := "card-header-icon card-toggle",
+                  i(cls := "fa fa-angle-down") // TODO Fix icons
+                )
+              ),
               div(
-                  div(
-                    cls := "container",
-                    idAttr := project.artifactIdQualifiedWhenNecessary,
+                cls := "card-content is-hidden",
+                div(
+                  cls := "content", {
+
+                    val dependencyDivs: Seq[Div] =
+                      dependencies.map(dep =>
+                        div(
+                          cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
+                          onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
+                            upToDateCheckbox(busPageInfo),
+                          dep.project.artifactIdQualifiedWhenNecessary
+                        )
+                      )
+
+                    val usedBy: Seq[Div] =
+                      dependants.map(dep =>
+                        div(
+                          cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
+                          dep.project.artifactIdQualifiedWhenNecessary
+                        )
+                      )
+
                     div(
-                      cls := "card is-fullwidth",
-                      header(
-                        cls := "card-header",
-                        inContext { thisNode => // TODO Move to header
-                          val blah: org.scalajs.dom.html.Element = thisNode.ref
-                          onClick.mapTo(thisNode.ref) --> toggleContentVisibility
-                        },
-                        p(cls := "card-header-title", 
-                                  UpToDateIcon(projectIsUpToDate),
-                                    project.githubUrl match
-                                      case Some(githubUrl) =>
-                                        a(href := githubUrl, project.artifactIdQualifiedWhenNecessary)
-                                      case None =>
-                                        project.artifactIdQualifiedWhenNecessary
+                      div(
+                        cls := "columns",
+                        div(
+                          cls := "column",
+                          h3(cls := "subtitle is-3", "Current Version: "),
+                          span(
+                            code(Render.sbtStyle(project, version)),
+                            ClipboardIcon(Render.sbtStyle(project, version))
+                          )
                         ),
-                        a(
-                          cls := "card-header-icon card-toggle",
-                          i(cls := "fa fa-angle-down") // TODO Fix icons
+                        (
+                          project.githubUrl match
+                            case Some(githubUrl) =>
+                              div(
+                                cls := "column",
+                                a(cls := "button is-size-4", href := githubUrl, "Github")
+                              )
+                            case None =>
+                              div()
+                        ),
+                        div(
+                          cls := "column",
+                          span(
+                            cls := s"box p-3 ${colorUpToDate(onLatestZioDep(zioDep))}",
+                            "ZIO Version: " + zioDep.map(_.zioDep.version).getOrElse("N/A")
+                          )
                         )
                       ),
                       div(
-                        cls := "card-content is-hidden",
+                        cls := "columns",
                         div(
-                          cls := "content", {
-                            
-
-                            val dependencyDivs: Seq[Div] =
-                                  dependencies.map(dep =>
-                                    div(
-                                      cls := s"box ${colorUpToDate(onLatestZio(dep))}",
-                                      onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
-                                        upToDateCheckbox(busPageInfo),
-                                      dep.project.artifactIdQualifiedWhenNecessary
-                                    )
-                                  )
-
-                            println("Number of dependants: " + dependants.length)
-                            val usedBy: Seq[Div] = // TODO This doesn't seem to be working :(
-                                  dependants.map(dep =>
-                                    div(
-                                      cls := s"box ${colorUpToDate(onLatestZio(dep))}",
-                                      dep.project.artifactIdQualifiedWhenNecessary
-                                    )
-                                  )
-
-                            div(
-                              cls    := "columns",
-                              div(
-                                cls :="column", 
-                                  div(cls:="is-size-4 has-text-weight-semibold", ("Current Version: ")), 
-                                  span(code( Render.sbtStyle(project, version)),
-                                  ClipboardIcon(Render.sbtStyle(project,version)))
-                              ),
-                              div(
-                                cls := "column",
-                                span(
-                                  cls := s"box ${colorUpToDate(onLatestZioDep(zioDep))}",
-                                  "ZIO Version: " + zioDep.map(_.zioDep.version).getOrElse("N/A")
-                                )
-                              ),
-                              div(cls := "column", div(span("Dependencies"), dependencyDivs.toSeq)),
-                              div(cls := "column", 
-                              div(
-                              span(s"Used By (${usedBy.length})"),
-                              // usedBy.toSeq
-                              )
-                              ),
-
-                            )
-                          }
+                          cls := "column",
+                          div(
+                            cls := "box p-3",
+                            span(
+                              cls := "subtitle is-3",
+                              "Depends on ",
+                              small(cls:="has-text-grey-dark", s"(${dependencyDivs.length})")
+                            ),
+                            dependencyDivs.toSeq
+                          )
+                        ),
+                        div(
+                          cls := "column",
+                          div(
+                            cls := "box p-3",
+                            span(cls := "subtitle is-3", "Used By ", small(cls:="has-text-grey-dark", s"(${usedBy.length})")),
+                            usedBy.toSeq
+                          )
                         )
                       )
                     )
-                  )
+                  }
+                )
               )
-          }
+            )
+          )
+        )
+      }
     end match
   end ExpandableProjectCard
 
@@ -229,7 +248,7 @@ object DependencyViewerLaminar:
       )
     )
 
-  def ClipboardIcon(sbtLink: String) = {
+  def ClipboardIcon(sbtLink: String) =
 
     val copySbtDependencyToClipboard =
       Observer[String](onNext =
@@ -238,20 +257,15 @@ object DependencyViewerLaminar:
           dom.window.navigator.clipboard.writeText(sbtText)
       )
 
-
-
     a(
       cls := "icon",
       onClick.mapTo(sbtLink) --> copySbtDependencyToClipboard,
-      img(
-        src := "/images/glyphicons-basic-30-clipboard.svg"
-      )
+      img(src := "/images/glyphicons-basic-30-clipboard.svg")
     )
-  }
 
   def colorUpToDate(upToDate: Boolean) =
     if (upToDate)
-      "has-background-primary"
+      "has-background-success"
     else
       "has-background-warning"
 
