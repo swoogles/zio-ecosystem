@@ -342,25 +342,6 @@ object DependencyViewerLaminar:
                 }
               )
             ),
-            labelledInput(
-              "Project introspection",
-              select(
-                cls := "select",
-                inContext { thisNode =>
-                  onChange.mapTo(thisNode.ref.value.toString) --> viewUpdate(busPageInfo)
-                },
-                DataView
-                  .values
-                  .map(dataView =>
-                    option(
-                      value    := dataView.toString,
-                      selected := (dataView == busPageInfo.dataView),
-                      dataView.toString
-                    )
-                  )
-                  .toSeq
-              )
-            ),
             constructPage(busPageInfo, viewUpdate(busPageInfo), fullAppData)
           )
         )
