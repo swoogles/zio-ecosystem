@@ -104,15 +104,24 @@ object DependencyViewerLaminar:
                 div(
                   cls := "content", {
 
-                    val dependencyDivs: Seq[Div] =
-                      dependencies.map(dep =>
-                        div(
-                          cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
-                          onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
-                            upToDateCheckbox(busPageInfo),
-                          dep.project.artifactIdQualifiedWhenNecessary
-                        )
-                      )
+
+                    def ConnectedProjectsContainer(title: String, connectedProjects: Seq[ProjectMetaData]) =
+                          div(
+                            cls := "box p-3",
+                            span(
+                              cls := "subtitle is-3",
+                              s"$title ",
+                              small(cls:="has-text-grey-dark", s"(${connectedProjects.length})")
+                            ),
+                            connectedProjects.map(dep =>
+                              div(
+                                cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
+                                onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
+                                  upToDateCheckbox(busPageInfo),
+                                dep.project.artifactIdQualifiedWhenNecessary
+                              )
+                            ).toSeq
+                          )
 
                     val usedBy: Seq[Div] =
                       dependants.map(dep =>
@@ -155,22 +164,13 @@ object DependencyViewerLaminar:
                         cls := "columns",
                         div(
                           cls := "column",
-                          div(
-                            cls := "box p-3",
-                            span(
-                              cls := "subtitle is-3",
-                              "Depends on ",
-                              small(cls:="has-text-grey-dark", s"(${dependencyDivs.length})")
-                            ),
-                            dependencyDivs.toSeq
-                          )
+                          ConnectedProjectsContainer("Depends on", dependencies)
                         ),
                         div(
                           cls := "column",
                           div(
                             cls := "box p-3",
-                            span(cls := "subtitle is-3", "Used By ", small(cls:="has-text-grey-dark", s"(${usedBy.length})")),
-                            usedBy.toSeq
+                            ConnectedProjectsContainer("Used By ", dependants)
                           )
                         )
                       )
@@ -219,11 +219,6 @@ object DependencyViewerLaminar:
 
                   div(
                     div(
-                      // tr(
-                      //   th("Artifact"),
-                      //   th("Depends on ZIO Version"),
-                      //   th(busPageInfo.dataView.toString)
-                      // ),
                       manipulatedData.map { connectedProject =>
                         ExpandableProjectCard(connectedProject, busPageInfo, fullAppDataLive)
 
