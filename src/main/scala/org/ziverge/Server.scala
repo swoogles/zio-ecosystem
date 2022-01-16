@@ -7,9 +7,10 @@ import zhttp.http._
 import zhttp.http.Header
 import zhttp.service.Server
 import zio._
-import zio.duration.durationInt
+import zio.durationInt
 import zio.stream.ZStream
 import java.nio.file.Paths
+import java.io.File
 import java.time.Instant
 
 object CrappySideEffectingCache:
@@ -19,50 +20,29 @@ object CrappySideEffectingCache:
 object DependencyServer extends App:
 
   import upickle.default.{read, write}
-  val app: Http[Any, Nothing, Request, Response[Any, Nothing]] =
-    Http.collectM[Request] {
-      case Method.GET -> Root / "text" =>
-        ZIO.succeed(Response.text("Hello World!"))
+  val app =
+    Http.collectHttp[Request] {
       case Method.GET -> Root =>
-        ZIO.succeed {
-          val content =
-            HttpData.fromStream {
+            Http.fromStream {
               ZStream
-                .fromFile(Paths.get("src/main/resources/index.html"))
+                .fromFile(Paths.get("src/main/resources/index.html").toFile)
                 .refineOrDie(_ => ???)
-                .provideLayer(zio.blocking.Blocking.live)
             }
-          Response.http(data = content)
-        }
       case Method.GET -> Root / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
-        ZIO.succeed {
-          val content =
-            HttpData.fromStream {
+            Http.fromStream {
               ZStream
                 .fromFile(
-                  Paths.get("src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")
+                  Paths.get("src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js").toFile
                 )
                 .refineOrDie(_ => ???)
-                .provideLayer(zio.blocking.Blocking.live)
             }
-        }
       case Method.GET -> Root / "images" / path =>
-               Http.fromFile(new File(s"src/main/resources/images/$path"))
-        // ZIO.succeed {
-        //   val content =
-        //     HttpData.fromStream {
-        //       ZStream
-        //         .fromFile(Paths.get(s"src/main/resources/images/$path"))
-        //         .refineOrDie(_ => ???)
-        //         .provideLayer(zio.blocking.Blocking.live)
-        //     }
-        //   Response.http(data = content)
-        //   Response.http(data = content)
-        // }
+               Http.fromFile(new File(s"src/main/resources/images/$path")).setHeaders(Headers.contentType("image/svg+xml"))
+
       case Method.GET -> !! / "projectData" =>
         val appData      = CrappySideEffectingCache.fullAppData.get
         val responseText = Chunk.fromArray(write(appData).getBytes)
-        ZIO.succeed(
+          Http.response(
           Response.http(
             status = Status.OK,
             headers =
@@ -71,7 +51,7 @@ object DependencyServer extends App:
                 .combine(Headers.contentType("application/json")),
             data = HttpData.fromStream(ZStream.fromChunk(responseText))
           )
-        )
+          )
     }
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
