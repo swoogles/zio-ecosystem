@@ -57,6 +57,7 @@ object DependencyViewerLaminar:
             latestZio // TODO Use
           ) => {
 
+        // TODO Move these down into Models.
         val onLatestZioDep: Option[ZioDep] => Boolean =
           zioDep =>
             zioDep.fold(true)(zDep =>
@@ -126,29 +127,37 @@ object DependencyViewerLaminar:
                         )
                       )
 
+                      
+
+                    val blah: Seq[ReactiveHtmlElement[org.scalajs.dom.HTMLElement]] = 
+                          Seq(div(cls:="subtitle is-3", "ZIO Version: "), div(
+                            cls := s"box p-3 ${colorUpToDate(onLatestZioDep(zioDep))}",
+zioDep.map(_.zioDep.version).getOrElse("N/A")
+                          ))
+
+                    def Column(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) = 
+                        div(
+                          cls := "column",
+                          content.toSeq
+                        )
+
                     div(
                       div(
                         cls := "columns",
-                        div(
-                          cls := "column",
+                        Column(
                           div(cls := "subtitle is-3", "Current Version: "),
                           div(
                             code(Render.sbtStyle(project, version)),
                             ClipboardIcon(Render.sbtStyle(project, version))
                           )
                         ),
-                        (
-                          project.githubUrl match
-                            case Some(githubUrl) =>
-                              div(
-                                cls := "column",
-                                a(cls := "button is-size-4 is-info", href := githubUrl, "Github")
-                              )
-                            case None =>
-                              div()
+                        project.githubUrl.map(
+                          githubUrl => 
+                            Column(
+                              a(cls := "button is-size-4 is-info", href := githubUrl, "Github")
+                            )
                         ),
-                        div(
-                          cls := "column",
+                        Column(
                           div(cls:="subtitle is-3", "ZIO Version: "), div(
                             cls := s"box p-3 ${colorUpToDate(onLatestZioDep(zioDep))}",
 zioDep.map(_.zioDep.version).getOrElse("N/A")
@@ -157,12 +166,10 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
                       ),
                       div(
                         cls := "columns",
-                        div(
-                          cls := "column",
+                        Column(
                           ConnectedProjectsContainer("Depends on", dependencies)
                         ),
-                        div(
-                          cls := "column",
+                        Column(
                           div(
                             cls := "box p-3",
                             ConnectedProjectsContainer("Used By ", dependants)
