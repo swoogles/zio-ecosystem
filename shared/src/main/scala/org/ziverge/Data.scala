@@ -63,6 +63,7 @@ object Data:
         Project("dev.zio", "zio-interop-cats", Some("https://github.com/zio/interop-cats")),
         Project("dev.zio", "zio-nio", Some("https://github.com/zio/zio-nio")),
         Project("dev.zio", "zio-zmx", Some("https://github.com/zio/zio-zmx")),
+        Project("dev.zio", "zio-parser", Some("https://github.com/zio/zio-parser")),
         Project("dev.zio", "zio-actors", Some("https://github.com/zio/zio-actors")),
         Project("dev.zio", "zio-logging", Some("https://github.com/zio/zio-logging")),
         Project("dev.zio", "zio-metrics", Some("https://github.com/zio/zio-metrics")),
