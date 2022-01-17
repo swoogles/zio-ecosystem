@@ -32,8 +32,8 @@ object Data:
         Project("dev.zio", "zio-kafka", Some("https://github.com/zio/zio-kafka")),
         Project("dev.zio", "zio-ftp", Some("https://github.com/zio/zio-ftp")),
         Project("dev.zio", "zio-aws-core", Some("https://github.com/zio/zio-aws")),
-        Project("dev.zio", "zio-prelude"),
-        Project("dev.zio", "zio-prelude-macros"),
+        Project("dev.zio", "zio-prelude", Some("https://github.com/zio/zio-prelude")),
+        Project("dev.zio", "zio-prelude-macros", Some("https://github.com/zio/zio-prelude")),
         Project(
           "dev.zio",
           "zio-interop-reactivestreams",
@@ -47,7 +47,9 @@ object Data:
         Project("io.7mind.izumi", "logstage-core", Some("https://github.com/7mind/izumi")),
         Project("com.github.poslegm", "munit-zio", Some("https://github.com/poslegm/munit-zio")),
         Project("com.coralogix", "zio-k8s-client", Some("https://github.com/coralogix/zio-k8s")),
-        Project("com.softwaremill.sttp.client3", "zio"),
+        Project("com.softwaremill.sttp.client3", "zio",
+          Some("https://github.com/softwaremill/sttp")
+),
         Project(
           "com.softwaremill.sttp.client3",
           "httpclient-backend-zio",
@@ -58,7 +60,9 @@ object Data:
           "async-http-client-backend-zio",
           Some("https://github.com/softwaremill/sttp")
         ),
-        Project("com.softwaremill.sttp.shared", "zio"),
+        Project("com.softwaremill.sttp.shared", "zio",
+          Some("https://github.com/softwaremill/sttp")
+),
         Project("io.d11", "zhttp", Some("https://github.com/dream11/zio-http")),
         Project("dev.zio", "zio-interop-cats", Some("https://github.com/zio/interop-cats")),
         Project("dev.zio", "zio-nio", Some("https://github.com/zio/zio-nio")),
@@ -90,8 +94,8 @@ object Data:
         // Project("com.github.jczuchnowski", "zio-pulsar"), // Scala 3 Only
         Project("nl.vroste", "rezilience", Some("https://github.com/svroonland/rezilience")),
         Project("nl.vroste", "zio-kinesis", Some("https://github.com/svroonland/zio-kinesis")),
-        Project("io.getquill", "quill-zio"),
-        Project("io.getquill", "quill-jdbc-zio"),
+        Project("io.getquill", "quill-zio", Some("https://github.com/zio/zio-quill")),
+        Project("io.getquill", "quill-jdbc-zio", Some("https://github.com/zio/zio-quill")),
         Project(
           "io.github.gaelrenoux",
           "tranzactio",

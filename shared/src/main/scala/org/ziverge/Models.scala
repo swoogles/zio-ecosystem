@@ -127,7 +127,6 @@ case class ConnectedProjectData(
     project: Project,
     version: Version,
     dependencies: Seq[ProjectMetaData],
-    blockers: Seq[ProjectMetaData],
     dependants: Seq[ProjectMetaData],
     zioDep: Option[ZioDep],
     latestZio: Version
@@ -183,19 +182,10 @@ object ConnectedProjectData:
         )
       zioDep <-
         ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
-      blockers =
-        typedDependencies.filter(p =>
-          p.zioDep.map(_.typedVersion) match
-            case Some(value) =>
-              Version.compareVersions(value, currentZioVersion) < 0
-            case None =>
-              false
-        )
     yield ConnectedProjectData(
       projectMetaData.project,
       projectMetaData.typedVersion,
       typedDependencies,
-      blockers,
       typedDependants,
       zioDep,
       currentZioVersion
@@ -274,18 +264,11 @@ object FullAppData:
             // TODO Make this a function in a better spot
             // project.dependants.exists(_.project.artifactId.contains(filter)) ||
             val introspectedDataMatches =
-              dataView match
-                case Dependencies =>
                   project
                     .dependencies
-                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-                case Dependents =>
+                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter)) ||
                   project
                     .dependants
-                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
-                case Blockers =>
-                  project
-                    .blockers
                     .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
             artifactMatches || introspectedDataMatches
         case None =>
@@ -294,7 +277,7 @@ object FullAppData:
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (filterUpToDateProjects)
-          p.blockers.nonEmpty || onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
+          onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
         else
           true
 

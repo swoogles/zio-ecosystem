@@ -30,19 +30,16 @@ object DependencyViewerLaminar:
 
   def ExpandableProjectCard(
       project: ConnectedProjectData,
-      busPageInfo: DependencyExplorerPage,
-      fullAppDataLive: FullAppData
+      currentZioVersion: Version
   ) =
 
     val toggleContentVisibility =
       Observer[org.scalajs.dom.html.Element](onNext =
         anchor =>
-          println("Click click boom.")
           anchor.parentElement.querySelector(".card-content").classList.toggle("is-hidden")
-      // router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
 
-    def scrollToProject(page: DependencyExplorerPage) =
+    val scrollToProject =
       Observer[String](onNext =
         checkboxState =>
 
@@ -55,7 +52,6 @@ object DependencyViewerLaminar:
             project,
             version,
             dependencies,
-            blockers,
             dependants,
             zioDep,
             latestZio // TODO Use
@@ -65,14 +61,14 @@ object DependencyViewerLaminar:
           zioDep =>
             zioDep.fold(true)(zDep =>
               // TODO
-              zDep.zioDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+              zDep.zioDep.typedVersion.compareTo(currentZioVersion) == 0
             )
 
         val onLatestZio: ProjectMetaData => Boolean =
           p =>
             p.zioDep
               .fold(true)(zDep =>
-                zDep.typedVersion.compareTo(fullAppDataLive.currentZioVersion) == 0
+                zDep.typedVersion.compareTo(currentZioVersion) == 0
               )
         val projectIsUpToDate =
           dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
@@ -84,7 +80,7 @@ object DependencyViewerLaminar:
               cls := "card is-fullwidth",
               header(
                 cls := "card-header",
-                inContext { thisNode => // TODO Move to header
+                inContext { thisNode =>
                   val blah: org.scalajs.dom.html.Element = thisNode.ref
                   onClick.mapTo(thisNode.ref) --> toggleContentVisibility
                 },
@@ -116,7 +112,7 @@ object DependencyViewerLaminar:
                               a(
                                 cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
                                 onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
-                                  scrollToProject(busPageInfo),
+                                  scrollToProject,
                                 dep.project.artifactIdQualifiedWhenNecessary
                               )
                             ).toSeq
@@ -135,8 +131,8 @@ object DependencyViewerLaminar:
                         cls := "columns",
                         div(
                           cls := "column",
-                          h3(cls := "subtitle is-3", "Current Version: "),
-                          span(
+                          div(cls := "subtitle is-3", "Current Version: "),
+                          div(
                             code(Render.sbtStyle(project, version)),
                             ClipboardIcon(Render.sbtStyle(project, version))
                           )
@@ -153,9 +149,9 @@ object DependencyViewerLaminar:
                         ),
                         div(
                           cls := "column",
-                          span(
+                          div(cls:="subtitle is-3", "ZIO Version: "), div(
                             cls := s"box p-3 ${colorUpToDate(onLatestZioDep(zioDep))}",
-                            "ZIO Version: " + zioDep.map(_.zioDep.version).getOrElse("N/A")
+zioDep.map(_.zioDep.version).getOrElse("N/A")
                           )
                         )
                       ),
@@ -184,7 +180,7 @@ object DependencyViewerLaminar:
     end match
   end ExpandableProjectCard
 
-  def constructPage(
+  def ProjectListings(
       busPageInfo: DependencyExplorerPage,
       viewUpdate: Observer[String],
       fullAppData: AppDataAndEffects
@@ -192,7 +188,6 @@ object DependencyViewerLaminar:
     def upToDateCheckbox(page: DependencyExplorerPage) =
       Observer[String](onNext =
         checkboxState =>
-          println("Clicked on artifactId : " + checkboxState)
           val element = dom.document.getElementById(checkboxState)
           if (dom.document.getElementById(checkboxState) != null)
             element.scrollIntoView(top = true)
@@ -219,7 +214,7 @@ object DependencyViewerLaminar:
                   div(
                     div(
                       manipulatedData.map { connectedProject =>
-                        ExpandableProjectCard(connectedProject, busPageInfo, fullAppDataLive)
+                        ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
 
                       }
                     )
@@ -228,7 +223,7 @@ object DependencyViewerLaminar:
             }
       )
     )
-  end constructPage
+  end ProjectListings
 
   def UpToDateIcon(upToDate: Boolean) =
     span(
@@ -247,7 +242,6 @@ object DependencyViewerLaminar:
     val copySbtDependencyToClipboard =
       Observer[String](onNext =
         sbtText =>
-          println("Click click boom.")
           dom.window.navigator.clipboard.writeText(sbtText)
       )
 
@@ -291,13 +285,11 @@ object DependencyViewerLaminar:
     def upToDateCheckbox(page: DependencyExplorerPage) =
       Observer[Boolean](onNext =
         checkboxState =>
-          println("Checkbox state: " + checkboxState)
           router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
 
     val refresh = EventStream.periodic(5000)
 
-//    val clickBus = new EventBus[]
     div(
       section(
         cls := "hero is-primary",
@@ -314,8 +306,6 @@ object DependencyViewerLaminar:
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
           val observer = refreshObserver(busPageInfo)
           div(
-            // refresh --> refreshObserver(busPageInfo),
-            // refresh --> observer,
             labelledInput(
               "Hide up-to-date projects",
               input(
@@ -324,8 +314,6 @@ object DependencyViewerLaminar:
                 defaultChecked := busPageInfo.filterUpToDateProjects
               )
             ),
-            // TextInput().amend(onInput --> printTextInput),
-            // Param Type: DomHtmlElement
             labelledInput(
               "Filter results by",
               input(
@@ -341,7 +329,7 @@ object DependencyViewerLaminar:
                 }
               )
             ),
-            constructPage(busPageInfo, viewUpdate(busPageInfo), fullAppData)
+            ProjectListings(busPageInfo, viewUpdate(busPageInfo), fullAppData)
           )
         )
     )
