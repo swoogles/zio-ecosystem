@@ -42,11 +42,10 @@ object DependencyViewerLaminar:
       // router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
 
-    def upToDateCheckbox(page: DependencyExplorerPage) =
+    def scrollToProject(page: DependencyExplorerPage) =
       Observer[String](onNext =
         checkboxState =>
 
-          println("Clicked on artifactId : " + checkboxState)
           val element = dom.document.getElementById(checkboxState)
           if (dom.document.getElementById(checkboxState) != null)
             element.scrollIntoView(top = true)
@@ -114,10 +113,10 @@ object DependencyViewerLaminar:
                               small(cls:="has-text-grey-dark", s"(${connectedProjects.length})")
                             ),
                             connectedProjects.map(dep =>
-                              div(
+                              a(
                                 cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
                                 onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
-                                  upToDateCheckbox(busPageInfo),
+                                  scrollToProject(busPageInfo),
                                 dep.project.artifactIdQualifiedWhenNecessary
                               )
                             ).toSeq
@@ -147,7 +146,7 @@ object DependencyViewerLaminar:
                             case Some(githubUrl) =>
                               div(
                                 cls := "column",
-                                a(cls := "button is-size-4", href := githubUrl, "Github")
+                                a(cls := "button is-size-4 is-info", href := githubUrl, "Github")
                               )
                             case None =>
                               div()
