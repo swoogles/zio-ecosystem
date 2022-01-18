@@ -296,7 +296,7 @@ object FullAppData:
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (filterUpToDateProjects)
-          onLatestZioConnected(p) && !Data.coreProjects.contains(p.project)
+          !p.projectIsUpToDate && !Data.coreProjects.contains(p.project)
         else
           true
 

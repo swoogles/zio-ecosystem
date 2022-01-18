@@ -57,7 +57,6 @@ object DependencyViewerLaminar:
             latestZio // TODO Use
           ) => {
 
-        println("About to print connectedProject: " + connectedProject.latestZio)
         div(
           div(
             cls    := "container",
@@ -84,9 +83,6 @@ object DependencyViewerLaminar:
                 cls := "card-content is-hidden",
                 div(
                   cls := "content", {
-                    println("currentZioVersion: " + currentZioVersion)
-
-
                     def ConnectedProjectsContainer(title: String, connectedProjects: Seq[ProjectMetaData]) =
                           div(
                             cls := "box p-3",
@@ -186,7 +182,6 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
           fullAppData
             .dataSignal
             .map { fullAppDataLive =>
-              println("Anything?!")
               fullAppDataLive match
                 case None =>
                   div("No info to display!")
@@ -199,10 +194,13 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
                       busPageInfo.targetProject
                     )
 
-                  println("About to construct page")
+                    
+                  
                   div(
                     EcosystemSummary(
-                      numberOfTrackedProjects = 10, numberOfCurrentProjects = 7
+                      // TODO Probably want to move this bit of logic into FullAppData
+                      numberOfTrackedProjects = fullAppDataLive.connected.length, 
+                      numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsUpToDate)
                     ),
                     div(
                       manipulatedData.map { connectedProject =>
@@ -262,7 +260,6 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
       cls := "box p-3",
       div("Total Tracked Projects: " + numberOfTrackedProjects),
       div("Up-to-date Projects: " + numberOfCurrentProjects),
-      "Summary Stats go here"
     )
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
