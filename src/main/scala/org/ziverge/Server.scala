@@ -94,7 +94,7 @@ object SharedLogic:
 
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
-      currentZioVersion <- Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
+      currentZioVersion: Version <- Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData: Seq[ProjectMetaData] <-
         ZIO.foreachPar(Data.projects) { project =>
           Maven.projectMetaDataFor(project, scalaVersion)

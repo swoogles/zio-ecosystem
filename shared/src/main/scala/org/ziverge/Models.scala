@@ -62,6 +62,12 @@ case class ProjectMetaData(project: Project, version: String, dependencies: Seq[
       .find(project => project.project.artifactId == "zio" && project.project.group == "dev.zio")
   val typedVersion = Version(version)
 
+  def onLatestZio(currentZioVersion: Version): Boolean =
+      zioDep
+        .fold(true)(zDep =>
+          zDep.typedVersion.compareTo(currentZioVersion) == 0
+        )
+
 object ProjectMetaData:
   implicit val rw: RW[ProjectMetaData] = macroRW
   def withZioDependenciesOnly(
@@ -130,9 +136,19 @@ case class ConnectedProjectData(
     dependants: Seq[ProjectMetaData],
     zioDep: Option[ZioDep],
     latestZio: Version
-)
+) {
+    lazy val onLatestZioDep: Boolean =
+        zioDep.fold(true)(zDep =>
+          // TODO
+          zDep.zioDep.typedVersion.compareTo(latestZio) == 0
+        )
+
+    lazy val projectIsUpToDate =
+      dependencies.forall(dep => dep.onLatestZio(latestZio)) && onLatestZioDep
+
+}
 object ConnectedProjectData:
-  implicit val versionRw: RW[Version] = readwriter[String].bimap[Version](_.toString, Version(_))
+  implicit val versionRw: RW[Version] = readwriter[String].bimap[Version](_.value, Version(_))
   implicit val rw: RW[ConnectedProjectData] = macroRW
 
   def apply(
@@ -248,10 +264,13 @@ object FullAppData:
     val onLatestZioConnected: ConnectedProjectData => Boolean =
       p =>
         p.zioDep
-          .fold(true)(zDep =>
-            zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) <
+          .fold(true){zDep =>
+            println("Comparing")
+            val res = zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) <
               0 // TODO Fix comparison?
-          )
+            println("Compared")
+            res
+          }
 
     val userFilter: ConnectedProjectData => Boolean =
       userFilterFromPage match

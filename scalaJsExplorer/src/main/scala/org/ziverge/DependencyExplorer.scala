@@ -48,7 +48,7 @@ object DependencyViewerLaminar:
             element.scrollIntoView(top = true)
       )
     project match
-      case ConnectedProjectData(
+      case connectedProject @ ConnectedProjectData(
             project,
             version,
             dependencies,
@@ -57,22 +57,7 @@ object DependencyViewerLaminar:
             latestZio // TODO Use
           ) => {
 
-        // TODO Move these down into Models.
-        val onLatestZioDep: Option[ZioDep] => Boolean =
-          zioDep =>
-            zioDep.fold(true)(zDep =>
-              // TODO
-              zDep.zioDep.typedVersion.compareTo(currentZioVersion) == 0
-            )
-
-        val onLatestZio: ProjectMetaData => Boolean =
-          p =>
-            p.zioDep
-              .fold(true)(zDep =>
-                zDep.typedVersion.compareTo(currentZioVersion) == 0
-              )
-        val projectIsUpToDate =
-          dependencies.forall(dep => onLatestZio(dep)) && onLatestZioDep(zioDep)
+        println("About to print connectedProject: " + connectedProject.latestZio)
         div(
           div(
             cls    := "container",
@@ -87,7 +72,7 @@ object DependencyViewerLaminar:
                 },
                 p(
                   cls := "card-header-title",
-                  UpToDateIcon(projectIsUpToDate),
+                  UpToDateIcon(connectedProject.projectIsUpToDate),
                   project.artifactIdQualifiedWhenNecessary
                 ),
                 a(
@@ -99,6 +84,7 @@ object DependencyViewerLaminar:
                 cls := "card-content is-hidden",
                 div(
                   cls := "content", {
+                    println("currentZioVersion: " + currentZioVersion)
 
 
                     def ConnectedProjectsContainer(title: String, connectedProjects: Seq[ProjectMetaData]) =
@@ -111,7 +97,7 @@ object DependencyViewerLaminar:
                             ),
                             connectedProjects.map(dep =>
                               a(
-                                cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
+                                cls := s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
                                 onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
                                   scrollToProject,
                                 dep.project.artifactIdQualifiedWhenNecessary
@@ -122,18 +108,12 @@ object DependencyViewerLaminar:
                     val usedBy: Seq[Div] =
                       dependants.map(dep =>
                         div(
-                          cls := s"box p-3 ${colorUpToDate(onLatestZio(dep))}",
+                          cls := s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
                           dep.project.artifactIdQualifiedWhenNecessary
                         )
                       )
 
                       
-
-                    val blah: Seq[ReactiveHtmlElement[org.scalajs.dom.HTMLElement]] = 
-                          Seq(div(cls:="subtitle is-3", "ZIO Version: "), div(
-                            cls := s"box p-3 ${colorUpToDate(onLatestZioDep(zioDep))}",
-zioDep.map(_.zioDep.version).getOrElse("N/A")
-                          ))
 
                     def Column(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) = 
                         div(
@@ -159,7 +139,7 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
                         ),
                         Column(
                           div(cls:="subtitle is-3", "ZIO Version: "), div(
-                            cls := s"box p-3 ${colorUpToDate(onLatestZioDep(zioDep))}",
+                            cls := s"box p-3 ${colorUpToDate(connectedProject.onLatestZioDep)}",
 zioDep.map(_.zioDep.version).getOrElse("N/A")
                           )
                         )
@@ -206,6 +186,7 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
           fullAppData
             .dataSignal
             .map { fullAppDataLive =>
+              println("Anything?!")
               fullAppDataLive match
                 case None =>
                   div("No info to display!")
@@ -218,7 +199,11 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
                       busPageInfo.targetProject
                     )
 
+                  println("About to construct page")
                   div(
+                    EcosystemSummary(
+                      numberOfTrackedProjects = 10, numberOfCurrentProjects = 7
+                    ),
                     div(
                       manipulatedData.map { connectedProject =>
                         ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
@@ -270,6 +255,14 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
       cls := "field is-horizontal",
       div(cls := "field-label is-normal", label(cls := "label", labelContent)),
       div(cls := "field-body", div(cls := "field", p(cls := "control", inputElement)))
+    )
+
+  def EcosystemSummary(numberOfTrackedProjects: Int, numberOfCurrentProjects: Int) = 
+    div(
+      cls := "box p-3",
+      div("Total Tracked Projects: " + numberOfTrackedProjects),
+      div("Up-to-date Projects: " + numberOfCurrentProjects),
+      "Summary Stats go here"
     )
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
