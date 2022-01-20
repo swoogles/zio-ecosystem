@@ -62,6 +62,7 @@ object DependencyServer extends App:
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
+            .tapError( error => ZIO.debug("Error during data fetch: " + error))
             .orDie
             .repeat(Schedule.spaced(30.minutes))
             .fork
@@ -116,6 +117,10 @@ object SharedLogic:
                   Github.pullRequests(project).map {
                     prOpt => 
                       res.copy(relevantPr = prOpt)
+                  }.catchAll {
+                    case githubError => 
+                      println("Github Error: " + githubError)
+                      ZIO.succeed(res)
                   }
                 ).getOrElse(ZIO.succeed(res))
                 
