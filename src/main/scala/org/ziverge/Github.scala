@@ -11,7 +11,6 @@ object Github {
     import sttp.client3.*
     val backend = HttpURLConnectionBackend()
     for
-      _ <- ZIO.debug("Going to construct URL")
       url <-
         ZIO
           .fromEither(
@@ -22,13 +21,11 @@ object Github {
             ).map(_.param("state","open"))
           )
           .mapError(new Exception(_))
-      _ <- ZIO.debug("constructed URL: " + url)
 
       accessToken <- ZIO.fromOption(sys.env.get("GITHUB_ACCESS_TOKEN")).mapError( _ => new Exception("Missing GITHUB_ACCESS_TOKEN"))
       r    <- ZIO(basicRequest.get(url).auth.bearer(accessToken).send(backend))
       pullRequests <- ZIO.fromEither(r.body).mapError(new Exception(_)).map(read[Seq[PullRequest]](_))
       relevantPr = pullRequests.find( pr => pr.title.toLowerCase.contains("zio") && pr.title.toLowerCase.contains("2"))
-      _ <- ZIO.debug("Relevant PR: " + relevantPr)
     yield relevantPr
   }
 }

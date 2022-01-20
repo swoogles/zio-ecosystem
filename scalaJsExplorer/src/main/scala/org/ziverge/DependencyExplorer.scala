@@ -89,7 +89,7 @@ object DependencyViewerLaminar:
                           div(
                             cls := "box p-3",
                             span(
-                              cls := "subtitle is-3",
+                              cls := "is-size-5",
                               s"$title ",
                               small(cls:="has-text-grey-dark", s"(${connectedProjects.length})")
                             ),
@@ -123,7 +123,7 @@ object DependencyViewerLaminar:
                       div(
                         cls := "columns",
                         Column(
-                          div(cls := "subtitle is-3", "Current Version: "),
+                          h5(cls := "is-size-5", "Current Version: "),
                           div(
                             code(Render.sbtStyle(project, version)),
                             ClipboardIcon(Render.sbtStyle(project, version))
@@ -133,16 +133,22 @@ object DependencyViewerLaminar:
                           githubUrl => 
                             Column(
                               div(
-                                h5(cls:="is-size5", "Github"),
-                                a(cls := "button is-size-4 is-info m-3", href := githubUrl, "Project"),
+                                h5(cls:="is-size-5", "Github"),
+                                a(cls := "button is-size-5 is-info m-3", href := githubUrl, "Project"),
                                 connectedProject.relevantPr.map( pr => 
-                                  a(cls := "button is-size-4 is-info m-3", href := pr.html_url, "ZIO Upgrade PR"),
+                                  div(
+                                  div(
+                                  a(cls := "button is-size-5 is-info m-3", href := pr.html_url, "ZIO Upgrade PR*"),
+                                  ),div(
+                                  small("* Best Effort. Not guaranteed to be relevant.")
                                   )
+                                  )
+                                )
                               )
                             )
                         ),
                         Column(
-                          div(cls:="subtitle is-3", "ZIO Version: "), div(
+                          h5(cls:="is-size-5", "ZIO Version: "), div(
                             cls := s"box p-3 ${colorUpToDate(connectedProject.onLatestZioDep)}",
 zioDep.map(_.zioDep.version).getOrElse("N/A")
                           )

@@ -116,7 +116,6 @@ object SharedLogic:
                   project =>
                   Github.pullRequests(project).map {
                     prOpt => 
-                      println("RelevantPR: " + prOpt)
                       res.copy(relevantPr = prOpt)
                   }
                 ).getOrElse(ZIO.succeed(res))
