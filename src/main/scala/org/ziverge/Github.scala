@@ -22,8 +22,11 @@ object Github {
           )
           .mapError(new Exception(_))
 
+      _ <- ZIO.debug("Constructed url: " + url)
       accessToken <- ZIO.fromOption(sys.env.get("GITHUB_ACCESS_TOKEN")).mapError( _ => new Exception("Missing GITHUB_ACCESS_TOKEN"))
+      _ <- ZIO.debug("Got access token" + accessToken.take(3))
       r    <- ZIO(basicRequest.get(url).auth.bearer(accessToken).send(backend))
+      _ <- ZIO.debug("Got response")
       pullRequests <- ZIO.fromEither(r.body).mapError(new Exception(_)).map(read[Seq[PullRequest]](_))
       relevantPr = pullRequests.find( pr => pr.title.toLowerCase.contains("zio") && pr.title.toLowerCase.contains("2"))
     yield relevantPr

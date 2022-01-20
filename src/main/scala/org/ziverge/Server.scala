@@ -59,7 +59,6 @@ object DependencyServer extends App:
       for
         port <- ZIO(sys.env.get("PORT"))
         _    <- ZIO.debug("PORT result: " + port)
-        _ <- Github.pullRequests(Data.projects.find(_.artifactId == "zio-nio").get.githubOrgAndRepo.get)
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
