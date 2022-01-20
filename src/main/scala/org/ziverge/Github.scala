@@ -1,20 +1,13 @@
 package org.ziverge
 
 import upickle.default.{read, write}
-import upickle.default.{macroRW, ReadWriter as RW, *}
-
-case class PullRequest(number: Int, title: String, html_url: String)
-object PullRequest {
-
-  implicit val rw: RW[PullRequest]            = macroRW
-}
 
 object Github {
   
   import sttp.model.Uri
   import zio.ZIO
 
-  def pullRequests(inputUrlIgnored: String): ZIO[Any, Throwable, String] = {
+  def pullRequests(project: GithubRepo): ZIO[Any, Throwable, Option[PullRequest]] = {
     import sttp.client3.*
     val backend = HttpURLConnectionBackend()
     for
@@ -25,14 +18,17 @@ object Github {
             Uri.safeApply(
               scheme = "https",
               host = "api.github.com": String,
-              path = "repos/zio/zio-nio/pulls".split("\\/").toSeq
-            )
+              path = s"repos/${project.org}/${project.name}/pulls".split("\\/").toSeq
+            ).map(_.param("state","open"))
           )
           .mapError(new Exception(_))
       _ <- ZIO.debug("constructed URL: " + url)
-      r    <- ZIO(basicRequest.get(url).send(backend))
-      body <- ZIO.fromEither(r.body).mapError(new Exception(_))
-      _ <- ZIO.debug("Pull request body: " + read[Seq[PullRequest]](body))
-    yield body
+
+      accessToken <- ZIO.fromOption(sys.env.get("GITHUB_ACCESS_TOKEN")).mapError( _ => new Exception("Missing GITHUB_ACCESS_TOKEN"))
+      r    <- ZIO(basicRequest.get(url).auth.bearer(accessToken).send(backend))
+      pullRequests <- ZIO.fromEither(r.body).mapError(new Exception(_)).map(read[Seq[PullRequest]](_))
+      relevantPr = pullRequests.find( pr => pr.title.toLowerCase.contains("zio") && pr.title.toLowerCase.contains("2"))
+      _ <- ZIO.debug("Relevant PR: " + relevantPr)
+    yield relevantPr
   }
 }

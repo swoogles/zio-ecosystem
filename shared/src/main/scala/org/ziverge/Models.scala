@@ -12,6 +12,8 @@ import upickle.default.{macroRW, ReadWriter as RW, *}
 
 import java.time.{OffsetDateTime, ZoneId}
 
+case class GithubRepo(org: String, name: String)
+
 class Models {}
 case class Project(group: String, artifactId: String, githubUrl: Option[String] = None):
   val groupUrl = group.replaceAll("\\.", "/")
@@ -22,6 +24,13 @@ case class Project(group: String, artifactId: String, githubUrl: Option[String] 
       s"${group}.${artifactId}"
     else
       artifactId
+  val githubOrgAndRepo: Option[GithubRepo] =
+    githubUrl.map {
+      url => 
+        val pieces = url.stripPrefix("https://github.com/").split("/")
+        GithubRepo(pieces(0), pieces(1))
+    }
+
 
 object Project:
   def fromMaven(groupId: String, artifactId: String): Project =
@@ -135,7 +144,8 @@ case class ConnectedProjectData(
     dependencies: Seq[ProjectMetaData],
     dependants: Seq[ProjectMetaData],
     zioDep: Option[ZioDep],
-    latestZio: Version
+    latestZio: Version,
+    relevantPr: Option[PullRequest] = None
 ) {
     lazy val onLatestZioDep: Boolean =
         zioDep.fold(true)(zDep =>
@@ -198,14 +208,16 @@ object ConnectedProjectData:
         )
       zioDep <-
         ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
-    yield ConnectedProjectData(
-      projectMetaData.project,
-      projectMetaData.typedVersion,
-      typedDependencies,
-      typedDependants,
-      zioDep,
-      currentZioVersion
-    )
+      // Instead of yielding here, assign value, check if it's on the latest ZIO, and then query for open PRs if not
+      connectedProject = ConnectedProjectData(
+        projectMetaData.project,
+        projectMetaData.typedVersion,
+        typedDependencies,
+        typedDependants,
+        zioDep,
+        currentZioVersion
+      )
+    yield connectedProject
   end apply
 end ConnectedProjectData
 
@@ -303,3 +315,11 @@ object FullAppData:
     fullAppData.connected.filter(p => upToDate(p) && userFilter(p))
   end filterData
 end FullAppData
+
+import upickle.default.{macroRW, ReadWriter as RW, *}
+
+case class PullRequest(number: Int, title: String, html_url: String)
+object PullRequest {
+
+  implicit val rw: RW[PullRequest]            = macroRW
+}

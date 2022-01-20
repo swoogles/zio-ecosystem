@@ -42,10 +42,11 @@ object DependencyViewerLaminar:
     val scrollToProject =
       Observer[String](onNext =
         checkboxState =>
-
           val element = dom.document.getElementById(checkboxState)
-          if (dom.document.getElementById(checkboxState) != null)
+          if (dom.document.getElementById(checkboxState) != null) {
+            element.querySelector(".card-content").classList.remove("is-hidden")
             element.scrollIntoView(top = true)
+          }
       )
     project match
       case connectedProject @ ConnectedProjectData(
@@ -54,7 +55,8 @@ object DependencyViewerLaminar:
             dependencies,
             dependants,
             zioDep,
-            latestZio // TODO Use
+            latestZio, // TODO Use
+            relevantPr
           ) => {
 
         div(
@@ -130,7 +132,13 @@ object DependencyViewerLaminar:
                         project.githubUrl.map(
                           githubUrl => 
                             Column(
-                              a(cls := "button is-size-4 is-info", href := githubUrl, "Github")
+                              div(
+                                h5(cls:="is-size5", "Github"),
+                                a(cls := "button is-size-4 is-info m-3", href := githubUrl, "Project"),
+                                connectedProject.relevantPr.map( pr => 
+                                  a(cls := "button is-size-4 is-info m-3", href := pr.html_url, "ZIO Upgrade PR"),
+                                  )
+                              )
                             )
                         ),
                         Column(

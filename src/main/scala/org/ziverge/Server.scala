@@ -59,7 +59,7 @@ object DependencyServer extends App:
       for
         port <- ZIO(sys.env.get("PORT"))
         _    <- ZIO.debug("PORT result: " + port)
-        _ <- Github.pullRequests("blah")
+        _ <- Github.pullRequests(Data.projects.find(_.artifactId == "zio-nio").get.githubOrgAndRepo.get)
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
@@ -100,14 +100,30 @@ object SharedLogic:
         ZIO.foreachPar(Data.projects) { project =>
           Maven.projectMetaDataFor(project, scalaVersion)
         }
+      // TODO Do Pull Request query here
       _                             <- ZIO.debug("got first project!")
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
       connectedProjects: Seq[ConnectedProjectData] <-
-        ZIO.foreach(allProjectsMetaData)(x =>
+        ZIO.foreachPar(allProjectsMetaData)(x =>
           for
             res <-
               ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
-          yield res
+            finalProject <- 
+              if (res.projectIsUpToDate)
+                ZIO.succeed(res)
+              else
+                res.project.githubOrgAndRepo.map(
+                  project =>
+                  Github.pullRequests(project).map {
+                    prOpt => 
+                      println("RelevantPR: " + prOpt)
+                      res.copy(relevantPr = prOpt)
+                  }
+                ).getOrElse(ZIO.succeed(res))
+                
+              // ZIO.debug(res.project.artifactId + " upToDate: " +  res.projectIsUpToDate)
+            // TODO Look for PRs here
+          yield finalProject
         )
       res =
         FullAppData(
