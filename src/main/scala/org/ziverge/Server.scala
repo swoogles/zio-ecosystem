@@ -74,22 +74,10 @@ end DependencyServer
 object SharedLogic:
   def fetchAppDataAndRefreshCache(scalaVersion: ScalaVersion) =
     for
-      now <- ZIO(Instant.now())
-      ageOfCache = java.time.Duration.between(now, CrappySideEffectingCache.timestamp)
-      res <-
-        if (
-          ageOfCache.compareTo(java.time.Duration.ofHours(1)) > 0 ||
-          CrappySideEffectingCache.fullAppData.isEmpty
-        )
-          println("Getting fresh data")
-          fetchAppData(scalaVersion)
-        else
-          println("Using cached data")
-          ZIO(CrappySideEffectingCache.fullAppData.get)
-      _ <-
-        ZIO {
+      _ <- zio.Console.printLine("Getting fresh data")
+      res <- fetchAppData(scalaVersion)
+      _ <- ZIO {
           CrappySideEffectingCache.fullAppData = Some(res)
-          CrappySideEffectingCache.timestamp = now
         }
     yield res
 
