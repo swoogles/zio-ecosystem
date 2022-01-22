@@ -302,17 +302,6 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
     val refresh = EventStream.periodic(5000)
 
     div(
-      section(
-        cls := "hero is-primary",
-        div(
-          cls := "hero-body",
-          p(cls := "title", "ZIO Ecosystem"),
-          p(
-            cls := "subtitle",
-            "Check which projects are on the latest and greatest version of ZIO!"
-          )
-        )
-      ),
       child <--
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
           val observer = refreshObserver(busPageInfo)
