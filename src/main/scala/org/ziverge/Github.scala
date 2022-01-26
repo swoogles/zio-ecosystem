@@ -3,7 +3,6 @@ package org.ziverge
 import upickle.default.{read, write}
 
 object Github {
-  
   import sttp.model.Uri
   import zio.ZIO
 

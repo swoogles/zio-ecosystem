@@ -51,6 +51,7 @@ object Data:
         Project("com.softwaremill.sttp.client3", "zio",
           Some("https://github.com/softwaremill/sttp")
 ),
+        Project("com.softwaremill.sttp.tapir","tapir-json-zio", Some("https://github.com/softwaremill/tapir")),
         Project(
           "com.softwaremill.sttp.client3",
           "httpclient-backend-zio",
