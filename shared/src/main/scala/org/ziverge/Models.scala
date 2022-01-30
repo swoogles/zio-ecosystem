@@ -25,12 +25,10 @@ case class Project(group: String, artifactId: String, githubUrl: Option[String] 
     else
       artifactId
   val githubOrgAndRepo: Option[GithubRepo] =
-    githubUrl.map {
-      url => 
-        val pieces = url.stripPrefix("https://github.com/").split("/")
-        GithubRepo(pieces(0), pieces(1))
+    githubUrl.map { url =>
+      val pieces = url.stripPrefix("https://github.com/").split("/")
+      GithubRepo(pieces(0), pieces(1))
     }
-
 
 object Project:
   def fromMaven(groupId: String, artifactId: String): Project =
@@ -72,10 +70,7 @@ case class ProjectMetaData(project: Project, version: String, dependencies: Seq[
   val typedVersion = Version(version)
 
   def onLatestZio(currentZioVersion: Version): Boolean =
-      zioDep
-        .fold(true)(zDep =>
-          zDep.typedVersion.compareTo(currentZioVersion) == 0
-        )
+    zioDep.fold(true)(zDep => zDep.typedVersion.compareTo(currentZioVersion) == 0)
 
 object ProjectMetaData:
   implicit val rw: RW[ProjectMetaData] = macroRW
@@ -146,19 +141,18 @@ case class ConnectedProjectData(
     zioDep: Option[ZioDep],
     latestZio: Version,
     relevantPr: Option[PullRequest] = None
-) {
-    lazy val onLatestZioDep: Boolean =
-        zioDep.fold(true)(zDep =>
-          // TODO
-          zDep.zioDep.typedVersion.compareTo(latestZio) == 0
-        )
+):
+  lazy val onLatestZioDep: Boolean =
+    zioDep.fold(true)(zDep =>
+      // TODO
+      zDep.zioDep.typedVersion.compareTo(latestZio) == 0
+    )
 
-    lazy val projectIsUpToDate =
-      dependencies.forall(dep => dep.onLatestZio(latestZio)) && onLatestZioDep
+  lazy val projectIsUpToDate =
+    dependencies.forall(dep => dep.onLatestZio(latestZio)) && onLatestZioDep
 
-}
 object ConnectedProjectData:
-  implicit val versionRw: RW[Version] = readwriter[String].bimap[Version](_.value, Version(_))
+  implicit val versionRw: RW[Version]       = readwriter[String].bimap[Version](_.value, Version(_))
   implicit val rw: RW[ConnectedProjectData] = macroRW
 
   def apply(
@@ -208,15 +202,17 @@ object ConnectedProjectData:
         )
       zioDep <-
         ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
-      // Instead of yielding here, assign value, check if it's on the latest ZIO, and then query for open PRs if not
-      connectedProject = ConnectedProjectData(
-        projectMetaData.project,
-        projectMetaData.typedVersion,
-        typedDependencies,
-        typedDependants,
-        zioDep,
-        currentZioVersion
-      )
+      // Instead of yielding here, assign value, check if it's on the latest ZIO, and then query for
+      // open PRs if not
+      connectedProject =
+        ConnectedProjectData(
+          projectMetaData.project,
+          projectMetaData.typedVersion,
+          typedDependencies,
+          typedDependants,
+          zioDep,
+          currentZioVersion
+        )
     yield connectedProject
   end apply
 end ConnectedProjectData
@@ -276,10 +272,11 @@ object FullAppData:
     val onLatestZioConnected: ConnectedProjectData => Boolean =
       p =>
         p.zioDep
-          .fold(true){zDep =>
+          .fold(true) { zDep =>
             println("Comparing")
-            val res = zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) <
-              0 // TODO Fix comparison?
+            val res =
+              zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) <
+                0 // TODO Fix comparison?
             println("Compared")
             res
           }
@@ -295,12 +292,12 @@ object FullAppData:
             // TODO Make this a function in a better spot
             // project.dependants.exists(_.project.artifactId.contains(filter)) ||
             val introspectedDataMatches =
-                  project
-                    .dependencies
-                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter)) ||
-                  project
-                    .dependants
-                    .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
+              project
+                .dependencies
+                .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter)) ||
+                project
+                  .dependants
+                  .exists(_.project.artifactId.toLowerCase.contains(normalizedFilter))
             artifactMatches || introspectedDataMatches
         case None =>
           project => true
@@ -319,7 +316,6 @@ end FullAppData
 import upickle.default.{macroRW, ReadWriter as RW, *}
 
 case class PullRequest(number: Int, title: String, html_url: String)
-object PullRequest {
+object PullRequest:
 
-  implicit val rw: RW[PullRequest]            = macroRW
-}
+  implicit val rw: RW[PullRequest] = macroRW

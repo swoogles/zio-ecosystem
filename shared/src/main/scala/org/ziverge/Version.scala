@@ -19,25 +19,17 @@ object Version:
       version1
         .value
         .split("\\.")
-        .filter(segment => !segment.contains("RC") && !segment.contains("M"))
     val version2Splits =
       version2
         .value
         .split("\\.")
-        .filter(segment => !segment.contains("RC") && !segment.contains("M"))
     val maxLengthOfVersionSplits = Math.max(version1Splits.length, version2Splits.length)
     var i                        = 0
     while (i < maxLengthOfVersionSplits && comparisonResult == 0) {
       val v1 =
-        if (i < version1Splits.length)
-          version1Splits(i).toInt
-        else
-          0
+          version1Splits(i)
       val v2 =
-        if (i < version2Splits.length)
-          version2Splits(i).toInt
-        else
-          0
+          version2Splits(i)
       val compare = v1.compareTo(v2)
       if (compare != 0) {
         comparisonResult = compare

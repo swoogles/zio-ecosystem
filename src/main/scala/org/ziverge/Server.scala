@@ -23,26 +23,28 @@ object DependencyServer extends App:
   val app =
     Http.collectHttp[Request] {
       case Method.GET -> Root =>
-            Http.fromStream {
-              ZStream
-                .fromFile(Paths.get("src/main/resources/index.html").toFile)
-                .refineOrDie(_ => ???)
-            }
+        Http.fromStream {
+          ZStream.fromFile(Paths.get("src/main/resources/index.html").toFile).refineOrDie(_ => ???)
+        }
       case Method.GET -> Root / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
-            Http.fromStream {
-              ZStream
-                .fromFile(
-                  Paths.get("src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js").toFile
-                )
-                .refineOrDie(_ => ???)
-            }
+        Http.fromStream {
+          ZStream
+            .fromFile(
+              Paths
+                .get("src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")
+                .toFile
+            )
+            .refineOrDie(_ => ???)
+        }
       case Method.GET -> Root / "images" / path =>
-               Http.fromFile(new File(s"src/main/resources/images/$path")).setHeaders(Headers.contentType("image/svg+xml"))
+        Http
+          .fromFile(new File(s"src/main/resources/images/$path"))
+          .setHeaders(Headers.contentType("image/svg+xml"))
 
       case Method.GET -> !! / "projectData" =>
         val appData      = CrappySideEffectingCache.fullAppData.get
         val responseText = Chunk.fromArray(write(appData).getBytes)
-          Http.response(
+        Http.response(
           Response.http(
             status = Status.OK,
             headers =
@@ -51,7 +53,7 @@ object DependencyServer extends App:
                 .combine(Headers.contentType("application/json")),
             data = HttpData.fromStream(ZStream.fromChunk(responseText))
           )
-          )
+        )
     }
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
@@ -62,7 +64,7 @@ object DependencyServer extends App:
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
-            .tapError( error => ZIO.debug("Error during data fetch: " + error))
+            .tapError(error => ZIO.debug("Error during data fetch: " + error))
             .orDie
             .repeat(Schedule.spaced(30.minutes))
             .fork
@@ -74,16 +76,18 @@ end DependencyServer
 object SharedLogic:
   def fetchAppDataAndRefreshCache(scalaVersion: ScalaVersion) =
     for
-      _ <- zio.Console.printLine("Getting fresh data")
+      _   <- zio.Console.printLine("Getting fresh data")
       res <- fetchAppData(scalaVersion)
-      _ <- ZIO {
+      _ <-
+        ZIO {
           CrappySideEffectingCache.fullAppData = Some(res)
         }
     yield res
 
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
-      currentZioVersion: Version <- Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
+      currentZioVersion: Version <-
+        Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData: Seq[ProjectMetaData] <-
         ZIO.foreachPar(Data.projects) { project =>
           Maven.projectMetaDataFor(project, scalaVersion)
@@ -96,24 +100,28 @@ object SharedLogic:
           for
             res <-
               ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
-            finalProject <- 
+            finalProject <-
               if (res.projectIsUpToDate)
                 ZIO.succeed(res)
               else
-                res.project.githubOrgAndRepo.map(
-                  project =>
-                  Github.pullRequests(project).map {
-                    prOpt => 
-                      res.copy(relevantPr = prOpt)
-                  }.catchAll {
-                    case githubError => 
-                      println("Github Error: " + githubError)
-                      ZIO.succeed(res)
-                  }
-                ).getOrElse(ZIO.succeed(res))
-                
-              // ZIO.debug(res.project.artifactId + " upToDate: " +  res.projectIsUpToDate)
-            // TODO Look for PRs here
+                res
+                  .project
+                  .githubOrgAndRepo
+                  .map(project =>
+                    Github
+                      .pullRequests(project)
+                      .map { prOpt =>
+                        res.copy(relevantPr = prOpt)
+                      }
+                      .catchAll { case githubError =>
+                        println("Github Error: " + githubError)
+                        ZIO.succeed(res)
+                      }
+                  )
+                  .getOrElse(ZIO.succeed(res))
+
+          // ZIO.debug(res.project.artifactId + " upToDate: " +  res.projectIsUpToDate)
+          // TODO Look for PRs here
           yield finalProject
         )
       res =

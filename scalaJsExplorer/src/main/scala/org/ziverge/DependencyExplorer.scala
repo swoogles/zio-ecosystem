@@ -28,15 +28,11 @@ object DependencyViewerLaminar:
 
   private val router = DependencyExplorerRouting.router
 
-  def ExpandableProjectCard(
-      project: ConnectedProjectData,
-      currentZioVersion: Version
-  ) =
+  def ExpandableProjectCard(project: ConnectedProjectData, currentZioVersion: Version) =
 
     val toggleContentVisibility =
       Observer[org.scalajs.dom.html.Element](onNext =
-        anchor =>
-          anchor.parentElement.querySelector(".card-content").classList.toggle("is-hidden")
+        anchor => anchor.parentElement.querySelector(".card-content").classList.toggle("is-hidden")
       )
 
     val scrollToProject =
@@ -85,23 +81,29 @@ object DependencyViewerLaminar:
                 cls := "card-content is-hidden",
                 div(
                   cls := "content", {
-                    def ConnectedProjectsContainer(title: String, connectedProjects: Seq[ProjectMetaData]) =
-                          div(
-                            cls := "box p-3",
-                            span(
-                              cls := "is-size-5",
-                              s"$title ",
-                              small(cls:="has-text-grey-dark", s"(${connectedProjects.length})")
-                            ),
-                            connectedProjects.map(dep =>
-                              a(
-                                cls := s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
-                                onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
-                                  scrollToProject,
-                                dep.project.artifactIdQualifiedWhenNecessary
-                              )
-                            ).toSeq
+                    def ConnectedProjectsContainer(
+                        title: String,
+                        connectedProjects: Seq[ProjectMetaData]
+                    ) =
+                      div(
+                        cls := "box p-3",
+                        span(
+                          cls := "is-size-5",
+                          s"$title ",
+                          small(cls := "has-text-grey-dark", s"(${connectedProjects.length})")
+                        ),
+                        connectedProjects
+                          .map(dep =>
+                            a(
+                              cls :=
+                                s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
+                              onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
+                                scrollToProject,
+                              dep.project.artifactIdQualifiedWhenNecessary
+                            )
                           )
+                          .toSeq
+                      )
 
                     val usedBy: Seq[Div] =
                       dependants.map(dep =>
@@ -111,13 +113,8 @@ object DependencyViewerLaminar:
                         )
                       )
 
-                      
-
-                    def Column(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) = 
-                        div(
-                          cls := "column",
-                          content.toSeq
-                        )
+                    def Column(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) =
+                      div(cls := "column", content.toSeq)
 
                     div(
                       div(
@@ -129,41 +126,47 @@ object DependencyViewerLaminar:
                             ClipboardIcon(Render.sbtStyle(project, version))
                           )
                         ),
-                        project.githubUrl.map(
-                          githubUrl => 
+                        project
+                          .githubUrl
+                          .map(githubUrl =>
                             Column(
                               div(
-                                h5(cls:="is-size-5", "Github"),
-                                a(cls := "button is-size-5 is-info m-3", href := githubUrl, "Project"),
-                                connectedProject.relevantPr.map( pr => 
-                                  div(
-                                  div(
-                                  a(cls := "button is-size-5 is-info m-3", href := pr.html_url, "ZIO Upgrade PR*"),
-                                  ),div(
-                                  small("* Best Effort. Not guaranteed to be relevant.")
+                                h5(cls := "is-size-5", "Github"),
+                                a(
+                                  cls  := "button is-size-5 is-info m-3",
+                                  href := githubUrl,
+                                  "Project"
+                                ),
+                                connectedProject
+                                  .relevantPr
+                                  .map(pr =>
+                                    div(
+                                      div(
+                                        a(
+                                          cls  := "button is-size-5 is-info m-3",
+                                          href := pr.html_url,
+                                          "ZIO Upgrade PR*"
+                                        )
+                                      ),
+                                      div(small("* Best Effort. Not guaranteed to be relevant."))
+                                    )
                                   )
-                                  )
-                                )
                               )
                             )
-                        ),
+                          ),
                         Column(
-                          h5(cls:="is-size-5", "ZIO Version: "), div(
+                          h5(cls := "is-size-5", "ZIO Version: "),
+                          div(
                             cls := s"box p-3 ${colorUpToDate(connectedProject.onLatestZioDep)}",
-zioDep.map(_.zioDep.version).getOrElse("N/A")
+                            zioDep.map(_.zioDep.version).getOrElse("N/A")
                           )
                         )
                       ),
                       div(
                         cls := "columns",
+                        Column(ConnectedProjectsContainer("Depends on", dependencies)),
                         Column(
-                          ConnectedProjectsContainer("Depends on", dependencies)
-                        ),
-                        Column(
-                          div(
-                            cls := "box p-3",
-                            ConnectedProjectsContainer("Used By ", dependants)
-                          )
+                          div(cls := "box p-3", ConnectedProjectsContainer("Used By ", dependants))
                         )
                       )
                     )
@@ -208,12 +211,10 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
                       busPageInfo.targetProject
                     )
 
-                    
-                  
                   div(
                     EcosystemSummary(
                       // TODO Probably want to move this bit of logic into FullAppData
-                      numberOfTrackedProjects = fullAppDataLive.connected.length, 
+                      numberOfTrackedProjects = fullAppDataLive.connected.length,
                       numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsUpToDate)
                     ),
                     div(
@@ -244,10 +245,7 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
   def ClipboardIcon(sbtLink: String) =
 
     val copySbtDependencyToClipboard =
-      Observer[String](onNext =
-        sbtText =>
-          dom.window.navigator.clipboard.writeText(sbtText)
-      )
+      Observer[String](onNext = sbtText => dom.window.navigator.clipboard.writeText(sbtText))
 
     a(
       cls := "icon",
@@ -269,11 +267,11 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
       div(cls := "field-body", div(cls := "field", p(cls := "control", inputElement)))
     )
 
-  def EcosystemSummary(numberOfTrackedProjects: Int, numberOfCurrentProjects: Int) = 
+  def EcosystemSummary(numberOfTrackedProjects: Int, numberOfCurrentProjects: Int) =
     div(
       cls := "box p-3",
       div("Total Tracked Projects: " + numberOfTrackedProjects),
-      div("Up-to-date Projects: " + numberOfCurrentProjects),
+      div("Up-to-date Projects: " + numberOfCurrentProjects)
     )
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
@@ -295,8 +293,7 @@ zioDep.map(_.zioDep.version).getOrElse("N/A")
 
     def upToDateCheckbox(page: DependencyExplorerPage) =
       Observer[Boolean](onNext =
-        checkboxState =>
-          router.pushState(page.copy(filterUpToDateProjects = checkboxState))
+        checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
 
     val refresh = EventStream.periodic(5000)

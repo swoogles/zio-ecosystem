@@ -8,10 +8,13 @@ ThisBuild / scalaVersion := "3.1.0"
 lazy val sharedSettings = Seq(
   libraryDependencies ++= Seq(
     "dev.zio" %%% "zio" % "2.0.0-RC1",
+    "dev.zio" %%% "zio-test" % "2.0.0-RC1" % "test",
+    "dev.zio" %%% "zio-test-sbt" % "2.0.0-RC1" % "test",
     "com.lihaoyi" %%% "pprint" % "0.7.0",
     "com.lihaoyi" %%% "upickle" % "1.4.3",
     ("org.scala-graph" %%% "graph-core" % "1.13.3").cross(CrossVersion.for3Use2_13),
-  )
+  ),
+  testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
 )
 
 mainClass in Compile := Some("org.ziverge.DependencyServer")

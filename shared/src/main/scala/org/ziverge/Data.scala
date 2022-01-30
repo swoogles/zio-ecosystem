@@ -14,7 +14,11 @@ object Data:
       Project("dev.zio", "zio-stacktracer", Some("https://github.com/zio/zio")),
       Project("dev.zio", "zio-streams", Some("https://github.com/zio/zio")),
       Project("dev.zio", "izumi-reflect", Some("https://github.com/zio/izumi-reflect")),
-      Project("dev.zio", "izumi-reflect-thirdparty-boopickle-shaded", Some("https://github.com/zio/izumi-reflect"))
+      Project(
+        "dev.zio",
+        "izumi-reflect-thirdparty-boopickle-shaded",
+        Some("https://github.com/zio/izumi-reflect")
+      )
     )
 
   val projects =
@@ -31,7 +35,8 @@ object Data:
         Project("dev.zio", "zio-config-typesafe", Some("https://github.com/zio/zio-config")),
         Project("dev.zio", "zio-kafka", Some("https://github.com/zio/zio-kafka")),
         Project("dev.zio", "zio-ftp", Some("https://github.com/zio/zio-ftp")),
-        // Project("dev.zio", "zio-mock", Some("https://github.com/zio/zio-mock")), // TODO Enable when published
+        // Project("dev.zio", "zio-mock", Some("https://github.com/zio/zio-mock")), // TODO Enable
+        // when published
         Project("dev.zio", "zio-aws-core", Some("https://github.com/zio/zio-aws")),
         Project("dev.zio", "zio-prelude", Some("https://github.com/zio/zio-prelude")),
         Project("dev.zio", "zio-prelude-macros", Some("https://github.com/zio/zio-prelude")),
@@ -48,10 +53,16 @@ object Data:
         Project("io.7mind.izumi", "logstage-core", Some("https://github.com/7mind/izumi")),
         Project("com.github.poslegm", "munit-zio", Some("https://github.com/poslegm/munit-zio")),
         Project("com.coralogix", "zio-k8s-client", Some("https://github.com/coralogix/zio-k8s")),
-        Project("com.softwaremill.sttp.client3", "zio",
+        Project(
+          "com.softwaremill.sttp.client3",
+          "zio",
           Some("https://github.com/softwaremill/sttp")
-),
-        Project("com.softwaremill.sttp.tapir","tapir-json-zio", Some("https://github.com/softwaremill/tapir")),
+        ),
+        Project(
+          "com.softwaremill.sttp.tapir",
+          "tapir-json-zio",
+          Some("https://github.com/softwaremill/tapir")
+        ),
         Project(
           "com.softwaremill.sttp.client3",
           "httpclient-backend-zio",
@@ -62,9 +73,11 @@ object Data:
           "async-http-client-backend-zio",
           Some("https://github.com/softwaremill/sttp")
         ),
-        Project("com.softwaremill.sttp.shared", "zio",
+        Project(
+          "com.softwaremill.sttp.shared",
+          "zio",
           Some("https://github.com/softwaremill/sttp")
-),
+        ),
         Project("io.d11", "zhttp", Some("https://github.com/dream11/zio-http")),
         Project("dev.zio", "zio-interop-cats", Some("https://github.com/zio/interop-cats")),
         Project("dev.zio", "zio-nio", Some("https://github.com/zio/zio-nio")),
