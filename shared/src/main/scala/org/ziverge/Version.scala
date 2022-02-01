@@ -36,6 +36,7 @@ object Version:
       }
       i = i + 1
     }
+//    println(s"Version1: $version1 Version2: $version2 comparison result: " + comparisonResult)
     comparisonResult
   end compareVersions
 end Version

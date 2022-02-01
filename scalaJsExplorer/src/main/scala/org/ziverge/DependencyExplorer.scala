@@ -19,6 +19,7 @@ case class DependencyExplorerPage(
     dataView: DataView,
     filterUpToDateProjects: Boolean
 ) extends Page:
+  val zioVersionOfInterest = Version("1.0.0")
   def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
 
 private case object LoginPageOriginal extends Page
@@ -54,6 +55,8 @@ object DependencyViewerLaminar:
             latestZio, // TODO Use
             relevantPr
           ) => {
+        println("project zio version: " + zioDep.map(_.toString).getOrElse("none"))
+        println("On minimum version: " + connectedProject.projectIsOnAtLeast(currentZioVersion))
 
         div(
           div(
@@ -69,7 +72,7 @@ object DependencyViewerLaminar:
                 },
                 p(
                   cls := "card-header-title",
-                  UpToDateIcon(connectedProject.projectIsUpToDate),
+                  UpToDateIcon(connectedProject.projectIsOnAtLeast(currentZioVersion)),
                   project.artifactIdQualifiedWhenNecessary
                 ),
                 a(
@@ -219,7 +222,8 @@ object DependencyViewerLaminar:
                     ),
                     div(
                       manipulatedData.map { connectedProject =>
-                        ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
+//                        ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
+                        ExpandableProjectCard(connectedProject, busPageInfo.zioVersionOfInterest)
 
                       }
                     )
@@ -340,6 +344,10 @@ import com.raquo.laminar.api.L.Signal
 case class AppDataAndEffects(dataSignal: Signal[Option[FullAppData]])
 
 object DependencyExplorer extends ZIOAppDefault:
+  /*
+      Potential new features:
+        - Contributor/Maintainer view
+  */
 
   def logic: ZIO[Console, Throwable, Unit] =
     for
