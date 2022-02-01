@@ -19,7 +19,7 @@ case class DependencyExplorerPage(
     dataView: DataView,
     filterUpToDateProjects: Boolean
 ) extends Page:
-  val zioVersionOfInterest = Version("1.0.0")
+  val zioVersionOfInterest = Version("2.0.0-RC1")
   def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
 
 private case object LoginPageOriginal extends Page
@@ -218,7 +218,7 @@ object DependencyViewerLaminar:
                     EcosystemSummary(
                       // TODO Probably want to move this bit of logic into FullAppData
                       numberOfTrackedProjects = fullAppDataLive.connected.length,
-                      numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsUpToDate)
+                      numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsOnAtLeast(busPageInfo.zioVersionOfInterest))
                     ),
                     div(
                       manipulatedData.map { connectedProject =>
