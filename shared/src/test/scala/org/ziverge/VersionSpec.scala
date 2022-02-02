@@ -20,5 +20,5 @@ object VersionSpec extends zio.test.ZIOSpecDefault:
       test("compareTo 1 vs 2")(
         assertTrue(Version.compareVersions(Version("1.0.13"), Version("2.0.0-RC1")) == -1)
       )
-
     )
+end VersionSpec

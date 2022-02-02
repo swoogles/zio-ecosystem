@@ -71,7 +71,7 @@ case class ProjectMetaData(project: Project, version: String, dependencies: Seq[
 
   def onLatestZio(currentZioVersion: Version): Boolean =
     zioDep.fold(true)(zDep => zDep.typedVersion.compareTo(currentZioVersion) == 0)
-    
+
   def onAtLeastZio(currentZioVersion: Version): Boolean =
     zioDep.fold(true)(zDep => zDep.typedVersion.compareTo(currentZioVersion) >= 0)
 
@@ -153,7 +153,7 @@ case class ConnectedProjectData(
 
   lazy val projectIsUpToDate =
     dependencies.forall(dep => dep.onLatestZio(latestZio)) && onLatestZioDep
-    
+
   def onLatestRequiredZioDep(version: Version): Boolean =
     zioDep.fold(true)(zDep =>
       // TODO
@@ -162,16 +162,15 @@ case class ConnectedProjectData(
 
   def projectIsOnAtLeast(version: Version): Boolean =
 //    println("Deps up to date: " + dependencies.forall(dep => dep.onAtLeastZio(version)))
-    if(onLatestRequiredZioDep(version))
-//      println(project.artifactId + " is on latest required ZIO")
-        ()
+    if (onLatestRequiredZioDep(version))
+      println(project.artifactId + " is on latest required ZIO")
+      ()
     else
       println(project.artifactId + " is not on latest required ZIO")
-      println("zioDep: " + zioDep)
-      
+
 //    println("zioDep up to date: " + onLatestRequiredZioDep(version))
     dependencies.forall(dep => dep.onAtLeastZio(version)) && onLatestRequiredZioDep(version)
-
+end ConnectedProjectData
 
 object ConnectedProjectData:
   implicit val versionRw: RW[Version]       = readwriter[String].bimap[Version](_.value, Version(_))

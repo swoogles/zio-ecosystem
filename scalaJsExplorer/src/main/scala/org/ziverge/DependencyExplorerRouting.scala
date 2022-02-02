@@ -17,17 +17,29 @@ object DependencyExplorerRouting:
   implicit private val explorerRW: RW[DependencyExplorerPage] = macroRW
   implicit private val rw: RW[Page]                           = macroRW
 
-  private val encodePage
-      : DependencyExplorerPage => (Option[String], Option[String], Option[Boolean]) =
-    page => (page.targetProject, Some(page.dataView.toString), Some(page.filterUpToDateProjects))
+  private val encodePage: DependencyExplorerPage => (
+      Option[String],
+      Option[String],
+      Option[Boolean],
+      Option[String]
+  ) =
+    page =>
+      (
+        page.targetProject,
+        Some(page.dataView.toString),
+        Some(page.filterUpToDateProjects),
+        page.zioVersionOfInterest.map(_.toString)
+      )
 
-  private val decodePage
-      : ((Option[String], Option[String], Option[Boolean])) => DependencyExplorerPage = {
-    case (targetProject, dataView, filterUpToDateProjects) =>
+  private val decodePage: (
+      (Option[String], Option[String], Option[Boolean], Option[String])
+  ) => DependencyExplorerPage = {
+    case (targetProject, dataView, filterUpToDateProjects, zioVersionOfInterest) =>
       DependencyExplorerPage(
         targetProject = targetProject,
         dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Dependencies),
-        filterUpToDateProjects = filterUpToDateProjects.getOrElse(false)
+        filterUpToDateProjects = filterUpToDateProjects.getOrElse(false),
+        zioVersionOfInterest = zioVersionOfInterest.map(Version(_))
       )
   }
 
@@ -54,31 +66,30 @@ object DependencyExplorerRouting:
 
   // val params: QueryParameters[(Option[String], Option[String], Option[String], Option[Boolean]),
   // DummyError] =
-  val params: QueryParameters[(Option[String], Option[String], Option[Boolean]), DummyError] =
-    param[String]("targetProject").? & param[String]("dataView").? &
-      param[Boolean]("filterUpToDateProjects").?
+//  val params: QueryParameters[
+//    ((Option[String], Option[String], Option[Boolean]), Option[String]),
+//    DummyError
+//  ] =
+//    param[String]("targetProject").? & param[String]("dataView").? &
+//      param[Boolean]("filterUpToDateProjects").? & param[Int]("zioVersionOfInterest").?
+  val params: QueryParameters[(Option[String], Option[String], Option[Boolean], Option[String]), DummyError] =
 
-  private val devRoute =
-    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[Boolean])](
-      encode = encodePage,
-      decode = decodePage,
-      pattern = (root / "index_dev.html" / endOfSegments) ? params
-    )
+      param[String]("targetProject").?.&(param[String]("dataView").?).&(param[Boolean]("filterUpToDateProjects").?.&(param[String]("zioVersionOfInterest").?))
+      // param[String]("targetProject").? & param[String]("dataView").? & param[Boolean]("filterUpToDateProjects").? & param[String]("zioVersionOfInterest").?
+
 
   private val prodRoute =
-    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[Boolean])](
-      encode = encodePage,
-      decode = decodePage,
-      pattern = (root / endOfSegments) ? params
+    Route.onlyQuery[
+      DependencyExplorerPage,
+      (Option[String], Option[String], Option[Boolean], Option[String])
+    ](encode = encodePage, decode = decodePage, pattern = (root / endOfSegments) ?
+
+      params
     )
 
   val router =
     new Router[Page](
-      routes =
-        List(
-          prodRoute
-          //      devRoute,
-        ),
+      routes = List(prodRoute),
       getPageTitle = _.toString, // mock page title (displayed in the browser tab next to favicon)
       serializePage = page => write(page)(rw), // serialize page data for storage in History API log
       deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
@@ -87,7 +98,8 @@ object DependencyExplorerRouting:
           DependencyExplorerPage(
             targetProject = None,
             dataView = DataView.Dependencies,
-            filterUpToDateProjects = false
+            filterUpToDateProjects = false,
+            zioVersionOfInterest = None
           ),
     )(
       $popStateEvent =
