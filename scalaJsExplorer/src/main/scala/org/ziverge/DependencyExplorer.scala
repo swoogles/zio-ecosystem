@@ -299,7 +299,7 @@ object DependencyViewerLaminar:
 
     def upToDateCheckbox(page: DependencyExplorerPage) =
       Observer[Boolean](onNext =
-        checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState))
+        checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState, zioVersionOfInterest = Some(Version("1.0.0"))))
       )
 
     val refresh = EventStream.periodic(5000)

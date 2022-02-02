@@ -28,7 +28,7 @@ object DependencyExplorerRouting:
         page.targetProject,
         Some(page.dataView.toString),
         Some(page.filterUpToDateProjects),
-        page.zioVersionOfInterest.map(_.toString)
+        page.zioVersionOfInterest.map(_.value.toString)
       )
 
   private val decodePage: (
