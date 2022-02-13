@@ -17,8 +17,7 @@ sealed private trait Page
 case class DependencyExplorerPage(
     targetProject: Option[String],
     dataView: DataView,
-    filterUpToDateProjects: Boolean,
-    zioVersionOfInterest: Option[Version]
+    filterUpToDateProjects: Boolean
 ) extends Page:
   def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
 
@@ -55,9 +54,6 @@ object DependencyViewerLaminar:
             latestZio, // TODO Use
             relevantPr
           ) => {
-        println("\n\nproject : " + project)
-        println("project zio version: " + zioDep.map(_.toString).getOrElse("none"))
-        println("On minimum version: " + connectedProject.projectIsOnAtLeast(currentZioVersion))
 
         div(
           div(
@@ -73,7 +69,7 @@ object DependencyViewerLaminar:
                 },
                 p(
                   cls := "card-header-title",
-                  UpToDateIcon(connectedProject.projectIsOnAtLeast(currentZioVersion)),
+                  UpToDateIcon(connectedProject.projectIsUpToDate),
                   project.artifactIdQualifiedWhenNecessary
                 ),
                 a(
@@ -96,14 +92,17 @@ object DependencyViewerLaminar:
                           s"$title ",
                           small(cls := "has-text-grey-dark", s"(${connectedProjects.length})")
                         ),
-                        connectedProjects.map(dep =>
-                          a(
-                            cls := s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
-                            onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
-                              scrollToProject,
-                            dep.project.artifactIdQualifiedWhenNecessary
+                        connectedProjects
+                          .map(dep =>
+                            a(
+                              cls :=
+                                s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
+                              onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
+                                scrollToProject,
+                              dep.project.artifactIdQualifiedWhenNecessary
+                            )
                           )
-                        )
+                          .toSeq
                       )
 
                     val usedBy: Seq[Div] =
@@ -212,20 +211,15 @@ object DependencyViewerLaminar:
                       busPageInfo.targetProject
                     )
 
-                  val zioVersionOfInterest =
-                    busPageInfo.zioVersionOfInterest.getOrElse(fullAppDataLive.currentZioVersion)
-
                   div(
                     EcosystemSummary(
                       // TODO Probably want to move this bit of logic into FullAppData
                       numberOfTrackedProjects = fullAppDataLive.connected.length,
-                      numberOfCurrentProjects =
-                        fullAppDataLive.connected.count(_.projectIsOnAtLeast(zioVersionOfInterest))
+                      numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsUpToDate)
                     ),
                     div(
                       manipulatedData.map { connectedProject =>
-//                        ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
-                        ExpandableProjectCard(connectedProject, zioVersionOfInterest)
+                        ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
 
                       }
                     )
@@ -299,7 +293,7 @@ object DependencyViewerLaminar:
 
     def upToDateCheckbox(page: DependencyExplorerPage) =
       Observer[Boolean](onNext =
-        checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState, zioVersionOfInterest = Some(Version("1.0.0"))))
+        checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
 
     val refresh = EventStream.periodic(5000)
@@ -346,8 +340,6 @@ import com.raquo.laminar.api.L.Signal
 case class AppDataAndEffects(dataSignal: Signal[Option[FullAppData]])
 
 object DependencyExplorer extends ZIOAppDefault:
-  /* Potential new features:
-   * - Contributor/Maintainer view */
 
   def logic: ZIO[Console, Throwable, Unit] =
     for
