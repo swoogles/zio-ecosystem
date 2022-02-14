@@ -8,10 +8,9 @@ import urldsl.language.QueryParameters
 
 import org.scalajs.dom
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import org.ziverge.DataView.*
+import DataView.*
 import com.raquo.airstream.web.AjaxEventStream
 
-/* Potential issue with ZIO-2.0.0-RC1 + SBT 1.6.1 */
 sealed private trait Page
 
 case class DependencyExplorerPage(
@@ -37,8 +36,9 @@ object DependencyViewerLaminar:
     val scrollToProject =
       Observer[String](onNext =
         checkboxState =>
-          val element = dom.document.getElementById(checkboxState)
-          if (dom.document.getElementById(checkboxState) != null) {
+          Option(
+            dom.document.getElementById(checkboxState)
+          ).foreach{element =>
             element.querySelector(".card-content").classList.remove("is-hidden")
             element.scrollIntoView(top = true)
           }
@@ -64,6 +64,11 @@ object DependencyViewerLaminar:
   def Column(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) =
     div(cls := "column", content.toSeq)
 
+  def Columns(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) =
+    div(cls:="columns",
+      content.toSeq.map(Column(_))
+    )
+
 
   def GitStuff(project: Project,
                relevantPr: Option[PullRequest]
@@ -71,7 +76,6 @@ object DependencyViewerLaminar:
     project
       .githubUrl
       .map(githubUrl =>
-        Column(
           div(
             h5(cls := "is-size-5", "Github"),
             a(
@@ -81,7 +85,7 @@ object DependencyViewerLaminar:
             ),
             relevantPr
               .map(pr =>
-                div(
+                Seq(
                   div(
                     a(
                       cls  := "button is-size-5 is-info m-3",
@@ -93,16 +97,9 @@ object DependencyViewerLaminar:
                 )
               )
           )
-        )
-      )
+      ).getOrElse(div())
 
   def ExpandableProjectCard(project: ConnectedProjectData, currentZioVersion: Version) =
-
-    val toggleContentVisibility =
-      Observer[org.scalajs.dom.html.Element](onNext =
-        anchor => anchor.parentElement.querySelector(".card-content").classList.toggle("is-hidden")
-      )
-
     project match
       case connectedProject @ ConnectedProjectData(
       project,
@@ -112,8 +109,7 @@ object DependencyViewerLaminar:
       zioDep,
       latestZio, // TODO Use
       relevantPr
-      ) => {
-        div(
+      ) =>
           div(
             cls    := "container",
             idAttr := project.artifactIdQualifiedWhenNecessary,
@@ -123,7 +119,8 @@ object DependencyViewerLaminar:
                 cls := "card-header",
                 inContext { thisNode =>
                   val blah: org.scalajs.dom.html.Element = thisNode.ref
-                  onClick.mapTo(thisNode.ref) --> toggleContentVisibility
+                  onClick.mapTo(thisNode.ref) -->
+                    (anchor => anchor.parentElement.querySelector(".card-content").classList.toggle("is-hidden"))
                 },
                 p(
                   cls := "card-header-title",
@@ -138,27 +135,21 @@ object DependencyViewerLaminar:
               div(
                 cls := "card-content is-hidden",
                 div(
-                  cls := "content", {
-                    val usedBy: Seq[Div] =
-                      dependants.map(dep =>
+                  cls := "content",
+                      Columns(
+                        // TODO Turn these raw divs into component defs
                         div(
-                          cls := s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
-                          dep.project.artifactIdQualifiedWhenNecessary
-                        )
-                      )
-
-                    div(
-                      div(
-                        cls := "columns",
-                        Column(
                           h5(cls := "is-size-5", "Current Version: "),
                           div(
-                            code(Render.sbtStyle(project, version)),
-                            ClipboardIcon(Render.sbtStyle(project, version))
+                            code(project.sbtDependency(version)),
+                            ClipboardIcon(project.sbtDependency(version))
                           )
                         ),
-                          GitStuff(???, ???),
-                        Column(
+                          GitStuff(
+                            project,
+                              relevantPr
+                          ),
+                        div(
                           h5(cls := "is-size-5", "ZIO Version: "),
                           div(
                             cls := s"box p-3 ${colorUpToDate(connectedProject.onLatestZioDep)}",
@@ -166,21 +157,14 @@ object DependencyViewerLaminar:
                           )
                         )
                       ),
-                      div(
-                        cls := "columns",
-                        Column(ConnectedProjectsContainer("Depends on", dependencies, currentZioVersion)),
-                        Column(
-                          div(cls := "box p-3", ConnectedProjectsContainer("Used By ", dependants, currentZioVersion))
-                        )
-                      )
-                    )
-                  }
+                  Columns(
+                    ConnectedProjectsContainer("Depends on", dependencies, currentZioVersion),
+                    ConnectedProjectsContainer("Used By ", dependants, currentZioVersion)
+                  )
                 )
               )
             )
           )
-        )
-      }
     end match
   end ExpandableProjectCard
 
@@ -189,48 +173,38 @@ object DependencyViewerLaminar:
       viewUpdate: Observer[String],
       fullAppData: AppDataAndEffects
   ) =
-    def upToDateCheckbox(page: DependencyExplorerPage) =
-      Observer[String](onNext =
-        checkboxState =>
-          val element = dom.document.getElementById(checkboxState)
-          if (dom.document.getElementById(checkboxState) != null)
-            element.scrollIntoView(top = true)
-      )
-
     div(
-      div(
-        child <--
-          fullAppData
-            .dataSignal
-            .map { fullAppDataLive =>
-              fullAppDataLive match
-                case None =>
-                  div("No info to display!")
-                case Some(fullAppDataLive) =>
-                  val manipulatedData: Seq[ConnectedProjectData] =
-                    FullAppData.filterData(
-                      fullAppDataLive,
-                      busPageInfo.dataView,
-                      busPageInfo.filterUpToDateProjects,
-                      busPageInfo.targetProject
-                    )
-
-                  div(
-                    EcosystemSummary(
-                      // TODO Probably want to move this bit of logic into FullAppData
-                      numberOfTrackedProjects = fullAppDataLive.connected.length,
-                      numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsUpToDate)
-                    ),
-                    div(
-                      manipulatedData.map { connectedProject =>
-                        ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
-
-                      }
-                    )
+      child <--
+        fullAppData
+          .dataSignal
+          .map { fullAppDataLive =>
+            fullAppDataLive match
+              case None =>
+                div("No info to display!")
+              case Some(fullAppDataLive) =>
+                val manipulatedData: Seq[ConnectedProjectData] =
+                  FullAppData.filterData(
+                    fullAppDataLive,
+                    busPageInfo.dataView,
+                    busPageInfo.filterUpToDateProjects,
+                    busPageInfo.targetProject
                   )
 
-            }
-      )
+                div(
+                  EcosystemSummary(
+                    // TODO Probably want to move this bit of logic into FullAppData
+                    numberOfTrackedProjects = fullAppDataLive.connected.length,
+                    numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsUpToDate)
+                  ),
+                  div(
+                    manipulatedData.map { connectedProject =>
+                      ExpandableProjectCard(connectedProject, fullAppDataLive.currentZioVersion)
+
+                    }
+                  )
+                )
+
+          }
     )
   end ProjectListings
 
@@ -246,14 +220,10 @@ object DependencyViewerLaminar:
       )
     )
 
-  def ClipboardIcon(sbtLink: String) =
-
-    val copySbtDependencyToClipboard =
-      Observer[String](onNext = sbtText => dom.window.navigator.clipboard.writeText(sbtText))
-
+  def ClipboardIcon(content: String) =
     a(
       cls := "icon",
-      onClick.mapTo(sbtLink) --> copySbtDependencyToClipboard,
+      onClick.mapTo(content) --> (sbtText => dom.window.navigator.clipboard.writeText(sbtText)),
       img(src := "/images/glyphicons-basic-30-clipboard.svg")
     )
 
@@ -280,8 +250,7 @@ object DependencyViewerLaminar:
 
   def renderMyPage($loginPage: Signal[DependencyExplorerPage], fullAppData: AppDataAndEffects) =
 
-    val clickObserver = Observer[dom.MouseEvent](onNext = ev => dom.console.log(ev.screenX))
-    def viewUpdate(page: DependencyExplorerPage) =
+    def updateFilterInUrl(page: DependencyExplorerPage) =
       Observer[String](onNext =
         dataView =>
           router.pushState(
@@ -289,10 +258,7 @@ object DependencyViewerLaminar:
           )
       )
 
-    def refreshObserver(page: DependencyExplorerPage) =
-      Observer[Int](onNext = dataView => println("should refresh here"))
-
-    def printTextInput(page: DependencyExplorerPage) =
+    def updateSearchParameterInUrl(page: DependencyExplorerPage) =
       Observer[String](onNext = text => router.pushState(page.changeTarget(text)))
 
     def upToDateCheckbox(page: DependencyExplorerPage) =
@@ -300,12 +266,9 @@ object DependencyViewerLaminar:
         checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState))
       )
 
-    val refresh = EventStream.periodic(5000)
-
     div(
       child <--
         $loginPage.map((busPageInfo: DependencyExplorerPage) =>
-          val observer = refreshObserver(busPageInfo)
           div(
             labelledInput(
               "Hide up-to-date projects",
@@ -326,11 +289,11 @@ object DependencyViewerLaminar:
                 placeholder := "Search for...",
                 onMountFocus,
                 inContext { thisNode =>
-                  onInput.mapTo(thisNode.ref.value) --> printTextInput(busPageInfo)
+                  onInput.mapTo(thisNode.ref.value) --> updateSearchParameterInUrl(busPageInfo)
                 }
               )
             ),
-            ProjectListings(busPageInfo, viewUpdate(busPageInfo), fullAppData)
+            ProjectListings(busPageInfo, updateFilterInUrl(busPageInfo), fullAppData)
           )
         )
     )
@@ -338,6 +301,7 @@ object DependencyViewerLaminar:
 
   def app(fullAppData: AppDataAndEffects): Div =
     div(child <-- DependencyExplorerRouting.splitter(fullAppData).$view)
+
 end DependencyViewerLaminar
 
 import com.raquo.laminar.api.L.Signal
@@ -346,31 +310,24 @@ case class AppDataAndEffects(dataSignal: Signal[Option[FullAppData]])
 object DependencyExplorer extends ZIOAppDefault:
 
   def logic: ZIO[Console, Throwable, Unit] =
-    for
-      console <- ZIO.environmentWith[Console](x => x.get)
-
       // This shows that currently, we're only getting this information once upon loading.
-      // We can envision some small changes that let us
-      _ <-
-        ZIO {
-          val appHolder = dom.document.getElementById("landing-message")
-          import com.raquo.laminar.api.L.{*, given}
-          val dataSignal
-              : Signal[Option[FullAppData]] = // TODO Maybe make this Signal[Option[FullAppData]] ?
-            AjaxEventStream
-              .get("/projectData") // EventStream[dom.XMLHttpRequest]
-              .map(req => Some(read[FullAppData](req.responseText))) // EventStream[String]
-              .toSignal(None)                                        // TODO Maybe make this
-          appHolder.innerHTML = ""
-          com
-            .raquo
-            .laminar
-            .api
-            .L
-            .render(appHolder, DependencyViewerLaminar.app(AppDataAndEffects(dataSignal)))
-        }
-    yield ()
+    ZIO {
+      val appHolder = dom.document.getElementById("landing-message")
+      val dataSignal
+          : Signal[Option[FullAppData]] =
+        AjaxEventStream
+          .get("/projectData")
+          .map(req => Some(read[FullAppData](req.responseText)))
+          .toSignal(None)
+      appHolder.innerHTML = ""
+      com
+        .raquo
+        .laminar
+        .api
+        .L
+        .render(appHolder, DependencyViewerLaminar.app(AppDataAndEffects(dataSignal)))
+    }
 
-  def run = logic.provide(ZLayer.succeed(DevConsole.word))
+  def run = logic
 
 end DependencyExplorer

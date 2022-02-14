@@ -30,6 +30,9 @@ case class Project(group: String, artifactId: String, githubUrl: Option[String] 
       GithubRepo(pieces(0), pieces(1))
     }
 
+  def sbtDependency(version: Version) =
+    s""" "${group}" %% "${artifactId}" % "${version.renderForWeb}" """
+
 object Project:
   def fromMaven(groupId: String, artifactId: String): Project =
     val strippedProject =
