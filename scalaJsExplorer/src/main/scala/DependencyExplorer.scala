@@ -1,15 +1,14 @@
 package org.ziverge
 
-import upickle.default.{read, write}
-import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, durationInt, ZLayer}
-import upickle.default.{macroRW, ReadWriter as RW, *}
+import DataView.*
+import org.scalajs.dom
+
+import com.raquo.airstream.web.AjaxEventStream
+import com.raquo.laminar.nodes.ReactiveHtmlElement
+import upickle.default.{macroRW, read, write, ReadWriter as RW, *}
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
-
-import org.scalajs.dom
-import com.raquo.laminar.nodes.ReactiveHtmlElement
-import DataView.*
-import com.raquo.airstream.web.AjaxEventStream
+import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, ZLayer, durationInt}
 
 sealed private trait Page
 
@@ -23,9 +22,9 @@ case class DependencyExplorerPage(
 private case object LoginPageOriginal extends Page
 
 object DependencyViewerLaminar:
-  import com.raquo.laminar.api.L._
+  import com.raquo.laminar.api.L.*
 
-  private val router = DependencyExplorerRouting.router
+  private val router = Routing.router
 
   def ConnectedProjectsContainer(
                                   title: String,
@@ -47,7 +46,7 @@ object DependencyViewerLaminar:
     div(
       cls := "box p-3",
       span(
-        cls := "is-size-5",
+        Bulma.size5,
         s"$title ",
         small(cls := "has-text-grey-dark", s"(${connectedProjects.length})")
       ),
@@ -77,9 +76,10 @@ object DependencyViewerLaminar:
       .githubUrl
       .map(githubUrl =>
           div(
-            h5(cls := "is-size-5", "Github"),
+            h5(Bulma.size5, "Github"),
             a(
-              cls  := "button is-size-5 is-info m-3",
+              Bulma.size5,
+              cls  := "button is-info m-3",
               href := githubUrl,
               "Project"
             ),
@@ -88,7 +88,8 @@ object DependencyViewerLaminar:
                 Seq(
                   div(
                     a(
-                      cls  := "button is-size-5 is-info m-3",
+                      Bulma.size5,
+                      cls  := "button is-info m-3",
                       href := pr.html_url,
                       "ZIO Upgrade PR*"
                     )
@@ -139,7 +140,7 @@ object DependencyViewerLaminar:
                       Columns(
                         // TODO Turn these raw divs into component defs
                         div(
-                          h5(cls := "is-size-5", "Current Version: "),
+                          h5(Bulma.size5, "Current Version: "),
                           div(
                             code(project.sbtDependency(version)),
                             ClipboardIcon(project.sbtDependency(version))
@@ -150,7 +151,7 @@ object DependencyViewerLaminar:
                               relevantPr
                           ),
                         div(
-                          h5(cls := "is-size-5", "ZIO Version: "),
+                          h5(Bulma.size5, "ZIO Version: "),
                           div(
                             cls := s"box p-3 ${colorUpToDate(connectedProject.onLatestZioDep)}",
                             zioDep.map(_.zioDep.version).getOrElse("N/A")
@@ -214,9 +215,9 @@ object DependencyViewerLaminar:
       img(
         src :=
           (if (upToDate)
-             "/images/glyphicons-basic-739-check.svg"
+            Glyphicons.check
            else
-             "/images/glyphicons-basic-847-square-alert.svg")
+            Glyphicons.squareAlert )
       )
     )
 
@@ -224,7 +225,7 @@ object DependencyViewerLaminar:
     a(
       cls := "icon",
       onClick.mapTo(content) --> (sbtText => dom.window.navigator.clipboard.writeText(sbtText)),
-      img(src := "/images/glyphicons-basic-30-clipboard.svg")
+      img(src := Glyphicons.clipboard)
     )
 
   def colorUpToDate(upToDate: Boolean) =
@@ -234,6 +235,7 @@ object DependencyViewerLaminar:
       "has-background-warning"
 
   def labelledInput(labelContent: String, inputElement: ReactiveHtmlElement[dom.html.Element]) =
+//    val blah = cls := "field-label is-normal"
     // Param Type: DomHtmlElement
     div(
       cls := "field is-horizontal",
@@ -300,7 +302,7 @@ object DependencyViewerLaminar:
   end renderMyPage
 
   def app(fullAppData: AppDataAndEffects): Div =
-    div(child <-- DependencyExplorerRouting.splitter(fullAppData).$view)
+    div(child <-- Routing.splitter(fullAppData).$view)
 
 end DependencyViewerLaminar
 
