@@ -60,7 +60,6 @@ object DependencyServer extends App:
     (
       for
         port <- ZIO(sys.env.get("PORT"))
-        _    <- ZIO.debug("PORT result: " + port)
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
@@ -93,7 +92,6 @@ object SharedLogic:
           Maven.projectMetaDataFor(project, scalaVersion)
         }
       // TODO Do Pull Request query here
-      _                             <- ZIO.debug("got first project!")
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
       connectedProjects: Seq[ConnectedProjectData] <-
         ZIO.foreachPar(allProjectsMetaData)(x =>

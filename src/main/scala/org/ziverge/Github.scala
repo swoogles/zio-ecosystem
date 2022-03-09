@@ -19,18 +19,15 @@ object Github:
                 host = "api.github.com": String,
                 path = s"repos/${project.org}/${project.name}/pulls".split("\\/").toSeq
               )
-              .map(_.param("state", "open"))
+              .map(_.withParam("state", "open"))
           )
           .mapError(new Exception(_))
 
-      _ <- ZIO.debug("Constructed url: " + url)
       accessToken <-
         ZIO
           .fromOption(sys.env.get("GITHUB_ACCESS_TOKEN"))
-          .mapError(_ => new Exception("Missing GITHUB_ACCESS_TOKEN"))
-      _ <- ZIO.debug("Got access token" + accessToken.take(3))
+          .orElseFail(new Exception("Missing GITHUB_ACCESS_TOKEN"))
       r <- ZIO(basicRequest.get(url).auth.bearer(accessToken).send(backend))
-      _ <- ZIO.debug("Got response")
       pullRequests <-
         ZIO.fromEither(r.body).mapError(new Exception(_)).map(read[Seq[PullRequest]](_))
       relevantPr =
