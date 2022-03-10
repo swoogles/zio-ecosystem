@@ -77,12 +77,6 @@ object DependencyViewerLaminar:
       .map(githubUrl =>
           div(
             h5(Bulma.size5, "Github"),
-            a(
-              Bulma.size5,
-              cls  := "button is-info m-3",
-              href := githubUrl,
-              "Project"
-            ),
             relevantPr
               .map(pr =>
                 Seq(
@@ -140,7 +134,16 @@ object DependencyViewerLaminar:
                       Columns(
                         // TODO Turn these raw divs into component defs
                         div(
-                          h5(Bulma.size5, "Current Version: "),
+                            a(
+                              Bulma.size5,
+                              href := project.githubUrl.getOrElse(""),
+                              img(
+                                src := "images/GitHub-Mark-64px.png"
+                              )
+                            ),
+                            Bulma.size5,
+                            "Current Version: "
+                          ),
                           div(
                             code(project.sbtDependency(version)),
                             ClipboardIcon(project.sbtDependency(version))
@@ -164,7 +167,6 @@ object DependencyViewerLaminar:
                   )
                 )
               )
-            )
           )
     end match
   end ExpandableProjectCard

@@ -124,14 +124,14 @@ object Data:
         Project("io.github.neurodyne", "zio-arrow", Some("https://github.com/zio-mesh/zio-arrow"))
       ).sortBy(_.artifactId)
 
-  val awsSubprojects =
-    List(
-      Project("dev.zio", "zio-aws-dynamodb"),
-      Project("dev.zio", "zio-aws-netty"),
-      Project("dev.zio", "zio-aws-sqs"),
-      Project("dev.zio", "zio-aws-kinesis"),
-      Project("dev.zio", "zio-aws-cloudwatch"),
-      Project("io.github.neurodyne", "zio-aws-s3")
-    )
+//  val awsSubprojects =
+//    List(
+//      Project("dev.zio", "zio-aws-dynamodb"),
+//      Project("dev.zio", "zio-aws-netty"),
+//      Project("dev.zio", "zio-aws-sqs"),
+//      Project("dev.zio", "zio-aws-kinesis"),
+//      Project("dev.zio", "zio-aws-cloudwatch"),
+//      Project("io.github.neurodyne", "zio-aws-s3")
+//    )
 
 end Data

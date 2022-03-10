@@ -60,6 +60,13 @@ import scala.sys.process._
 lazy val fastOptJSCopyToServer = taskKey[Unit]("Build JS application and then copy to Server static resources directory")
 fastOptJSCopyToServer := {
   (scalaJsExplorer/Compile/fastOptJS).value
+  println("doing stuff")
+  Process("cp ./scalaJsExplorer/target/scala-3.1.0/zioecosystemtracker-fastopt.js ./src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
+}
+
+lazy val fastLinkJSCopyToServer = taskKey[Unit]("Build JS application and then copy to Server static resources directory")
+fastLinkJSCopyToServer := {
+  (scalaJsExplorer/Compile/fastLinkJS).value
   Process("cp ./scalaJsExplorer/target/scala-3.1.0/zioecosystemtracker-fastopt.js ./src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
 }
 
