@@ -76,7 +76,6 @@ object DependencyViewerLaminar:
       .githubUrl
       .map(githubUrl =>
           div(
-            h5(Bulma.size5, "Github"),
             relevantPr
               .map(pr =>
                 Seq(
@@ -138,26 +137,34 @@ object DependencyViewerLaminar:
                               Bulma.size5,
                               href := project.githubUrl.getOrElse(""),
                               img(
-                                src := "images/GitHub-Mark-64px.png"
+                                src := "images/GitHub-Mark-64px.png",
+                                styleAttr := "width: 1.0em; height: 1.0em;"
                               )
                             ),
                             Bulma.size5,
-                            "Current Version: "
-                          ),
-                          div(
-                            code(project.sbtDependency(version)),
-                            ClipboardIcon(project.sbtDependency(version))
+                          span(
+
+                            cls := s"p-3 ",
+                            span("Latest: "),
+                            span(
+                              code(project.sbtDependency(version)),
+                              ClipboardIcon(project.sbtDependency(version))
+                            )
                           )
+                          ),
                         ),
                           GitStuff(
                             project,
                               relevantPr
                           ),
                         div(
-                          h5(Bulma.size5, "ZIO Version: "),
-                          div(
-                            cls := s"box p-3 ${colorUpToDate(connectedProject.onLatestZioDep)}",
-                            zioDep.map(_.zioDep.version).getOrElse("N/A")
+                          cls := s"p-3 ",
+                          span(
+                            "ZIO Version: ",
+                          ),
+                          span(
+                            cls := "has-text-weight-bold",
+                            zioDep.map(dep => dep.zioDep.version).getOrElse("N/A")
                           )
                         )
                       ),
