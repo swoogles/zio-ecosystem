@@ -35,18 +35,12 @@ Build libraries on RCs, please!
 
 --- 
 ![ecosystem.svg](ecosystem.svg)
+
 ---
+### Terminally Demanding
 
-```
-zio-interop-reactivestreams    is on ZIO 2.0.0-RC2 and required by 3 projects: zio-aws-core,async-http-client-backend-zio,zio-amqp
-zio-interop-cats               is on ZIO 2.0.0-RC2 and required by 2 projects: distage-core,tranzactio
-zio-query                      is on ZIO 2.0.0-RC2 and required by 1 projects: caliban
-zio-prelude                    is on ZIO 2.0.0-RC2 and required by 1 projects: zio-schema
-zio-nio                        is on ZIO 2.0.0-RC2 and required by 1 projects: zio-actors
-zio-json                       is on ZIO 2.0.0-RC2 and required by 1 projects: caliban
-zio-zmx                        is on ZIO 2.0.0-RC2 and has no dependants.
 
-```
+<img class="full-slide-image" width="850" src="images/terminal_output.png" alt="Terminal Output" />
 
 ---
 # Current Web Phase
@@ -56,9 +50,11 @@ zio-zmx                        is on ZIO 2.0.0-RC2 and has no dependants.
 - 
 ---
 
+<pre>
 pullRequests  
-&nbsp; &nbsp;  .find(pr =>  
-&nbsp; &nbsp; &nbsp; &nbsp;     pr.title.contains("zio") && pr.title.contains("2"))  
+  .find(pr =>  
+    pr.title.contains("zio") && pr.title.contains("2"))  
+</pre>
 
 ---
 # Limitations
