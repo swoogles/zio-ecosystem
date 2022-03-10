@@ -53,6 +53,12 @@ zio-zmx                        is on ZIO 2.0.0-RC2 and has no dependants.
 
 - ZHTTP
 - *TODO DEMO* "advanced" open-PR query code
+- 
+---
+
+pullRequests  
+&nbsp; &nbsp;  .find(pr =>  
+&nbsp; &nbsp; &nbsp; &nbsp;     pr.title.contains("zio") && pr.title.contains("2"))  
 
 ---
 # Limitations
