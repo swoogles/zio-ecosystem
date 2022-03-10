@@ -21,11 +21,13 @@ We want to encourage people to try out the RCs and release their libraries on to
   - ZIO project dependencies
   - ZIO projects that are dependent on it
   - Use ScalaGraph to achieve that
+    - Show rendered graph example?
 
 ---
 # CLI Phase
 
 - Used ZIO-cli
+  - *TODO DEMO* 1 cool feature/API decision
 - Output just goes to terminal
   - Useful for me, but not for thee
 - Constructed 3 different views of the data before I got annoyed
@@ -34,7 +36,7 @@ We want to encourage people to try out the RCs and release their libraries on to
 # Current Web Phase
 
 - ZHTTP
-- Look at "advanced" open-PR query code
+- *TODO DEMO* "advanced" open-PR query code
 
 ---
 # Limitations
