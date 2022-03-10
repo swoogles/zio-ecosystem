@@ -1,4 +1,32 @@
 Talk @ 9:55 AM
+# ZIO Ecosystem 
+
+<div class="grid-container">
+  <div class="grid-item">
+    <p>
+    Bill Frasure
+    </p>
+
+    <p>
+      <a href="https://github.com/swoogles">
+        github.com/swoogles
+      </a>
+    </p>
+
+    <p>
+      <a href="mailto:bill@billdingsoftware.com">
+        bill@billdingsoftware.com
+      </a>
+    </p>
+  </div>
+  <div class="grid-item">
+    <img class="full-slide-image" width="350" src="images/BilldingLogo.png" alt="Billding" />
+  </div>
+</div>
+
+
+---
+
 # Problem
 
 ZIO 2.0 approaches!
@@ -34,13 +62,23 @@ Build libraries on RCs, please!
 - Constructed 3 different views of the data before I got annoyed
 
 --- 
-![ecosystem.svg](ecosystem.svg)
+![ecosystem.svg](images/ecosystem.svg)
 
 ---
 ### Terminally Demanding
 
-
 <img class="full-slide-image" width="850" src="images/terminal_output.png" alt="Terminal Output" />
+
+---
+# Generating interesting graphs
+
+<img class="full-slide-image" width="650" src="images/ecosystem_graph.png" alt="Terminal Output" />
+
+---
+# Generating interesting graphs
+
+<img class="full-slide-image" width="850" src="images/ZioMetroSubGraph.png" alt="Terminal Output" />
+
 
 ---
 # Current Web Phase
@@ -68,3 +106,8 @@ TODO Turn these into Github issues before talk
 - Checkboxes to construct multi-library SBT snippet
 - More information on each project card
 - Incorporate drawn graphs
+
+---
+# Thanks
+Will Harvey, for the inspiring graphs and spurring me to take this beyond a spreadsheet
+Adam Fraser, for guidance and goal-setting

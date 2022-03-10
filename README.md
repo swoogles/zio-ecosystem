@@ -3,7 +3,7 @@
 To build the ZIO World 2022 presentation:
 ```landslide -i presentation.cfg```
 
-![ZIO 2.0 Ecosystem](./ecosystem.svg)
+![ZIO 2.0 Ecosystem](images/ecosystem.svg)
 
 ## Building the Dockerfile
 ```bash
