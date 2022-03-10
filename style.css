@@ -1,6 +1,21 @@
 .slide.current {
     /*background: unset;*/
     /*background-color: #3b1;*/
+
+    /*Weird, don't think I actually want to do this. But you can.*/
+    /*background-image: url(ecosystem.svg);*/
+
+}
+
+.full-slide-svg{
+
+
+}
+
+
+/* Resize images */
+.full-slide-image {
+    /*transform: scale(0.7);*/
 }
 
 h1 {

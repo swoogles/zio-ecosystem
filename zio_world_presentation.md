@@ -1,17 +1,18 @@
 Talk @ 9:55 AM
 # Problem
 
-ZIO is approaching the 2.0 release.
-
-It is still being developed, but is reasonably stable.
-
-We want to encourage people to try out the RCs and release their libraries on top of it.
+ZIO 2.0 approaches!
+Build libraries on RCs, please!
 
 ---
 # How It Started
 
-- Join Ziverge during the development of ZIO 2
-- "Create a spreadsheet to track where everyone is at"
+- "We want to find out where everyone is at"
+
+---
+### How It Started
+
+<img class="full-slide-image" width="850" src="images/spreadsheet_alpha.png" alt="ZIO World Presentation" />
 
 ---
 # Front-end agnostic logic
@@ -32,6 +33,21 @@ We want to encourage people to try out the RCs and release their libraries on to
   - Useful for me, but not for thee
 - Constructed 3 different views of the data before I got annoyed
 
+--- 
+![ecosystem.svg](ecosystem.svg)
+---
+
+```
+zio-interop-reactivestreams    is on ZIO 2.0.0-RC2 and required by 3 projects: zio-aws-core,async-http-client-backend-zio,zio-amqp
+zio-interop-cats               is on ZIO 2.0.0-RC2 and required by 2 projects: distage-core,tranzactio
+zio-query                      is on ZIO 2.0.0-RC2 and required by 1 projects: caliban
+zio-prelude                    is on ZIO 2.0.0-RC2 and required by 1 projects: zio-schema
+zio-nio                        is on ZIO 2.0.0-RC2 and required by 1 projects: zio-actors
+zio-json                       is on ZIO 2.0.0-RC2 and required by 1 projects: caliban
+zio-zmx                        is on ZIO 2.0.0-RC2 and has no dependants.
+
+```
+
 ---
 # Current Web Phase
 
@@ -45,5 +61,8 @@ We want to encourage people to try out the RCs and release their libraries on to
 
 ---
 # Potential Future Features
+TODO Turn these into Github issues before talk
 - Show all transitive dependencies/dependents
 - Checkboxes to construct multi-library SBT snippet
+- More information on each project card
+- Incorporate drawn graphs
