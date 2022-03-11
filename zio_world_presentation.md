@@ -2,7 +2,7 @@
 
 ---
 
-# ZIO Ecosystem
+# [github.com/swoogles/zio-ecosystem](github.com/swoogles/zio-ecosystem)
 
 <div class="grid-container">
   <div class="grid-item">
@@ -163,15 +163,34 @@ Adam Fraser, for guidance and goal-setting
 
 Ziverge, for attracting enthusiastic engineers and letting them build
 
+---
+
+# [github.com/swoogles/zio-ecosystem](github.com/swoogles/zio-ecosystem)
+
+<div class="grid-container">
+  <div class="grid-item">
+    <p>
+    Bill Frasure
+    </p>
+
+    <p>
+      <a href="https://github.com/swoogles">
+        github.com/swoogles
+      </a>
+    </p>
+
+    <p>
+      <a href="mailto:bill@billdingsoftware.com">
+        bill@billdingsoftware.com
+      </a>
+    </p>
+
+  </div>
+  <div class="grid-item">
+    <img class="full-slide-image" width="350" src="images/BilldingLogo.png" alt="Billding" />
+  </div>
+</div>
 
 ---
 
-###### Paper Notes ######
-
-Demos:
-  - ZIO-config
-    -  A solid, middle-network library that is green on both sides
-  - ZIO-nio
-    - You might be able to help dependent projects upgrade
-    - Show active PR
 
