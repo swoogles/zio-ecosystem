@@ -34,7 +34,9 @@
 }
 
 header h1 {
-    color: #F2644F;
+    /*color: #F2644F;*/
+    color: #AA70B7;
+    /*color: #462D81;*/
     /*place-items: center;*/
     /*text-align: center;*/
     /*margin-left: auto;*/
@@ -51,4 +53,18 @@ li {
 
 body {
     background-color: #000000;
+}
+
+.zorange {
+    color: #F2644F;
+
+}
+
+.slide header:only-child h1 {
+    /*color: #AA70B7;*/
+    /*color: #F2644F;*/
+}
+
+pre, .gist .gist-file .gist-data {
+   font-size: 22px;
 }

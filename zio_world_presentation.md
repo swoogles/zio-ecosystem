@@ -1,5 +1,8 @@
-Talk @ 9:55 AM
 # ZIO Ecosystem 
+
+---
+
+# ZIO Ecosystem
 
 <div class="grid-container">
   <div class="grid-item">
@@ -29,25 +32,29 @@ Talk @ 9:55 AM
 
 # Situation
 
+Joined Ziverge
+
 ZIO 2.0 approaches!
 
 We need the community to build on it!
 
 ---
 
-# How It Started
+# Questions
 
-- "Who is publishing on the 2.x releases?"
-- "Who is working towards a release?"
+"Who is publishing on the 2.x releases?"
+
+"Who is working towards a release?"
+
+"Can we track this?"
 
 ---
-# How It Started
+# Alpha Stages
 
 <img class="full-slide-image" width="850" src="images/spreadsheet_alpha.png" alt="ZIO World Presentation" />
 
 ---
-# Downsides
-- Inconsistent verbiage/focus between projects
+# Excel Downsides
 - Tables only take you so far
 - Manually-entered data is stale immediately
 
@@ -69,32 +76,36 @@ Credit - Will Harvey
 Credit - Will Harvey
 
 ---
+# Graph Downsides 
 
-# Downside - Output requires a person
+- Output requires hand-tuning
+- Still hectic
 
 ---
 
 # Win - We focused on connections
 
 ---
-# Core Logic
-- Find the latest release of project on Maven
-- Examine POM file to determine: 
-    - Version of ZIO it depends on
-    - ZIO project dependencies
-    - ZIO projects that depend on it
+
+# Next up, automation
 
 ---
-###  CLI Phase
+# Core Logic
+- Find the latest release of project on Maven
+- Extract dependencies from POM file
+- Slam everything into a graph
+
+---
+###  Terminal Velocity
 
 <img class="full-slide-image" width="850" src="images/terminal_output.png" alt="Terminal Output" />
 
 Built with ZIO-cli
 
 ---
-### CLI Phase Downsides
+### Terminal Downsides
 
-- Output just goes to terminal
+- You have to view in a terminal
 - Built 3 views before I got annoyed
 - Useful, but not _easy_
 
@@ -102,35 +113,41 @@ Built with ZIO-cli
 ---
 # To the Web!
 
-- Built with ZHTTP
-
 ---
-# To the Web!
 
-*DEMO*
-
-- ZIO-config
-  -  A solid, middle-network library that is green on both sides
-- ZIO-nio
-    - If you are comfortable with ZIO-nio, you might be able to help dependent projects upgrade
-- TrazactIO
-  - For active PR
-
+# * DEMO *
 
 ---
 
-# Advanced Machine-learning Algorithm
+# Cool, but I need to be at the computer
+
+---
+
+# * DEMO *
+
+---
+
+# How did we find the relevant PRs?
+
+---
+
+# Advanced Deep-learning Algorithm
 
 ---
 
 <pre>
+
+
+
+
+
 pullRequests  
   .find(pr =>  
     pr.title.contains("zio") && pr.title.contains("2"))  
 </pre>
 
 ---
-# Potential Future Features
+# Potential Features
 
 https://github.com/swoogles/zio-ecosystem/issues
 
@@ -142,3 +159,17 @@ Will Harvey, for the inspiring graphs and spurring me to take this beyond a spre
 Adam Fraser, for guidance and goal-setting
 
 Ziverge, for attracting enthusiastic engineers and letting them build
+
+
+---
+
+###### Paper Notes ######
+
+Demos:
+  - ZIO-config
+    -  A solid, middle-network library that is green on both sides
+  - ZIO-nio
+    - If you are comfortable with ZIO-nio, you might be able to help dependent projects upgrade
+  - TrazactIO
+    - For active PR
+
