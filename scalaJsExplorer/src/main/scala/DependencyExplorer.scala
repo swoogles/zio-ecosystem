@@ -299,9 +299,9 @@ object DependencyViewerLaminar:
                 value       := busPageInfo.targetProject.getOrElse(""),
                 placeholder := "Search for...",
                 onMountFocus,
-                inContext { thisNode =>
-                  onInput.mapTo(thisNode.ref.value) --> updateSearchParameterInUrl(busPageInfo)
-                }
+//                inContext { thisNode =>
+//                  onInput.mapTo(thisNode.ref.value) --> updateSearchParameterInUrl(busPageInfo)
+//                }
               )
             ),
             ProjectListings(busPageInfo, updateFilterInUrl(busPageInfo), fullAppData)
