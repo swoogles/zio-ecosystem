@@ -27,65 +27,100 @@ Talk @ 9:55 AM
 
 ---
 
-# Problem
+# Situation
 
 ZIO 2.0 approaches!
-Build libraries on RCs, please!
+
+We need the community to build on it!
+
+---
+
+# How It Started
+
+- "Who is publishing on the 2.x releases?"
+- "Who is working towards a release?"
 
 ---
 # How It Started
 
-- "We want to find out where everyone is at"
-
----
-### How It Started
-
 <img class="full-slide-image" width="850" src="images/spreadsheet_alpha.png" alt="ZIO World Presentation" />
 
 ---
-# Front-end agnostic logic
+# Downsides
+- Inconsistent verbiage/focus between projects
+- Tables only take you so far
+- Manually-entered data is stale immediately
+
+---
+
+# Win - Got a colleague interested
+
+---
+# Interesting Graphs
+
+<img class="full-slide-image" width="600" src="images/ecosystem_graph.png" alt="Graph" />
+Credit - Will Harvey
+
+---
+# Interesting Graphs
+
+<img class="full-slide-image" width="520" src="images/ZioMetroSubGraph.png" alt="Graph" />
+
+Credit - Will Harvey
+
+---
+
+# Downside - Output requires a person
+
+---
+
+# Win - We focused on connections
+
+---
+# Core Logic
 - Find the latest release of project on Maven
 - Examine POM file to determine: 
-  - Version of ZIO it depends on
-  - ZIO project dependencies
-  - ZIO projects that are dependent on it
-  - Use ScalaGraph to achieve that
-    - Show rendered graph example?
+    - Version of ZIO it depends on
+    - ZIO project dependencies
+    - ZIO projects that depend on it
 
 ---
-# CLI Phase
-
-- Used ZIO-cli
-  - *TODO DEMO* 1 cool feature/API decision
-- Output just goes to terminal
-  - Useful for me, but not for thee
-- Constructed 3 different views of the data before I got annoyed
-
---- 
-![ecosystem.svg](images/ecosystem.svg)
-
----
-### Terminally Demanding
+###  CLI Phase
 
 <img class="full-slide-image" width="850" src="images/terminal_output.png" alt="Terminal Output" />
 
----
-# Generating interesting graphs
-
-<img class="full-slide-image" width="650" src="images/ecosystem_graph.png" alt="Terminal Output" />
+Built with ZIO-cli
 
 ---
-# Generating interesting graphs
+### CLI Phase Downsides
 
-<img class="full-slide-image" width="850" src="images/ZioMetroSubGraph.png" alt="Terminal Output" />
+- Output just goes to terminal
+- Built 3 views before I got annoyed
+- Useful, but not _easy_
 
 
 ---
-# Current Web Phase
+# To the Web!
 
-- ZHTTP
-- *TODO DEMO* "advanced" open-PR query code
-- 
+- Built with ZHTTP
+
+---
+# To the Web!
+
+*DEMO*
+
+- ZIO-config
+  -  A solid, middle-network library that is green on both sides
+- ZIO-nio
+    - If you are comfortable with ZIO-nio, you might be able to help dependent projects upgrade
+- TrazactIO
+  - For active PR
+
+
+---
+
+# Advanced Machine-learning Algorithm
+
 ---
 
 <pre>
@@ -95,19 +130,15 @@ pullRequests
 </pre>
 
 ---
-# Limitations
-- *Only* checks projects against the latest version of ZIO
-- List of tracked projects is hard-coded in src code
-
----
 # Potential Future Features
-TODO Turn these into Github issues before talk
-- Show all transitive dependencies/dependents
-- Checkboxes to construct multi-library SBT snippet
-- More information on each project card
-- Incorporate drawn graphs
+
+https://github.com/swoogles/zio-ecosystem/issues
 
 ---
 # Thanks
+
 Will Harvey, for the inspiring graphs and spurring me to take this beyond a spreadsheet
+
 Adam Fraser, for guidance and goal-setting
+
+Ziverge, for attracting enthusiastic engineers and letting them build

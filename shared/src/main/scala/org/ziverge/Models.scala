@@ -20,7 +20,7 @@ case class Project(group: String, artifactId: String, githubUrl: Option[String] 
   def versionedArtifactId(scalaVersion: ScalaVersion) =
     artifactId + "_" + scalaVersion.mvnFriendlyVersion
   lazy val artifactIdQualifiedWhenNecessary =
-    if (!Data.coreProjects.contains(this) && artifactId == "zio")
+    if (!TrackedProjects.coreProjects.contains(this) && artifactId == "zio")
       s"${group}.${artifactId}"
     else
       artifactId
@@ -39,7 +39,7 @@ object Project:
       VersionedProject.stripScalaVersionFromArtifact(Project(groupId, artifactId))
     if (artifactId.contains("config"))
       println("Looking for: " + groupId + "." + artifactId)
-    Data
+    TrackedProjects
       .projects
       .find(knownProject =>
         knownProject.group == strippedProject.group &&
@@ -92,11 +92,11 @@ object ProjectMetaData:
       case Some(value) =>
         Right(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
       case None =>
-        if (Data.coreProjects.contains(projectMetaData.project))
+        if (TrackedProjects.coreProjects.contains(projectMetaData.project))
           Right(
             Some(
               ZioDep(
-                zioDep = VersionedProject(Data.zioCore, currentZioVersion.value),
+                zioDep = VersionedProject(TrackedProjects.zioCore, currentZioVersion.value),
                 dependencyType = DependencyType.Direct
               )
             )
@@ -220,7 +220,7 @@ object ConnectedProjectData:
   end apply
 end ConnectedProjectData
 
-def isAZioLibrary(project: VersionedProject) = Data.projects.contains(project.project)
+def isAZioLibrary(project: VersionedProject) = TrackedProjects.projects.contains(project.project)
 
 object Render:
   def dependencies(projectMetaData: ProjectMetaData) =
@@ -308,7 +308,7 @@ object FullAppData:
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (filterUpToDateProjects)
-          !p.projectIsUpToDate && !Data.coreProjects.contains(p.project)
+          !p.projectIsUpToDate && !TrackedProjects.coreProjects.contains(p.project)
         else
           true
 

@@ -2,7 +2,7 @@ package org.ziverge
 
 import scala.collection.immutable.HashSet
 
-object Data:
+object TrackedProjects:
   val zioCore = Project("dev.zio", "zio", Some("https://github.com/zio/zio-query"))
   val coreProjects =
     List(
@@ -134,4 +134,4 @@ object Data:
 //      Project("io.github.neurodyne", "zio-aws-s3")
 //    )
 
-end Data
+end TrackedProjects

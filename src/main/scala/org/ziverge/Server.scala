@@ -86,9 +86,9 @@ object SharedLogic:
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
       currentZioVersion: Version <-
-        Maven.projectMetaDataFor(Data.zioCore, scalaVersion).map(_.typedVersion)
+        Maven.projectMetaDataFor(TrackedProjects.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData: Seq[ProjectMetaData] <-
-        ZIO.foreachPar(Data.projects) { project =>
+        ZIO.foreachPar(TrackedProjects.projects) { project =>
           Maven.projectMetaDataFor(project, scalaVersion)
         }
       // TODO Do Pull Request query here
