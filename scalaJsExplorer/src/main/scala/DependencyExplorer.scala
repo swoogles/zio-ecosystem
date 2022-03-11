@@ -290,7 +290,7 @@ object DependencyViewerLaminar:
               )
             ),
             labelledInput(
-              "Filter results by",
+              "Show projects that involve:",
               input(
                 typ         := "text",
                 cls         := "input",

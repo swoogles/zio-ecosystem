@@ -49,7 +49,10 @@ We need the community to build on it!
 "Can we track this?"
 
 ---
-# Alpha Stages
+# Constructing an elegant Alpha
+
+---
+# Excel-lent
 
 <img class="full-slide-image" width="850" src="images/spreadsheet_alpha.png" alt="ZIO World Presentation" />
 
@@ -63,13 +66,13 @@ We need the community to build on it!
 # Win - Got a colleague interested
 
 ---
-# Interesting Graphs
+# Fun Graphs
 
 <img class="full-slide-image" width="600" src="images/ecosystem_graph.png" alt="Graph" />
 Credit - Will Harvey
 
 ---
-# Interesting Graphs
+# Fun Graphs
 
 <img class="full-slide-image" width="520" src="images/ZioMetroSubGraph.png" alt="Graph" />
 
@@ -83,7 +86,7 @@ Credit - Will Harvey
 
 ---
 
-# Win - We focused on connections
+# Win - We highlighted connections
 
 ---
 
@@ -169,7 +172,6 @@ Demos:
   - ZIO-config
     -  A solid, middle-network library that is green on both sides
   - ZIO-nio
-    - If you are comfortable with ZIO-nio, you might be able to help dependent projects upgrade
-  - TrazactIO
-    - For active PR
+    - You might be able to help dependent projects upgrade
+    - Show active PR
 
