@@ -121,7 +121,8 @@ object TrackedProjects:
           "zio-test-akka-http",
           Some("https://github.com/senia-psm/zio-test-akka-http")
         ),
-        Project("io.github.neurodyne", "zio-arrow", Some("https://github.com/zio-mesh/zio-arrow"))
+        Project("io.github.neurodyne", "zio-arrow", Some("https://github.com/zio-mesh/zio-arrow")),
+        Project("dev.akif", "e-zio", Some("https://github.com/makiftutuncu/e"))
       ).sortBy(_.artifactId)
 
 //  val awsSubprojects =
