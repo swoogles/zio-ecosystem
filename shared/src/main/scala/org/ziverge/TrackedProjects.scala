@@ -123,10 +123,8 @@ object TrackedProjects:
         ),
         Project("io.github.neurodyne", "zio-arrow", Some("https://github.com/zio-mesh/zio-arrow")),
         Project("dev.akif", "e-zio", Some("https://github.com/makiftutuncu/e")),
-        Project("io.github.vigoo", "prox", Some("https://github.com/vigoo/prox")),
-        Project("io.github.vigoo", "clipp", Some("https://github.com/vigoo/clipp")),
 
-      ) ++ desertProjects.projects ++ clippProjects.projects ).sortBy(_.artifactId)
+      ) ++ desertProjects.projects ++ clippProjects.projects ++ proxProjects.projects ).sortBy(_.artifactId)
 
   lazy val desertProjects = ProjectGroup(
     "Desert Projects",
@@ -147,6 +145,13 @@ object TrackedProjects:
       Project("io.github.vigoo", "clipp-cats", Some("https://github.com/vigoo/clipp")),
       Project("io.github.vigoo", "clipp-cats-effect", Some("https://github.com/vigoo/clipp")),
       Project("io.github.vigoo", "clipp-zio-2", Some("https://github.com/vigoo/clipp")),
+    )
+  )
+
+  lazy val proxProjects = ProjectGroup(
+    "Prox Projects",
+    List(
+      Project("io.github.vigoo", "prox-zstream-2", Some("https://github.com/vigoo/prox")),
     )
   )
 
