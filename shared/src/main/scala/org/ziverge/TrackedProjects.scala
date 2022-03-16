@@ -122,7 +122,10 @@ object TrackedProjects:
           Some("https://github.com/senia-psm/zio-test-akka-http")
         ),
         Project("io.github.neurodyne", "zio-arrow", Some("https://github.com/zio-mesh/zio-arrow")),
-        Project("dev.akif", "e-zio", Some("https://github.com/makiftutuncu/e"))
+        Project("dev.akif", "e-zio", Some("https://github.com/makiftutuncu/e")),
+        Project("io.github.vigoo", "prox", Some("https://github.com/vigoo/prox")),
+        Project("io.github.vigoo", "clipp", Some("https://github.com/vigoo/clipp")),
+        Project("io.github.vigoo", "desert", Some("https://github.com/vigoo/desert")),        
       ).sortBy(_.artifactId)
 
 //  val awsSubprojects =
