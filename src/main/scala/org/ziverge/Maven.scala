@@ -51,11 +51,10 @@ object Maven:
   ): ZIO[Any, Throwable, ProjectMetaData] =
     for
       versionedProject <- latestProjectOnMaven(project, ScalaVersion.V2_13)
-      _ <- ZIO.debug("looking for: " + project.artifactId)
       pomFile <-
         pomFor(versionedProject, ScalaVersion.V2_13)
-          .tapError(project => ZIO.logWarning("Failed to get POM for. " + project.getMessage))
-          .orDieWith(error => new Exception("Failed to get POM for: " + project.artifactId))
+          // TODO better error type
+          .mapError(error => new Exception("Failed to get POM for: " + project.artifactId))
     yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile))
 
   def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) =

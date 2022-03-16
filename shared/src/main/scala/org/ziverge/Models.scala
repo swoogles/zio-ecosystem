@@ -37,8 +37,6 @@ object Project:
   def fromMaven(groupId: String, artifactId: String): Project =
     val strippedProject =
       VersionedProject.stripScalaVersionFromArtifact(Project(groupId, artifactId))
-    if (artifactId.contains("config"))
-      println("Looking for: " + groupId + "." + artifactId)
     TrackedProjects
       .projects
       .find(knownProject =>
@@ -176,8 +174,7 @@ object ConnectedProjectData:
           }
           .toRight {
             new Exception(
-              s"Missing value in dependency graph for ${projectMetaData.project}. Available nodes: \n" +
-                dependendencyGraph.nodes.map(_.value)
+              s"Missing value in dependency graph for ${projectMetaData.project}"
             )
           }
       dependents = node.diSuccessors.map(_.value)
