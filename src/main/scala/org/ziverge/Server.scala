@@ -87,14 +87,15 @@ object SharedLogic:
     for
       currentZioVersion: Version <-
         Maven.projectMetaDataFor(TrackedProjects.zioCore, scalaVersion).map(_.typedVersion)
-      allProjectsMetaData: Seq[ProjectMetaData] <-
-        ZIO.foreachPar(TrackedProjects.projects) { project =>
+      allProjectsMetaData <-
+        ZIO.collectAllSuccessesPar(TrackedProjects.projects.map{ project =>
           Maven.projectMetaDataFor(project, scalaVersion)
         }
+        )
       // TODO Do Pull Request query here
       graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
       connectedProjects: Seq[ConnectedProjectData] <-
-        ZIO.foreachPar(allProjectsMetaData)(x =>
+        ZIO.collectAllSuccessesPar(allProjectsMetaData.map(x =>
           for
             res <-
               ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
@@ -121,6 +122,7 @@ object SharedLogic:
           // ZIO.debug(res.project.artifactId + " upToDate: " +  res.projectIsUpToDate)
           // TODO Look for PRs here
           yield finalProject
+        )
         )
       res =
         FullAppData(

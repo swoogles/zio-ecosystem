@@ -177,7 +177,7 @@ object ConnectedProjectData:
           .toRight {
             new Exception(
               s"Missing value in dependency graph for ${projectMetaData.project}. Available nodes: \n" +
-                dependendencyGraph.nodes.map(_.value).filter(_.toString.contains("mag"))
+                dependendencyGraph.nodes.map(_.value)
             )
           }
       dependents = node.diSuccessors.map(_.value)
