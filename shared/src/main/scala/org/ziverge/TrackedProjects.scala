@@ -22,7 +22,7 @@ object TrackedProjects:
     )
 
   val projects =
-    coreProjects ++
+    (coreProjects ++
       List(
         Project("dev.zio", "zio-cache", Some("https://github.com/zio/zio-cache")),
         Project("dev.zio", "caliban-deriving", Some("https://github.com/zio/caliban-deriving")),
@@ -125,8 +125,30 @@ object TrackedProjects:
         Project("dev.akif", "e-zio", Some("https://github.com/makiftutuncu/e")),
         Project("io.github.vigoo", "prox", Some("https://github.com/vigoo/prox")),
         Project("io.github.vigoo", "clipp", Some("https://github.com/vigoo/clipp")),
-        Project("io.github.vigoo", "desert", Some("https://github.com/vigoo/desert")),        
-      ).sortBy(_.artifactId)
+
+      ) ++ desertProjects.projects ++ clippProjects.projects ).sortBy(_.artifactId)
+
+  lazy val desertProjects = ProjectGroup(
+    "Desert Projects",
+    List(
+      Project("io.github.vigoo", "desert-core", Some("https://github.com/vigoo/desert")),
+      Project("io.github.vigoo", "desert-zio", Some("https://github.com/vigoo/desert")),
+      Project("io.github.vigoo", "desert-cats", Some("https://github.com/vigoo/desert")),
+      Project("io.github.vigoo", "desert-cats-effect", Some("https://github.com/vigoo/desert")),
+      Project("io.github.vigoo", "desert-akka", Some("https://github.com/vigoo/desert")),
+    )
+  )
+
+  lazy val clippProjects = ProjectGroup(
+    "Clipp Projects",
+    List(
+      Project("io.github.vigoo", "clipp", Some("https://github.com/vigoo/clipp")),
+      Project("io.github.vigoo", "clipp-core", Some("https://github.com/vigoo/clipp")),
+      Project("io.github.vigoo", "clipp-cats", Some("https://github.com/vigoo/clipp")),
+      Project("io.github.vigoo", "clipp-cats-effect", Some("https://github.com/vigoo/clipp")),
+      Project("io.github.vigoo", "clipp-zio-2", Some("https://github.com/vigoo/clipp")),
+    )
+  )
 
 //  val awsSubprojects =
 //    List(

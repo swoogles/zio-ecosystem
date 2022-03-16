@@ -319,3 +319,5 @@ case class PullRequest(number: Int, title: String, html_url: String)
 object PullRequest:
 
   implicit val rw: RW[PullRequest] = macroRW
+
+case class ProjectGroup(group: String, projects: Seq[Project])
