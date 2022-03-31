@@ -3,7 +3,7 @@ package org.ziverge
 import scala.collection.immutable.HashSet
 
 object TrackedProjects:
-  val zioCore = Project("dev.zio", "zio", Some("https://github.com/zio/zio-query"))
+  val zioCore = Project("dev.zio", "zio", Some("https://github.com/zio/zio"))
   val coreProjects =
     List(
       zioCore,
@@ -123,6 +123,9 @@ object TrackedProjects:
         ),
         Project("io.github.neurodyne", "zio-arrow", Some("https://github.com/zio-mesh/zio-arrow")),
         Project("dev.akif", "e-zio", Some("https://github.com/makiftutuncu/e")),
+        // TODO Figure out how to get weaver-zio to show the ZIO dependency for weaver-zio-core
+//        Project("com.disneystreaming", "weaver-zio", Some("https://github.com/disneystreaming/weaver-test")),
+//        Project("com.disneystreaming", "weaver-zio-core", Some("https://github.com/disneystreaming/weaver-test")),
 
       ) ++ desertProjects.projects ++ clippProjects.projects ++ proxProjects.projects ).sortBy(_.artifactId)
 
