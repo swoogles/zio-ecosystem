@@ -126,6 +126,7 @@ object TrackedProjects:
         // TODO Figure out how to get weaver-zio to show the ZIO dependency for weaver-zio-core
 //        Project("com.disneystreaming", "weaver-zio", Some("https://github.com/disneystreaming/weaver-test")),
 //        Project("com.disneystreaming", "weaver-zio-core", Some("https://github.com/disneystreaming/weaver-test")),
+        Project("com.softwaremill.sttp.tapir", "tapir-zio", Some("https://github.com/softwaremill/tapir")),
 
       ) ++ desertProjects.projects ++ clippProjects.projects ++ proxProjects.projects ).sortBy(_.artifactId)
 
