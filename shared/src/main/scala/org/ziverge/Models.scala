@@ -100,18 +100,14 @@ object ProjectMetaData:
             )
           )
         else
-          val zioDeps: Seq[VersionedProject] =
+          Right(
             projectMetaData
               .dependencies
-              .flatMap(dependency =>
-                allProjectsMetaData.find(_.project == dependency.project).flatMap(_.zioDep)
-              )
-          val res: Option[VersionedProject] =
-            zioDeps
-              // .flatten
-              .minByOption(_.typedVersion)
-          Right(
-            res.map(project => Some(ZioDep(project, DependencyType.Transitive))).getOrElse(None)
+              .find( dep =>
+                TrackedProjects.coreProjects.contains(dep.project)
+              ).flatMap( dep =>
+              Some(ZioDep(dep, DependencyType.Transitive))
+            )
           )
 end ProjectMetaData
 
