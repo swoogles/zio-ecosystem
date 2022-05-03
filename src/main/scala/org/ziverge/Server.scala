@@ -101,7 +101,7 @@ object SharedLogic:
               ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
                 .tapError(error => ZIO.debug("Error constructing ConnectedProjectData: " + error))
             finalProject <-
-              if (res.projectIsUpToDate)
+              if (res.onLatestZioDep)
                 ZIO.succeed(res)
               else
                 res

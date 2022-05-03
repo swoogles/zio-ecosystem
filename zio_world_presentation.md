@@ -2,7 +2,7 @@
 
 ---
 
-# [github.com/swoogles/zio-ecosystem](github.com/swoogles/zio-ecosystem)
+# [zio-ecosystem.herokuapp.com](https://zio-ecosystem.herokuapp.com)
 
 <div class="grid-container">
   <div class="grid-item">
@@ -16,14 +16,9 @@
       </a>
     </p>
 
-    <p>
-      <a href="mailto:bill@billdingsoftware.com">
-        bill@billdingsoftware.com
-      </a>
-    </p>
   </div>
   <div class="grid-item">
-    <img class="full-slide-image" width="350" src="images/BilldingLogo.png" alt="Billding" />
+    <img class="full-slide-image" width="300" src="images/BilldingLogo.png" alt="Billding" />
   </div>
 </div>
 
@@ -31,6 +26,8 @@
 ---
 
 # Situation
+
+ZIO 1 is out and heavily used by the community
 
 Joined Ziverge
 
@@ -42,7 +39,7 @@ We need the community to build on it!
 
 # Questions
 
-"Who is publishing on the 2.x releases?"
+"Who is publishing for 2.x releases?"
 
 "Who is working towards a release?"
 
@@ -159,13 +156,13 @@ https://github.com/swoogles/zio-ecosystem/issues
 
 Will Harvey, for the inspiring graphs and spurring me to take this beyond a spreadsheet
 
-Adam Fraser, for guidance and goal-setting
+Adam Fraser, for guidance and non-guidance
 
 Ziverge, for attracting enthusiastic engineers and letting them build
 
 ---
 
-# [github.com/swoogles/zio-ecosystem](github.com/swoogles/zio-ecosystem)
+# [zio-ecosystem.herokuapp.com](https://zio-ecosystem.herokuapp.com)
 
 <div class="grid-container">
   <div class="grid-item">
@@ -179,15 +176,9 @@ Ziverge, for attracting enthusiastic engineers and letting them build
       </a>
     </p>
 
-    <p>
-      <a href="mailto:bill@billdingsoftware.com">
-        bill@billdingsoftware.com
-      </a>
-    </p>
-
   </div>
   <div class="grid-item">
-    <img class="full-slide-image" width="350" src="images/BilldingLogo.png" alt="Billding" />
+    <img class="full-slide-image" width="300" src="images/BilldingLogo.png" alt="Billding" />
   </div>
 </div>
 

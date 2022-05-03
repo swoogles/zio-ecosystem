@@ -85,7 +85,10 @@ object ProjectMetaData:
       projectMetaData: ProjectMetaData,
       allProjectsMetaData: Seq[ProjectMetaData],
       currentZioVersion: Version
-  ): Either[Throwable, Option[ZioDep]] =
+  ): Either[Throwable, Option[ZioDep]] = {
+    if (projectMetaData.project.artifactId.contains("parser"))
+      println("zio-parser time!")
+
     projectMetaData.zioDep match
       case Some(value) =>
         Right(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
@@ -109,6 +112,7 @@ object ProjectMetaData:
               Some(ZioDep(dep, DependencyType.Transitive))
             )
           )
+  }
 end ProjectMetaData
 
 enum DependencyType:
@@ -140,13 +144,11 @@ case class ConnectedProjectData(
     relevantPr: Option[PullRequest] = None
 ):
   lazy val onLatestZioDep: Boolean =
-    zioDep.fold(true)(zDep =>
-      // TODO
+    zioDep.fold(
+      dependencies.forall(dep => dep.onLatestZio(latestZio))
+    )(zDep =>
       zDep.zioDep.typedVersion.compareTo(latestZio) == 0
     )
-
-  lazy val projectIsUpToDate =
-    dependencies.forall(dep => dep.onLatestZio(latestZio)) && onLatestZioDep
 
 object ConnectedProjectData:
   implicit val versionRw: RW[Version]       = readwriter[String].bimap[Version](_.value, Version(_))
@@ -301,7 +303,7 @@ object FullAppData:
     val upToDate: ConnectedProjectData => Boolean =
       p =>
         if (filterUpToDateProjects)
-          !p.projectIsUpToDate && !TrackedProjects.coreProjects.contains(p.project)
+          !p.onLatestZioDep && !TrackedProjects.coreProjects.contains(p.project)
         else
           true
 

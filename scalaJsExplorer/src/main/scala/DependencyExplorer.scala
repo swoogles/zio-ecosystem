@@ -118,7 +118,7 @@ object DependencyViewerLaminar:
                 },
                 p(
                   cls := "card-header-title",
-                  UpToDateIcon(connectedProject.projectIsUpToDate),
+                  UpToDateIcon(connectedProject.onLatestZioDep),
                   project.artifactIdQualifiedWhenNecessary
                 ),
                 a(
@@ -204,7 +204,7 @@ object DependencyViewerLaminar:
                   EcosystemSummary(
                     // TODO Probably want to move this bit of logic into FullAppData
                     numberOfTrackedProjects = fullAppDataLive.connected.length,
-                    numberOfCurrentProjects = fullAppDataLive.connected.count(_.projectIsUpToDate)
+                    numberOfCurrentProjects = fullAppDataLive.connected.count(_.onLatestZioDep)
                   ),
                   div(
                     manipulatedData.map { connectedProject =>
