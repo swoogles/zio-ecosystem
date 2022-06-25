@@ -31,6 +31,7 @@ object TrackedProjects:
         Project("dev.zio", "zio-json", Some("https://github.com/zio/zio-json")),
         Project("dev.zio", "zio-query", Some("https://github.com/zio/zio-query")),
         Project("dev.zio", "zio-schema", Some("https://github.com/zio/zio-schema")),
+        Project("dev.zio", "zio-cli", Some("https://github.com/zio/zio-cli")),
         Project("dev.zio", "zio-config", Some("https://github.com/zio/zio-config")),
         Project("dev.zio", "zio-config-typesafe", Some("https://github.com/zio/zio-config")),
         Project("dev.zio", "zio-kafka", Some("https://github.com/zio/zio-kafka")),
