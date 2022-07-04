@@ -20,7 +20,7 @@ object Maven:
             )
           )
           .mapError(new Exception(_))
-      r    <- ZIO.attempt(basicRequest.get(url).send(backend))
+      r    <- ZIO(basicRequest.get(url).send(backend))
       body <- ZIO.fromEither(r.body).mapError(new Exception(_))
     yield XML.loadString(body)
 

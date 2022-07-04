@@ -27,7 +27,7 @@ object Github:
         ZIO
           .fromOption(sys.env.get("GITHUB_ACCESS_TOKEN"))
           .orElseFail(new Exception("Missing GITHUB_ACCESS_TOKEN"))
-      r <- ZIO.attempt(basicRequest.get(url).auth.bearer(accessToken).send(backend))
+      r <- ZIO(basicRequest.get(url).auth.bearer(accessToken).send(backend))
       pullRequests <-
         ZIO.fromEither(r.body).mapError(new Exception(_)).map(read[Seq[PullRequest]](_))
       relevantPr =
