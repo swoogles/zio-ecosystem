@@ -17,16 +17,16 @@ object CrappySideEffectingCache:
   var fullAppData: Option[FullAppData] = None
   var timestamp: Instant               = Instant.parse("2018-11-30T18:35:24.00Z")
 
-object DependencyServer extends App:
+object DependencyServer extends ZIOAppDefault:
 
   import upickle.default.{read, write}
   val app =
     Http.collectHttp[Request] {
-      case Method.GET -> Root =>
+      case Method.GET -> !! =>
         Http.fromStream {
           ZStream.fromFile(Paths.get("src/main/resources/index.html").toFile).refineOrDie(_ => ???)
         }
-      case Method.GET -> Root / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
+      case Method.GET -> !! / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
         Http.fromStream {
           ZStream
             .fromFile(
@@ -36,7 +36,7 @@ object DependencyServer extends App:
             )
             .refineOrDie(_ => ???)
         }
-      case Method.GET -> Root / "images" / path =>
+      case Method.GET -> !! / "images" / path =>
         Http
           .fromFile(new File(s"src/main/resources/images/$path"))
           .setHeaders(Headers.contentType("image/svg+xml"))
@@ -45,8 +45,8 @@ object DependencyServer extends App:
         val appData      = CrappySideEffectingCache.fullAppData.get
         val responseText = Chunk.fromArray(write(appData).getBytes)
         Http.response(
-          Response.http(
-            status = Status.OK,
+          Response(
+            status = Status.Ok,
             headers =
               Headers
                 .contentLength(responseText.length.toLong)
@@ -56,7 +56,7 @@ object DependencyServer extends App:
         )
     }
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
+  override def run =
     (
       for
         port <- ZIO.succeed(sys.env.get("PORT"))
@@ -78,14 +78,14 @@ object SharedLogic:
       _   <- zio.Console.printLine("Getting fresh data")
       res <- fetchAppData(scalaVersion)
       _ <-
-        ZIO {
+        ZIO.attempt {
           CrappySideEffectingCache.fullAppData = Some(res)
         }
     yield res
 
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
-      currentZioVersion: Version <-
+      currentZioVersion: org.ziverge.Version <-
         Maven.projectMetaDataFor(TrackedProjects.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData <-
         ZIO.collectAllSuccessesPar(TrackedProjects.projects.map{ project =>
@@ -93,7 +93,7 @@ object SharedLogic:
         }
         )
       // TODO Do Pull Request query here
-      graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
+      graph: Graph[Project, DiEdge] <- ZIO.attempt(ScalaGraph(allProjectsMetaData))
       connectedProjects: Seq[ConnectedProjectData] <-
         ZIO.collectAllSuccessesPar(allProjectsMetaData.map(x =>
           for
