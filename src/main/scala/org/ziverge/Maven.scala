@@ -6,7 +6,7 @@ import zio.ZIO
 import scala.xml.{Elem, XML}
 
 object Maven:
-  def mavenHttpCall(url: String): ZIO[Any, Throwable, Elem] =
+  private def mavenHttpCall(url: String): ZIO[Any, Throwable, Elem] =
     import sttp.client3.*
     val backend = HttpURLConnectionBackend()
     for
@@ -24,7 +24,7 @@ object Maven:
       body <- ZIO.fromEither(r.body).mapError(new Exception(_))
     yield XML.loadString(body)
 
-  def latestVersionOfArtifact(
+  private def latestVersionOfArtifact(
       project: Project,
       scalaVersion: ScalaVersion
   ): ZIO[Any, Throwable, Elem] =
@@ -57,7 +57,7 @@ object Maven:
           .mapError(error => new Exception("Failed to get POM for: " + project.artifactId))
     yield ProjectMetaData.withZioDependenciesOnly(versionedProject, dependenciesFor(pomFile))
 
-  def pomFor(project: VersionedProject, scalaVersion: ScalaVersion) =
+  def pomFor(project: VersionedProject, scalaVersion: ScalaVersion): ZIO[Any, Throwable, Elem] =
     def pomFile(project: VersionedProject) =
       s"${project.project.versionedArtifactId(scalaVersion)}-${project.version}.pom"
 
