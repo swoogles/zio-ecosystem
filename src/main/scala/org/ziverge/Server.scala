@@ -2,20 +2,16 @@ package org.ziverge
 
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
-
-import zhttp.http._
+import zhttp.http.*
 import zhttp.http.Header
 import zhttp.service.Server
-import zio._
+import zio.*
 import zio.durationInt
 import zio.stream.ZStream
+
 import java.nio.file.Paths
 import java.io.File
 import java.time.Instant
-
-object CrappySideEffectingCache:
-  var fullAppData: Option[FullAppData] = None
-  var timestamp: Instant               = Instant.parse("2018-11-30T18:35:24.00Z")
 
 object DependencyServer extends App:
 
@@ -57,7 +53,6 @@ object DependencyServer extends App:
     }
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    (
       for
         port <- ZIO(sys.env.get("PORT"))
         _ <-
@@ -67,72 +62,8 @@ object DependencyServer extends App:
             .orDie
             .repeat(Schedule.spaced(30.minutes))
             .fork
-        _ <- Server.start(port.map(_.toInt).getOrElse(8090), app)
+        _ <- Server.start(port.map(_.toInt).getOrElse(8090), app).exitCode
       yield ()
-    ).exitCode
 end DependencyServer
 
-object SharedLogic:
-  def fetchAppDataAndRefreshCache(scalaVersion: ScalaVersion) =
-    for
-      _   <- zio.Console.printLine("Getting fresh data")
-      res <- fetchAppData(scalaVersion)
-      _ <-
-        ZIO {
-          CrappySideEffectingCache.fullAppData = Some(res)
-        }
-    yield res
 
-  def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
-    for
-      currentZioVersion: Version <-
-        Maven.projectMetaDataFor(TrackedProjects.zioCore, scalaVersion).map(_.typedVersion)
-      allProjectsMetaData <-
-        ZIO.collectAllSuccessesPar(TrackedProjects.projects.map{ project =>
-          Maven.projectMetaDataFor(project, scalaVersion)
-        }
-        )
-      // TODO Do Pull Request query here
-      graph: Graph[Project, DiEdge] <- ZIO(ScalaGraph(allProjectsMetaData))
-      connectedProjects: Seq[ConnectedProjectData] <-
-        ZIO.collectAllSuccessesPar(allProjectsMetaData.map(x =>
-          for
-            res <-
-              ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
-                .tapError(error => ZIO.debug("Error constructing ConnectedProjectData: " + error))
-            finalProject <-
-              if (res.onLatestZioDep)
-                ZIO.succeed(res)
-              else
-                res
-                  .project
-                  .githubOrgAndRepo
-                  .map(project =>
-                    Github
-                      .pullRequests(project)
-                      .map { prOpt =>
-                        res.copy(relevantPr = prOpt)
-                      }
-                      .catchAll { case githubError =>
-                        println("Github Error: " + githubError)
-                        ZIO.succeed(res)
-                      }
-                  )
-                  .getOrElse(ZIO.succeed(res))
-
-          // ZIO.debug(res.project.artifactId + " upToDate: " +  res.projectIsUpToDate)
-          // TODO Look for PRs here
-          yield finalProject
-        )
-        )
-      res =
-        FullAppData(
-          connectedProjects,
-          allProjectsMetaData,
-          DotGraph.render(graph),
-          currentZioVersion,
-          scalaVersion
-        )
-    yield res
-  end fetchAppData
-end SharedLogic
