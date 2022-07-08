@@ -18,19 +18,17 @@ object DependencyServer extends ZIOAppDefault:
 
   import upickle.default.{read, write}
   val app: HttpApp[Any, Nothing] = Http.collect[Request] {
-    case Method.GET -> !! / "text" => Response.text("Hello World!")
+    case Method.GET -> otherPathsIncludingRoot =>
+            Response(Status.Ok, Headers.empty,
+              HttpData.fromStream {
+              ZStream.fromFile(Paths.get("src/main/resources/index.html").toFile).refineOrDie(_ => ???)
+            }
+          )
     case Method.GET -> !! / "json" => Response.json("""{"greetings": "Hello World!"}""")
   }
 
   val app2: HttpApp[Any, Throwable] =
     Http.collect[Request] {
-      case Method.GET -> !! =>
-//        Response(Status.Ok, Headers.empty,
-//          HttpData.fromStream {
-//          ZStream.fromFile(Paths.get("src/main/resources/index.html").toFile).refineOrDie(_ => ???)
-//        }
-//      )
-        Response.text("hey")
       case Method.GET -> zhttp.http.!! / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
         Response(Status.Ok, Headers.empty,
           HttpData.fromStream {
@@ -63,12 +61,18 @@ object DependencyServer extends ZIOAppDefault:
                 .combine(Headers.contentType("application/json")),
             data = HttpData.fromStream(ZStream.fromChunk(responseText))
           )
+      case Method.GET -> otherPathsIncludingRoot =>
+        Response(Status.Ok, Headers.empty,
+          HttpData.fromStream {
+            ZStream.fromFile(Paths.get("src/main/resources/index.html").toFile).refineOrDie(_ => ???)
+          }
+        )
     }
 
   override def run =
     (
       for
-        port <- ZIO.succeed(sys.env.get("PORT"))
+        port <- ZIO.succeed(sys.env.get("PORT")).debug("Port")
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
@@ -76,6 +80,6 @@ object DependencyServer extends ZIOAppDefault:
             .orDie
             .repeat(Schedule.spaced(30.minutes))
             .fork
-        _ <- Server.start(port.map(_.toInt).getOrElse(8090), app).exitCode
+        _ <- Server.start(port.map(_.toInt).getOrElse(8090), app2)
       yield ()).exitCode
 end DependencyServer
