@@ -320,9 +320,9 @@ case class AppDataAndEffects(dataSignal: Signal[Option[FullAppData]])
 
 object DependencyExplorer extends ZIOAppDefault:
 
-  def logic: ZIO[Console, Throwable, Unit] =
+  def logic: ZIO[Any, Throwable, Unit] =
       // This shows that currently, we're only getting this information once upon loading.
-    ZIO {
+    ZIO.attempt {
       val appHolder = dom.document.getElementById("landing-message")
       val dataSignal
           : Signal[Option[FullAppData]] =

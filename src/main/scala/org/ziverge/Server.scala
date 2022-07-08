@@ -53,8 +53,9 @@ object DependencyServer extends App:
     }
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    (for
-        port <- ZIO(sys.env.get("PORT"))
+    (
+      for
+        port <- ZIO.succeed(sys.env.get("PORT"))
         _ <-
           SharedLogic
             .fetchAppDataAndRefreshCache(ScalaVersion.V2_13)

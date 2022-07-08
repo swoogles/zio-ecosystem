@@ -8,7 +8,7 @@ import java.io.IOException
 import pprint.PPrinter
 
 /* Dunno if this experiment is worthwhile. I'd like things to be automatically pretty-printed during
- * development, but the downside is functions suddenly & temporarily requiring Console */
+ * development, but the downside is functions suddenly & temporarily requiring Console <--  Not true anymore!! */
 object DevConsole:
 
   val name: Console = single("(default name)")
@@ -19,13 +19,13 @@ object DevConsole:
   def single(hardcodedInput: String) =
     new Console:
       def print(line: => Any)(implicit
-          trace: zio.ZTraceElement
+          trace: zio.Trace
       ): zio.IO[java.io.IOException, Unit] = ZIO.succeed(print("Hard-coded: " + line))
       def printError(line: => Any)(implicit
-          trace: zio.ZTraceElement
+          trace: zio.Trace
       ): zio.IO[java.io.IOException, Unit] = ???
       def printLine(line: => Any)(implicit
-          trace: zio.ZTraceElement
+          trace: zio.Trace
       ): zio.IO[java.io.IOException, Unit] =
         val renderedLine =
           line match
@@ -37,9 +37,9 @@ object DevConsole:
         // TODO Decide whether to use ansi colors based on whether we're in ScalaJS.
         ZIO.succeed(println(renderedLine))
       def printLineError(line: => Any)(implicit
-          trace: zio.ZTraceElement
+          trace: zio.Trace
       ): zio.IO[java.io.IOException, Unit] = ???
-      def readLine(implicit trace: zio.ZTraceElement): zio.IO[java.io.IOException, String] =
+      def readLine(implicit trace: zio.Trace): zio.IO[java.io.IOException, String] =
         ZIO.succeed(hardcodedInput)
 
   def withInput(hardcodedInput: String*): ZIO[Any, Nothing, Console] =
@@ -50,22 +50,22 @@ object DevConsole:
   private def inputConsole(hardcodedInput: Ref[Seq[String]]) =
     new Console:
       def print(line: => Any)(implicit
-          trace: zio.ZTraceElement
-      ): zio.IO[java.io.IOException, Unit] = IO.succeed(print(line))
+          trace: zio.Trace
+      ): zio.IO[java.io.IOException, Unit] = ZIO.succeed(print(line))
 
       def printError(line: => Any)(implicit
-          trace: zio.ZTraceElement
+          trace: zio.Trace
       ): zio.IO[java.io.IOException, Unit] = ???
 
       def printLine(line: => Any)(implicit
-          trace: zio.ZTraceElement
+          trace: zio.Trace
       ): zio.IO[java.io.IOException, Unit] = ZIO.succeed(println("Automated: " + line))
 
       def printLineError(line: => Any)(implicit
-          trace: zio.ZTraceElement
+          trace: zio.Trace
       ): zio.IO[java.io.IOException, Unit] = ???
 
-      def readLine(implicit trace: zio.ZTraceElement): zio.IO[java.io.IOException, String] =
+      def readLine(implicit trace: zio.Trace): zio.IO[java.io.IOException, String] =
         for
           curInput <- hardcodedInput.get
           _        <- hardcodedInput.set(curInput.tail)
