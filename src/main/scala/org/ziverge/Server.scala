@@ -53,7 +53,7 @@ object DependencyServer extends App:
     }
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-      for
+    (for
         port <- ZIO(sys.env.get("PORT"))
         _ <-
           SharedLogic
@@ -62,8 +62,8 @@ object DependencyServer extends App:
             .orDie
             .repeat(Schedule.spaced(30.minutes))
             .fork
-        _ <- Server.start(port.map(_.toInt).getOrElse(8090), app).exitCode
-      yield ()
+        _ <- Server.start(port.map(_.toInt).getOrElse(8090), app)
+      yield ()).exitCode
 end DependencyServer
 
 
