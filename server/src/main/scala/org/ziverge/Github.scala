@@ -23,6 +23,7 @@ object Github:
           )
           .mapError(new Exception(_))
 
+      // TODO Do this once on application startup, rather than attempting every time.
       accessToken <-
         ZIO
           .fromOption(sys.env.get("GITHUB_ACCESS_TOKEN"))

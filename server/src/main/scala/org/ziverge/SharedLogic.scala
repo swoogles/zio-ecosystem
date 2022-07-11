@@ -21,6 +21,17 @@ object SharedLogic:
         }
     yield res
 
+  def statusOf(group: String, artifactId: String, currentZioVersion: Version, scalaVersion: ScalaVersion): ZIO[Any, Serializable, ConnectedProjectData] =
+    for
+      _ <- ZIO.when(CrappySideEffectingCache.fullAppData.isEmpty)(SharedLogic.fetchAppDataAndRefreshCache(ScalaVersion.V2_13))
+      res <- ZIO.fromOption (
+        CrappySideEffectingCache.fullAppData.get.connected.find(p => p.project.group == group && p.project.artifactId == artifactId)
+      )
+      _ <- ZIO.attempt(
+        pprint.pprintln(res)
+      )
+    yield res
+
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
       currentZioVersion: org.ziverge.Version <-
@@ -52,7 +63,7 @@ object SharedLogic:
                         res.copy(relevantPr = prOpt)
                       }
                       .catchAll { case githubError =>
-                        println("Github Error: " + githubError)
+//                        println("Github Error: " + githubError) // TODO Delete this once token lookup is done properly?
                         ZIO.succeed(res)
                       }
                   )
