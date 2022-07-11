@@ -21,7 +21,7 @@ object SharedLogic:
         }
     yield res
 
-  def statusOf(group: String, artifactId: String, currentZioVersion: Version, scalaVersion: ScalaVersion): ZIO[Any, Serializable, ConnectedProjectData] =
+  def projectData(group: String, artifactId: String, currentZioVersion: Version, scalaVersion: ScalaVersion): ZIO[Any, Serializable, ConnectedProjectData] =
     for
       _ <- ZIO.when(CrappySideEffectingCache.fullAppData.isEmpty)(SharedLogic.fetchAppDataAndRefreshCache(ScalaVersion.V2_13))
       res <- ZIO.fromOption (
@@ -75,6 +75,6 @@ object SharedLogic:
         )
       res =
         FullAppData(connectedProjects, DotGraph.render(graph), currentZioVersion, scalaVersion)
-    yield res
+    yield res.copy(connected = res.connected.take(5))
   end fetchAppData
 end SharedLogic
