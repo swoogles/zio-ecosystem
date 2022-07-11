@@ -3,7 +3,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "3.1.0"
+ThisBuild / scalaVersion := "3.1.3"
 
 val zioVersion = "2.0.0-RC6"
 
@@ -30,6 +30,7 @@ libraryDependencies ++= Seq(
   ("com.flowtick" %%% "xmls" % "0.1.11").cross(CrossVersion.for3Use2_13),
   ("com.softwaremill.sttp.client3" %%% "core" % "3.3.18"),
   "dev.zio" %%% "zio" % zioVersion, // Upgrade once zhttp is migrated to ZIO 2
+  "dev.zio" %%% "zio-test" % zioVersion % "test",
 )
     
 
