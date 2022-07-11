@@ -28,9 +28,9 @@ object DependencyServer extends ZIOAppDefault:
   }
 
   val app2: HttpApp[Any, Throwable] =
-    Http.collect[Request] {
+    Http.collectZIO[Request] {
       case Method.GET -> zhttp.http.!! / "compiledJavascript" / "zioecosystemtracker-fastopt.js" =>
-        Response(Status.Ok, Headers.empty,
+        ZIO.succeed(Response(Status.Ok, Headers.empty,
           HttpData.fromStream {
             ZStream
               .fromFile(
@@ -41,18 +41,21 @@ object DependencyServer extends ZIOAppDefault:
               .refineOrDie(_ => ???)
           }
         )
+        )
       case Method.GET -> zhttp.http.!! / "images" / path =>
-        Response(
+        ZIO.succeed(Response(
           status = Status.Ok,
           headers =
             Headers.contentType("image/svg+xml"),
           HttpData
           .fromFile(new File(s"server/src/main/resources/images/$path"))
         )
-
+        )
       case Method.GET -> zhttp.http.!! / "projectData" =>
-        val appData      = CrappySideEffectingCache.fullAppData.get
-        val responseText = Chunk.fromArray(write(appData).getBytes)
+        for
+          appData      <- SharedLogic.fetchAppDataWhenAppropriate(ScalaVersion.V2_13)
+        yield
+          val responseText = Chunk.fromArray(write(appData).getBytes)
           Response(
             status = Status.Ok,
             headers =
@@ -62,10 +65,11 @@ object DependencyServer extends ZIOAppDefault:
             data = HttpData.fromStream(ZStream.fromChunk(responseText))
           )
       case Method.GET -> otherPathsIncludingRoot =>
-        Response(Status.Ok, Headers.empty,
+        ZIO.succeed(Response(Status.Ok, Headers.empty,
           HttpData.fromStream {
             ZStream.fromFile(Paths.get("server/src/main/resources/index.html").toFile).refineOrDie(_ => ???)
           }
+        )
         )
     }
 

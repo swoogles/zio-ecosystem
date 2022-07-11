@@ -6,11 +6,11 @@ import zio.ZIO
 
 import java.time.Instant
 
-object CrappySideEffectingCache:
-  var fullAppData: Option[FullAppData] = None
-  var timestamp: Instant               = Instant.parse("2018-11-30T18:35:24.00Z")
-
 object SharedLogic:
+  private object CrappySideEffectingCache:
+    var fullAppData: Option[FullAppData] = None
+    var timestamp: Instant               = Instant.parse("2018-11-30T18:35:24.00Z")
+
   def fetchAppDataAndRefreshCache(scalaVersion: ScalaVersion) =
     for
       _   <- zio.Console.printLine("Getting fresh data")
@@ -31,6 +31,11 @@ object SharedLogic:
 //        pprint.pprintln(res)
 //      )
     yield res
+
+  def fetchAppDataWhenAppropriate(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
+    for
+      _ <- ZIO.when(CrappySideEffectingCache.fullAppData.isEmpty)(SharedLogic.fetchAppDataAndRefreshCache(scalaVersion))
+    yield CrappySideEffectingCache.fullAppData.get
 
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
@@ -75,6 +80,6 @@ object SharedLogic:
         )
       res =
         FullAppData(connectedProjects, DotGraph.render(graph), currentZioVersion, scalaVersion)
-    yield res.copy(connected = res.connected.take(5))
+    yield res //.copy(connected = res.connected.take(5))
   end fetchAppData
 end SharedLogic
