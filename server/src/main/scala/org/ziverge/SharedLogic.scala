@@ -74,13 +74,7 @@ object SharedLogic:
         )
         )
       res =
-        FullAppData(
-          connectedProjects,
-          allProjectsMetaData,
-          DotGraph.render(graph),
-          currentZioVersion,
-          scalaVersion
-        )
+        FullAppData(connectedProjects, DotGraph.render(graph), currentZioVersion, scalaVersion)
     yield res
   end fetchAppData
 end SharedLogic

@@ -57,7 +57,7 @@ lazy val scalaJsExplorer = (project in file("scalaJsExplorer"))
   ).settings(sharedSettings).dependsOn(shared)
 
 lazy val shared = (project in file("shared"))
-//  .enablePlugins(ScalaJSPlugin)
+  .enablePlugins(ScalaJSPlugin)
   .settings(
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.client3" %%% "core" % "3.3.18",
@@ -86,17 +86,17 @@ lazy val fastOptJSCopyToServer = taskKey[Unit]("Build JS application and then co
 fastOptJSCopyToServer := {
   (scalaJsExplorer/Compile/fastOptJS).value
   println("doing stuff")
-  Process("cp ./scalaJsExplorer/target/scala-3.1.0/zioecosystemtracker-fastopt.js ./src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
+  Process("cp ./scalaJsExplorer/target/scala-3.1.3/zioecosystemtracker-fastopt.js ./server/src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
 }
 
 lazy val fastLinkJSCopyToServer = taskKey[Unit]("Build JS application and then copy to Server static resources directory")
 fastLinkJSCopyToServer := {
   (scalaJsExplorer/Compile/fastLinkJS).value
-  Process("cp ./scalaJsExplorer/target/scala-3.1.0/zioecosystemtracker-fastopt.js ./src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
+  Process("cp ./scalaJsExplorer/target/scala-3.1.3/zioecosystemtracker-fastopt.js ./server/src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
 }
 
 lazy val fullOptJSCopyToServer = taskKey[Unit]("Compile and copy JS app")
 fullOptJSCopyToServer := {
   (scalaJsExplorer/Compile/fullOptJS).value
-  Process("cp ./scalaJsExplorer/target/scala-3.1.0/zioecosystemtracker-opt/main.js ./src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
+  Process("cp ./scalaJsExplorer/target/scala-3.1.3/zioecosystemtracker-opt/main.js ./server/src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")!
 }

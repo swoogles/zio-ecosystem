@@ -192,6 +192,8 @@ object DependencyViewerLaminar:
               case None =>
                 div("No info to display!")
               case Some(fullAppDataLive) =>
+                println("Dotgraph")
+                println(fullAppDataLive.graph)
                 val manipulatedData: Seq[ConnectedProjectData] =
                   FullAppData.filterData(
                     fullAppDataLive,
@@ -339,6 +341,6 @@ object DependencyExplorer extends ZIOAppDefault:
         .render(appHolder, DependencyViewerLaminar.app(AppDataAndEffects(dataSignal)))
     }
 
-  def run = logic
+  def run = logic <* ZIO.debug("Did new stuff!")
 
 end DependencyExplorer

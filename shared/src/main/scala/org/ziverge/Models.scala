@@ -244,13 +244,7 @@ object ScalaGraph:
       }*
     )
 
-case class FullAppData(
-    connected: Seq[ConnectedProjectData],
-    all: Seq[ProjectMetaData],
-    graph: String,
-    currentZioVersion: Version,
-    scalaVersion: ScalaVersion
-)
+case class FullAppData(connected: Seq[ConnectedProjectData], graph: String, currentZioVersion: Version, scalaVersion: ScalaVersion)
 
 object FullAppData:
 
