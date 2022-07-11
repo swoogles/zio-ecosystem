@@ -1,4 +1,3 @@
-enablePlugins(JavaAppPackaging)
 Global / onChangedBuildSource := ReloadOnSourceChanges
 
 ThisBuild / version := "0.1.0-SNAPSHOT"
@@ -19,22 +18,30 @@ lazy val sharedSettings = Seq(
   testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
 )
 
-mainClass in Compile := Some("org.ziverge.DependencyServer")
+lazy val server = (project in file("server"))
+  .settings(
 
-name := "ZioEcosystemTracker"
-idePackagePrefix := Some("org.ziverge")
-libraryDependencies ++= Seq(
-  "io.d11" %% "zhttp"      % "2.0.0-RC9",
-  "com.lihaoyi" %%% "pprint" % "0.7.0",
-  "com.lihaoyi" %%% "upickle" % "1.4.3",
-  ("com.flowtick" %%% "xmls" % "0.1.11").cross(CrossVersion.for3Use2_13),
-  ("com.softwaremill.sttp.client3" %%% "core" % "3.3.18"),
-  "dev.zio" %%% "zio" % zioVersion, // Upgrade once zhttp is migrated to ZIO 2
-  "dev.zio" %%% "zio-test" % zioVersion % "test",
-)
-    
+    mainClass in Compile := Some("org.ziverge.DependencyServer"),
+//    mainClass := Some("org.ziverge.DependencyServer"),
 
-dependsOn(shared)
+    name := "ZioEcosystemTracker",
+//    idePackagePrefix := Some("org.ziverge"),
+    libraryDependencies ++= Seq(
+      "io.d11" %% "zhttp"      % "2.0.0-RC9",
+      "com.lihaoyi" %%% "pprint" % "0.7.0",
+      "com.lihaoyi" %%% "upickle" % "1.4.3",
+      ("com.flowtick" %%% "xmls" % "0.1.11").cross(CrossVersion.for3Use2_13),
+      ("com.softwaremill.sttp.client3" %%% "core" % "3.3.18"),
+      "dev.zio" %%% "zio" % zioVersion, // Upgrade once zhttp is migrated to ZIO 2
+      "dev.zio" %%% "zio-test" % zioVersion % "test",
+      "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
+    ),
+
+
+  ).dependsOn(shared)
+  .enablePlugins(JavaAppPackaging)
+
+enablePlugins(JavaAppPackaging)
 
 lazy val scalaJsExplorer = (project in file("scalaJsExplorer"))
   .enablePlugins(ScalaJSPlugin)
@@ -50,13 +57,28 @@ lazy val scalaJsExplorer = (project in file("scalaJsExplorer"))
   ).settings(sharedSettings).dependsOn(shared)
 
 lazy val shared = (project in file("shared"))
-  .enablePlugins(ScalaJSPlugin)
+//  .enablePlugins(ScalaJSPlugin)
   .settings(
     libraryDependencies ++= Seq(
       "com.softwaremill.sttp.client3" %%% "core" % "3.3.18",
     ),
     sharedSettings
   )
+
+lazy val root = (project in file("."))
+  .settings(
+    mainClass in Compile := Some("org.ziverge.DependencyServer"),
+//    mainClass := Some("org.ziverge.DependencyServer"),
+    name := "ZioEcosystemTracker",
+  )
+  .aggregate(
+    server,
+    scalaJsExplorer,
+    shared
+  ).dependsOn(server)
+  .enablePlugins(JavaAppPackaging)
+
+import sbt.Keys.name
 
 import scala.sys.process._
 

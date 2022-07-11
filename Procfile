@@ -1,1 +1,1 @@
-web: target/universal/stage/bin/zioecosystemtracker
+web: server/target/universal/stage/bin/zioecosystemtracker

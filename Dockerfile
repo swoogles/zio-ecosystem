@@ -23,7 +23,7 @@ RUN \
 WORKDIR /project-root
 COPY project ./project
 COPY python-code ./python-code
-COPY src ./src
+COPY server/src ./src
 COPY build.sbt ./
 
 # Compile the Scala code

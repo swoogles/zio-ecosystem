@@ -21,7 +21,7 @@ object DependencyServer extends ZIOAppDefault:
     case Method.GET -> otherPathsIncludingRoot =>
             Response(Status.Ok, Headers.empty,
               HttpData.fromStream {
-              ZStream.fromFile(Paths.get("src/main/resources/index.html").toFile).refineOrDie(_ => ???)
+              ZStream.fromFile(Paths.get("server/src/main/resources/index.html").toFile).refineOrDie(_ => ???)
             }
           )
     case Method.GET -> !! / "json" => Response.json("""{"greetings": "Hello World!"}""")
@@ -35,7 +35,7 @@ object DependencyServer extends ZIOAppDefault:
             ZStream
               .fromFile(
                 Paths
-                  .get("src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")
+                  .get("server/src/main/resources/compiledJavascript/zioecosystemtracker-fastopt.js")
                   .toFile
               )
               .refineOrDie(_ => ???)
@@ -47,7 +47,7 @@ object DependencyServer extends ZIOAppDefault:
           headers =
             Headers.contentType("image/svg+xml"),
           HttpData
-          .fromFile(new File(s"src/main/resources/images/$path"))
+          .fromFile(new File(s"server/src/main/resources/images/$path"))
         )
 
       case Method.GET -> zhttp.http.!! / "projectData" =>
@@ -64,7 +64,7 @@ object DependencyServer extends ZIOAppDefault:
       case Method.GET -> otherPathsIncludingRoot =>
         Response(Status.Ok, Headers.empty,
           HttpData.fromStream {
-            ZStream.fromFile(Paths.get("src/main/resources/index.html").toFile).refineOrDie(_ => ???)
+            ZStream.fromFile(Paths.get("server/src/main/resources/index.html").toFile).refineOrDie(_ => ???)
           }
         )
     }
