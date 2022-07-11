@@ -27,9 +27,9 @@ object SharedLogic:
       res <- ZIO.fromOption (
         CrappySideEffectingCache.fullAppData.get.connected.find(p => p.project.group == group && p.project.artifactId == artifactId)
       )
-      _ <- ZIO.attempt(
-        pprint.pprintln(res)
-      )
+//      _ <- ZIO.attempt(
+//        pprint.pprintln(res)
+//      )
     yield res
 
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =

@@ -10,7 +10,8 @@ object SharedLogicSpec extends ZIOSpecDefault:
     suite("all projects")(
       test("fullAppData")(
         for
-          _ <- SharedLogic.fetchAppData(ScalaVersion.V2_13)
+          data <- SharedLogic.fetchAppData(ScalaVersion.V2_13)
+          _ <- ZIO.debug(data.graph)
         yield assertCompletes
       )
     ),
@@ -18,7 +19,7 @@ object SharedLogicSpec extends ZIOSpecDefault:
       test("zio-cron")(
         for
 //          _ <- SharedLogic.fetchAppDataAndRefreshCache(ScalaVersion.V2_13)
-          res <- SharedLogic.statusOf("io.github.jkobejs", "zio-cron", Version("1.0.0"), ScalaVersion.V2_13).debug
+          res <- SharedLogic.statusOf("io.github.jkobejs", "zio-cron", Version("1.0.0"), ScalaVersion.V2_13)
         yield assertCompletes
       )
     )
