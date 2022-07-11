@@ -131,6 +131,7 @@ object TrackedProjects:
 //        Project("com.disneystreaming", "weaver-zio", Some("https://github.com/disneystreaming/weaver-test")),
 //        Project("com.disneystreaming", "weaver-zio-core", Some("https://github.com/disneystreaming/weaver-test")),
         Project("com.softwaremill.sttp.tapir", "tapir-zio", Some("https://github.com/softwaremill/tapir")),
+        Project("io.github.jkobejs", "zio-cron", Some("https://github.com/jkobejs/cron")),
 
       ) ++ desertProjects.projects ++ clippProjects.projects ++ proxProjects.projects ).sortBy(_.artifactId)
 
