@@ -7,8 +7,6 @@ import java.time.{OffsetDateTime, ZoneId}
 
 case class GithubRepo(org: String, name: String)
 
-class Models {}
-
 case class DependencyProjectUI(group: String, artifactId: String):
 
   lazy val artifactIdQualifiedWhenNecessary =
@@ -40,6 +38,7 @@ case class Project(group: String, artifactId: String, githubUrl: Option[String] 
     s""" "${group}" %% "${artifactId}" % "${version.renderForWeb}" """
 
 object Project:
+  implicit val rw: RW[Project] = macroRW
   def fromMaven(groupId: String, artifactId: String): Project =
     val strippedProject =
       VersionedProject.stripScalaVersionFromArtifact(Project(groupId, artifactId))
@@ -50,13 +49,11 @@ object Project:
           knownProject.artifactId == strippedProject.artifactId
       )
       .getOrElse(Project(groupId, artifactId))
-  implicit val rw: RW[Project] = macroRW
 
 case class VersionedProject(project: Project, version: String):
   val typedVersion = Version(version)
 
 object VersionedProject:
-  implicit val rw: RW[VersionedProject] = macroRW
   def stripped(project: Project, version: String): VersionedProject =
     VersionedProject(stripScalaVersionFromArtifact(project), version)
 
@@ -75,18 +72,6 @@ case class VersionedProjectUI(project: DependencyProjectUI, version: String):
 
 object VersionedProjectUI:
   implicit val rw: RW[VersionedProjectUI] = macroRW
-  def stripped(project: DependencyProjectUI, version: String): VersionedProjectUI =
-    VersionedProjectUI(stripScalaVersionFromArtifact(project), version)
-
-  def stripScalaVersionFromArtifact(project: DependencyProjectUI): DependencyProjectUI =
-    ScalaVersion
-      .values
-      .find(scalaVersion => project.artifactId.endsWith("_" + scalaVersion.mvnFriendlyVersion))
-      .map(scalaVersion =>
-        project
-          .copy(artifactId = project.artifactId.replace("_" + scalaVersion.mvnFriendlyVersion, ""))
-      )
-      .getOrElse(project)
 
 case class ProjectMetaDataSmall(project: DependencyProjectUI, typedVersion: Version, zioDep: Option[Version]): // TODO Change zioDep type?
   def onLatestZio(currentZioVersion: Version): Boolean =
@@ -114,16 +99,13 @@ case class ProjectMetaData(project: Project, version: String, dependencies: Seq[
       .find(project => project.project.artifactId == "zio" && project.project.group == "dev.zio")
   val typedVersion = Version(version)
 
-  def onLatestZio(currentZioVersion: Version): Boolean =
-    zioDep.fold(true)(zDep => zDep.typedVersion.compareTo(currentZioVersion) == 0)
-
 object ProjectMetaData:
-  implicit val rw: RW[ProjectMetaData] = macroRW
+  private def isAZioLibrary(project: VersionedProject) = TrackedProjects.projects.contains(project.project)
   def withZioDependenciesOnly(
       project: VersionedProject,
       dependencies: Seq[VersionedProject]
   ): ProjectMetaData =
-    ProjectMetaData(project.project, project.version.toString, dependencies.filter(isAZioLibrary))
+    ProjectMetaData(project.project, project.version, dependencies.filter(isAZioLibrary))
 
   def getUnderlyingZioDep(
       projectMetaData: ProjectMetaData,
@@ -135,13 +117,17 @@ object ProjectMetaData:
 
     projectMetaData.zioDep match
       case Some(value) =>
-        Right(Some(ZioDep(zioDep = value, dependencyType = DependencyType.Direct)))
+        Right(Some(ZioDep(zioDep = VersionedProjectUI(
+          DependencyProjectUI(value.project.group, value.project.artifactId),
+          value.version
+          
+        ), dependencyType = DependencyType.Direct)))
       case None =>
         if (TrackedProjects.coreProjects.contains(projectMetaData.project))
           Right(
             Some(
               ZioDep(
-                zioDep = VersionedProject(TrackedProjects.zioCore, currentZioVersion.value),
+                zioDep = VersionedProjectUI(DependencyProjectUI(TrackedProjects.zioCore.group, TrackedProjects.zioCore.artifactId), currentZioVersion.value),
                 dependencyType = DependencyType.Direct
               )
             )
@@ -154,7 +140,12 @@ object ProjectMetaData:
               .find( dep =>
                 TrackedProjects.coreProjects.contains(dep.project)
               ).flatMap( dep =>
-              Some(ZioDep(dep, DependencyType.Transitive))
+              Some(ZioDep(
+                VersionedProjectUI(
+                  DependencyProjectUI(dep.project.group, dep.project.artifactId),
+                  dep.version
+                )
+                , DependencyType.Transitive))
             )
           )
   }
@@ -166,24 +157,13 @@ enum DependencyType:
 object DependencyType:
   implicit val rw: RW[DependencyType] = macroRW
 
-case class ZioDep(zioDep: VersionedProject, dependencyType: DependencyType)
+case class ZioDep(zioDep: VersionedProjectUI, dependencyType: DependencyType)
 object ZioDep:
   implicit val rw: RW[ZioDep] = macroRW
-
-  def render(zioDep: Option[ZioDep]): String =
-    zioDep.fold("Does not depend on ZIO") { dep =>
-      dep.dependencyType match
-        case DependencyType.Direct =>
-          " directly depends on ZIO " + dep.zioDep.version
-        case DependencyType.Transitive =>
-          " Transitively depends on ZIO " + dep.zioDep.version
-    }
 
 case class ConnectedProjectData(
     project: Project,
     version: Version,
-    // These 2 fields keep track of a whole extra layer of dependencies that we *do not need*
-    // TODO Change to smaller type
     dependencies: Seq[ProjectMetaDataSmall],
     dependants: Seq[ProjectMetaDataSmall],
     zioDep: Option[ZioDep],
@@ -203,26 +183,7 @@ object ConnectedProjectData:
 
 end ConnectedProjectData
 
-def isAZioLibrary(project: VersionedProject) = TrackedProjects.projects.contains(project.project)
-
-object Render:
-  def dependencies(projectMetaData: ProjectMetaData) =
-    val targetProject = projectMetaData.project
-    val dependencies  = projectMetaData.dependencies
-    "Target Project: " + sbtStyle(targetProject, projectMetaData.typedVersion) + "\n" +
-      "Dependencies:\n" +
-      dependencies
-        .map(project => "  " + sbtStyle(project.project, projectMetaData.typedVersion))
-        .mkString("\n")
-
-  def sbtStyle(project: Project, version: Version) =
-    s""" "${project.group}" %% "${project.artifactId}" % "${version.renderForWeb}" """
-
-  def sbtStyle(project: Project) = project.group + "::" + project.artifactId
-
-
 case class FullAppData(connected: Seq[ConnectedProjectData], currentZioVersion: Version, scalaVersion: ScalaVersion)
-case class FullAppDataLegacy(connected: Seq[ConnectedProjectData], graph: String, currentZioVersion: Version, scalaVersion: ScalaVersion)
 
 object FullAppData:
 
@@ -236,17 +197,6 @@ object FullAppData:
       userFilterFromPage: Option[String]
   ) =
     import org.ziverge.DataView.*
-    val onLatestZioConnected: ConnectedProjectData => Boolean =
-      p =>
-        p.zioDep
-          .fold(true) { zDep =>
-            println("Comparing")
-            val res =
-              zDep.zioDep.typedVersion.compareTo(fullAppData.currentZioVersion) <
-                0 // TODO Fix comparison?
-            println("Compared")
-            res
-          }
 
     val userFilter: ConnectedProjectData => Boolean =
       userFilterFromPage match
