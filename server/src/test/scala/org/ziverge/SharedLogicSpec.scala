@@ -11,7 +11,6 @@ object SharedLogicSpec extends ZIOSpecDefault:
       test("fullAppData")(
         for
           data <- SharedLogic.fetchAppData(ScalaVersion.V2_13)
-          _ <- ZIO.debug(data.graph)
         yield assertCompletes
       )
     ),

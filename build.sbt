@@ -8,12 +8,11 @@ val zioVersion = "2.0.0-RC6"
 
 lazy val sharedSettings = Seq(
   libraryDependencies ++= Seq(
-    "dev.zio" %%% "zio" % zioVersion,
-    "dev.zio" %%% "zio-test" % zioVersion % "test",
-    "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
     "com.lihaoyi" %%% "pprint" % "0.7.0",
     "com.lihaoyi" %%% "upickle" % "1.4.3",
     ("org.scala-graph" %%% "graph-core" % "1.13.3").cross(CrossVersion.for3Use2_13),
+    "dev.zio" %%% "zio-test" % zioVersion % "test",
+    "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
   ),
   testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
 )
@@ -37,6 +36,7 @@ lazy val server = (project in file("server"))
       "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
     ),
 
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
 
   ).dependsOn(shared)
   .enablePlugins(JavaAppPackaging)

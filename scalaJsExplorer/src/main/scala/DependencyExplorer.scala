@@ -8,7 +8,6 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import upickle.default.{macroRW, read, write, ReadWriter as RW, *}
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
-import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, ZLayer, durationInt}
 
 sealed private trait Page
 
@@ -192,8 +191,6 @@ object DependencyViewerLaminar:
               case None =>
                 div("No info to display!")
               case Some(fullAppDataLive) =>
-                println("Dotgraph")
-                println(fullAppDataLive.graph)
                 val manipulatedData: Seq[ConnectedProjectData] =
                   FullAppData.filterData(
                     fullAppDataLive,
@@ -320,27 +317,22 @@ end DependencyViewerLaminar
 import com.raquo.laminar.api.L.Signal
 case class AppDataAndEffects(dataSignal: Signal[Option[FullAppData]])
 
-object DependencyExplorer extends ZIOAppDefault:
+object DependencyExplorer extends App:
 
-  def logic: ZIO[Any, Throwable, Unit] =
-      // This shows that currently, we're only getting this information once upon loading.
-    ZIO.attempt {
-      val appHolder = dom.document.getElementById("landing-message")
-      val dataSignal
-          : Signal[Option[FullAppData]] =
-        AjaxEventStream
-          .get("/projectData")
-          .map(req => Some(read[FullAppData](req.responseText)))
-          .toSignal(None)
-      appHolder.innerHTML = ""
-      com
-        .raquo
-        .laminar
-        .api
-        .L
-        .render(appHolder, DependencyViewerLaminar.app(AppDataAndEffects(dataSignal)))
-    }
-
-  def run = logic <* ZIO.debug("Did new stuff!")
+  // This shows that currently, we're only getting this information once upon loading.
+  val appHolder = dom.document.getElementById("landing-message")
+  val dataSignal
+      : Signal[Option[FullAppData]] =
+    AjaxEventStream
+      .get("/projectData")
+      .map(req => Some(read[FullAppData](req.responseText)))
+      .toSignal(None)
+  appHolder.innerHTML = ""
+  com
+    .raquo
+    .laminar
+    .api
+    .L
+    .render(appHolder, DependencyViewerLaminar.app(AppDataAndEffects(dataSignal)))
 
 end DependencyExplorer

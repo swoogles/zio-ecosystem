@@ -1,8 +1,6 @@
 package org.ziverge
 
 import sttp.model.Uri
-import zio.{Chunk, Console, Task, ZIO, ZIOAppDefault, durationInt}
-import zio.Console.printLine
 import scalax.collection.Graph
 import scalax.collection.GraphPredef.*
 import scalax.collection.GraphEdge.*
@@ -266,7 +264,8 @@ object ScalaGraph:
       }*
     )
 
-case class FullAppData(connected: Seq[ConnectedProjectData], graph: String, currentZioVersion: Version, scalaVersion: ScalaVersion)
+case class FullAppData(connected: Seq[ConnectedProjectData], currentZioVersion: Version, scalaVersion: ScalaVersion)
+case class FullAppDataLegacy(connected: Seq[ConnectedProjectData], graph: String, currentZioVersion: Version, scalaVersion: ScalaVersion)
 
 object FullAppData:
 
