@@ -37,8 +37,6 @@ lazy val server = (project in file("server"))
   ).dependsOn(shared)
   .enablePlugins(JavaAppPackaging)
 
-enablePlugins(JavaAppPackaging)
-
 lazy val scalaJsExplorer = (project in file("scalaJsExplorer"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
@@ -70,9 +68,6 @@ lazy val root = (project in file("."))
     scalaJsExplorer,
     shared
   ).dependsOn(server)
-  .enablePlugins(JavaAppPackaging)
-
-import sbt.Keys.name
 
 import scala.sys.process._
 
