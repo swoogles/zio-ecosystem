@@ -8,6 +8,19 @@ import java.time.{OffsetDateTime, ZoneId}
 case class GithubRepo(org: String, name: String)
 
 class Models {}
+
+case class DependencyProjectUI(group: String, artifactId: String):
+
+  lazy val artifactIdQualifiedWhenNecessary =
+    if (!TrackedProjects.coreProjects.contains(this) && artifactId == "zio")
+      s"${group}.${artifactId}"
+    else
+      artifactId
+
+object DependencyProjectUI:
+
+  implicit val rw: RW[DependencyProjectUI] = macroRW
+
 case class Project(group: String, artifactId: String, githubUrl: Option[String] = None):
   val groupUrl = group.replaceAll("\\.", "/")
   def versionedArtifactId(scalaVersion: ScalaVersion) =
@@ -56,24 +69,43 @@ object VersionedProject:
           .copy(artifactId = project.artifactId.replace("_" + scalaVersion.mvnFriendlyVersion, ""))
       )
       .getOrElse(project)
+    
+case class VersionedProjectUI(project: DependencyProjectUI, version: String):
+  val typedVersion = Version(version)
 
-case class ProjectMetaDataSmall(project: Project, typedVersion: Version, zioDep: Option[VersionedProject]):
+object VersionedProjectUI:
+  implicit val rw: RW[VersionedProjectUI] = macroRW
+  def stripped(project: DependencyProjectUI, version: String): VersionedProjectUI =
+    VersionedProjectUI(stripScalaVersionFromArtifact(project), version)
+
+  def stripScalaVersionFromArtifact(project: DependencyProjectUI): DependencyProjectUI =
+    ScalaVersion
+      .values
+      .find(scalaVersion => project.artifactId.endsWith("_" + scalaVersion.mvnFriendlyVersion))
+      .map(scalaVersion =>
+        project
+          .copy(artifactId = project.artifactId.replace("_" + scalaVersion.mvnFriendlyVersion, ""))
+      )
+      .getOrElse(project)
+
+case class ProjectMetaDataSmall(project: DependencyProjectUI, typedVersion: Version, zioDep: Option[Version]): // TODO Change zioDep type?
   def onLatestZio(currentZioVersion: Version): Boolean =
-    zioDep.fold(true)(zDep => zDep.typedVersion.compareTo(currentZioVersion) == 0)
+    zioDep.fold(true)(zioVersion => zioVersion.compareTo(currentZioVersion) == 0)
 
 object ProjectMetaDataSmall:
   implicit val rw: RW[ProjectMetaDataSmall] = macroRW
-  def apply(project: Project, version: String, dependencies: Seq[VersionedProject]): ProjectMetaDataSmall =
-    val zioDep: Option[VersionedProject] =
+  def apply(project: Project, version: String, dependencies: Seq[VersionedProjectUI]): ProjectMetaDataSmall =
+    val zioDep: Option[VersionedProjectUI] =
       dependencies
         .find(project => project.project.artifactId == "zio" && project.project.group == "dev.zio")
 
     val typedVersion = Version(version)
-    ProjectMetaDataSmall(project, typedVersion, zioDep)
+    val projectUi = DependencyProjectUI(project.group, project.artifactId)
+    ProjectMetaDataSmall(projectUi, typedVersion, zioDep.map(_.typedVersion))
 
   def apply(data: ProjectMetaData): ProjectMetaDataSmall =
     ProjectMetaDataSmall(
-      data.project, data.typedVersion, data.zioDep
+      DependencyProjectUI(data.project.group, data.project.artifactId), data.typedVersion, data.zioDep.map(_.typedVersion)
     )
 
 case class ProjectMetaData(project: Project, version: String, dependencies: Seq[VersionedProject]):
