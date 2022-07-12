@@ -10,7 +10,6 @@ lazy val sharedSettings = Seq(
   libraryDependencies ++= Seq(
     "com.lihaoyi" %%% "pprint" % "0.7.0",
     "com.lihaoyi" %%% "upickle" % "1.4.3",
-    ("org.scala-graph" %%% "graph-core" % "1.13.3").cross(CrossVersion.for3Use2_13),
     "dev.zio" %%% "zio-test" % zioVersion % "test",
     "dev.zio" %%% "zio-test-sbt" % zioVersion % "test",
   ),
@@ -19,16 +18,13 @@ lazy val sharedSettings = Seq(
 
 lazy val server = (project in file("server"))
   .settings(
-
     mainClass in Compile := Some("org.ziverge.DependencyServer"),
-//    mainClass := Some("org.ziverge.DependencyServer"),
-
     name := "ZioEcosystemTracker",
-//    idePackagePrefix := Some("org.ziverge"),
     libraryDependencies ++= Seq(
       "io.d11" %% "zhttp"      % "2.0.0-RC9",
       "com.lihaoyi" %%% "pprint" % "0.7.0",
       "com.lihaoyi" %%% "upickle" % "1.4.3",
+      ("org.scala-graph" %%% "graph-core" % "1.13.3").cross(CrossVersion.for3Use2_13),
       ("com.flowtick" %%% "xmls" % "0.1.11").cross(CrossVersion.for3Use2_13),
       ("com.softwaremill.sttp.client3" %%% "core" % "3.3.18"),
       "dev.zio" %%% "zio" % zioVersion, // Upgrade once zhttp is migrated to ZIO 2
@@ -47,7 +43,6 @@ lazy val scalaJsExplorer = (project in file("scalaJsExplorer"))
   .enablePlugins(ScalaJSPlugin)
   .settings(
     name := "ZioEcosystemTracker",
-    idePackagePrefix := Some("org.ziverge"),
     libraryDependencies ++= Seq(
       "com.raquo" %%% "laminar" % "0.14.2",
       "com.raquo" %%% "waypoint" % "0.5.0",
@@ -68,7 +63,6 @@ lazy val shared = (project in file("shared"))
 lazy val root = (project in file("."))
   .settings(
     mainClass in Compile := Some("org.ziverge.DependencyServer"),
-//    mainClass := Some("org.ziverge.DependencyServer"),
     name := "ZioEcosystemTracker",
   )
   .aggregate(

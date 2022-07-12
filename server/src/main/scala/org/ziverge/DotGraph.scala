@@ -11,14 +11,12 @@ object DotGraph:
      * http://www.scala-graph.org/guides/dot.html */
     "digraph {\n" +
       graph
-      .edges
-      .map {
-        x =>
-          val lib = x.head
+        .edges
+        .map { x =>
+          val lib       = x.head
           val dependent = x.tail.head
-          s""" "${lib.artifactIdQualifiedWhenNecessary}"->"${dependent.artifactIdQualifiedWhenNecessary}" """
-      }
-      .mkString("\n") +
-        "\n}"
+          s""" "${lib.artifactIdQualifiedWhenNecessary}"->"${dependent
+            .artifactIdQualifiedWhenNecessary}" """
+        }
+        .mkString("\n") + "\n}"
   end render
-end DotGraph

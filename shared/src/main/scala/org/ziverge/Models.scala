@@ -1,11 +1,6 @@
 package org.ziverge
 
 import sttp.model.Uri
-import scalax.collection.Graph
-import scalax.collection.GraphPredef.*
-import scalax.collection.GraphEdge.*
-import scalax.collection.edge.LDiEdge
-import scalax.collection.edge.Implicits.*
 import upickle.default.{macroRW, ReadWriter as RW, *}
 
 import java.time.{OffsetDateTime, ZoneId}
@@ -174,65 +169,6 @@ object ConnectedProjectData:
   implicit val versionRw: RW[Version]       = readwriter[String].bimap[Version](_.value, Version(_))
   implicit val rw: RW[ConnectedProjectData] = macroRW
 
-  def apply(
-      projectMetaData: ProjectMetaData,
-      allProjectsMetaData: Seq[ProjectMetaData],
-      dependendencyGraph: Graph[Project, DiEdge],
-      currentZioVersion: Version
-  ): Either[Throwable, ConnectedProjectData] = // TODO More specific error type
-    for
-      node <-
-        dependendencyGraph
-          .nodes
-          .find { node =>
-            // TODO Do we need this?
-            val nodeProject: Project = node.value.asInstanceOf[Project]
-            nodeProject.artifactId == projectMetaData.project.artifactId &&
-            nodeProject.group == projectMetaData.project.group
-          }
-          .toRight {
-            new Exception(
-              s"Missing value in dependency graph for ${projectMetaData.project}"
-            )
-          }
-      dependents = node.diSuccessors.map(_.value)
-      typedDependants <-
-        Right(
-          dependents
-            .flatMap(dependent =>
-              allProjectsMetaData
-                .find(_.project == dependent)
-                .toRight(new Exception("Missing projects metadata entry"))
-                .toSeq
-            )
-            .toSeq
-        )
-      typedDependencies <-
-        Right(
-          projectMetaData
-            .dependencies
-            .flatMap(dependency =>
-              allProjectsMetaData
-                .find(_.project == dependency.project)
-                .toRight(new Exception("Missing dependency entry for: " + dependency.project))
-                .toSeq
-            )
-        )
-      zioDep <-
-        ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
-      // Instead of yielding here, assign value, check if it's on the latest ZIO, and then query for
-      // open PRs if not
-      connectedProject =
-        ConnectedProjectData(
-          projectMetaData.project,
-          projectMetaData.typedVersion,
-          typedDependencies.map(ProjectMetaDataSmall.apply),
-          typedDependants.map(ProjectMetaDataSmall.apply),
-          zioDep,
-          currentZioVersion
-        )
-    yield connectedProject
-  end apply
 end ConnectedProjectData
 
 def isAZioLibrary(project: VersionedProject) = TrackedProjects.projects.contains(project.project)
@@ -252,26 +188,12 @@ object Render:
 
   def sbtStyle(project: Project) = project.group + "::" + project.artifactId
 
-object ScalaGraph:
-  def apply(allProjectsMetaData: Seq[ProjectMetaData]): Graph[Project, DiEdge] =
-    Graph(
-      allProjectsMetaData.flatMap { project =>
-        project
-          .dependencies
-          .map { dependency =>
-            dependency.project ~> project.project
-          }
-      }*
-    )
 
 case class FullAppData(connected: Seq[ConnectedProjectData], currentZioVersion: Version, scalaVersion: ScalaVersion)
 case class FullAppDataLegacy(connected: Seq[ConnectedProjectData], graph: String, currentZioVersion: Version, scalaVersion: ScalaVersion)
 
 object FullAppData:
 
-  // implicit val graphRw: RW[Graph[org.ziverge.Project, scalax.collection.GraphEdge.DiEdge]] =
-  // macroRW
-  // scalax.collection.Graph[org.ziverge.Project, scalax.collection.GraphEdge.DiEdge]
   implicit val scalaVersion: RW[ScalaVersion] = macroRW
   implicit val rw: RW[FullAppData]            = macroRW
 

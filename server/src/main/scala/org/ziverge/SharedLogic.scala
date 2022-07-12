@@ -52,7 +52,7 @@ object SharedLogic:
         ZIO.collectAllSuccessesPar(allProjectsMetaData.map(x =>
           for
             res <-
-              ZIO.fromEither(ConnectedProjectData(x, allProjectsMetaData, graph, currentZioVersion))
+              ZIO.fromEither(ConnectedProjectServer(x, allProjectsMetaData, graph, currentZioVersion))
                 .tapError(error => ZIO.debug("Error constructing ConnectedProjectData: " + error))
             finalProject <-
               if (res.onLatestZioDep)
@@ -83,3 +83,83 @@ object SharedLogic:
     yield res //.copy(connected = res.connected.take(5))
   end fetchAppData
 end SharedLogic
+
+// TODO Move around
+import scalax.collection.Graph
+import scalax.collection.GraphPredef.*
+import scalax.collection.GraphEdge.*
+import scalax.collection.edge.LDiEdge
+import scalax.collection.edge.Implicits.*
+object ConnectedProjectServer:
+
+  def apply(
+             projectMetaData: ProjectMetaData,
+             allProjectsMetaData: Seq[ProjectMetaData],
+             dependendencyGraph: Graph[Project, DiEdge],
+             currentZioVersion: Version
+           ): Either[Throwable, ConnectedProjectData] = // TODO More specific error type
+    for
+      node <-
+        dependendencyGraph
+          .nodes
+          .find { node =>
+            // TODO Do we need this?
+            val nodeProject: Project = node.value.asInstanceOf[Project]
+            nodeProject.artifactId == projectMetaData.project.artifactId &&
+              nodeProject.group == projectMetaData.project.group
+          }
+          .toRight {
+            new Exception(
+              s"Missing value in dependency graph for ${projectMetaData.project}"
+            )
+          }
+      dependents = node.diSuccessors.map(_.value)
+      typedDependants <-
+        Right(
+          dependents
+            .flatMap(dependent =>
+              allProjectsMetaData
+                .find(_.project == dependent)
+                .toRight(new Exception("Missing projects metadata entry"))
+                .toSeq
+            )
+            .toSeq
+        )
+      typedDependencies <-
+        Right(
+          projectMetaData
+            .dependencies
+            .flatMap(dependency =>
+              allProjectsMetaData
+                .find(_.project == dependency.project)
+                .toRight(new Exception("Missing dependency entry for: " + dependency.project))
+                .toSeq
+            )
+        )
+      zioDep <-
+        ProjectMetaData.getUnderlyingZioDep(projectMetaData, allProjectsMetaData, currentZioVersion)
+      // Instead of yielding here, assign value, check if it's on the latest ZIO, and then query for
+      // open PRs if not
+      connectedProject =
+        ConnectedProjectData(
+          projectMetaData.project,
+          projectMetaData.typedVersion,
+          typedDependencies.map(ProjectMetaDataSmall.apply),
+          typedDependants.map(ProjectMetaDataSmall.apply),
+          zioDep,
+          currentZioVersion
+        )
+    yield connectedProject
+  end apply
+  
+object ScalaGraph:
+  def apply(allProjectsMetaData: Seq[ProjectMetaData]): Graph[Project, DiEdge] =
+    Graph(
+      allProjectsMetaData.flatMap { project =>
+        project
+          .dependencies
+          .map { dependency =>
+            dependency.project ~> project.project
+          }
+      }*
+    )
