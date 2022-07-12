@@ -144,8 +144,8 @@ object ConnectedProjectServer:
         ConnectedProjectData(
           projectMetaData.project,
           projectMetaData.typedVersion,
-          typedDependencies.map(ProjectMetaDataSmall.apply),
-          typedDependants.map(ProjectMetaDataSmall.apply),
+          typedDependencies.map(ProjectMetaData.apply),
+          typedDependants.map(ProjectMetaData.apply),
           zioDep,
           currentZioVersion
         )
