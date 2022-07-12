@@ -1,13 +1,7 @@
 package org.ziverge
 
 
-def filterData(
-                fullAppData: FullAppData,
-                dataView: DataView,
-                filterUpToDateProjects: Boolean,
-                userFilterFromPage: Option[String]
-              ): Seq[ConnectedProjectData] =
-  import org.ziverge.DataView.*
+def filterData(fullAppData: FullAppData, filterUpToDateProjects: Boolean, userFilterFromPage: Option[String]) =
 
   val userFilter: ConnectedProjectData => Boolean =
     userFilterFromPage match
@@ -18,7 +12,6 @@ def filterData(
 
           val artifactMatches = project.project.artifactId.toLowerCase.contains(normalizedFilter)
           // TODO Make this a function in a better spot
-          // project.dependants.exists(_.project.artifactId.contains(filter)) ||
           val introspectedDataMatches =
             project
               .dependencies

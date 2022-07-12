@@ -1,6 +1,5 @@
 package org.ziverge
 
-import DataView.*
 import org.scalajs.dom
 
 import com.raquo.airstream.web.AjaxEventStream
@@ -11,11 +10,7 @@ import urldsl.language.QueryParameters
 
 sealed private trait Page
 
-case class DependencyExplorerPage(
-    targetProject: Option[String],
-    dataView: DataView, // TODO Destroy
-    filterUpToDateProjects: Boolean
-) extends Page:
+case class DependencyExplorerPage(targetProject: Option[String], filterUpToDateProjects: Boolean) extends Page:
   def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
 
 private case object LoginPageOriginal extends Page
@@ -192,12 +187,7 @@ object DependencyViewerLaminar:
                 div("No info to display!")
               case Some(fullAppDataLive) =>
                 val manipulatedData: Seq[ConnectedProjectData] =
-                  filterData(
-                    fullAppDataLive,
-                    busPageInfo.dataView,
-                    busPageInfo.filterUpToDateProjects,
-                    busPageInfo.targetProject
-                  )
+                  filterData(fullAppDataLive, busPageInfo.filterUpToDateProjects, busPageInfo.targetProject)
 
                 div(
                   EcosystemSummary(
@@ -264,7 +254,7 @@ object DependencyViewerLaminar:
       Observer[String](onNext =
         dataView =>
           router.pushState(
-            page.copy(dataView = DataView.fromString(dataView).getOrElse(DataView.Blockers))
+            page.copy()
           )
       )
 

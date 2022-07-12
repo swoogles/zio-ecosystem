@@ -1,6 +1,5 @@
 package org.ziverge
 
-import com.*
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
 
@@ -14,26 +13,20 @@ object Routing:
   implicit private val rw: RW[Page] = macroRW
 
   private val encodePage
-  : DependencyExplorerPage => (Option[String], Option[String], Option[Boolean]) =
-    page => (page.targetProject, Some(page.dataView.toString), Some(page.filterUpToDateProjects))
+  : DependencyExplorerPage => (Option[String], Option[Boolean]) =
+    page => (page.targetProject, Some(page.filterUpToDateProjects))
 
-  val x = 3
   private val decodePage
-  : ((Option[String], Option[String], Option[Boolean])) => DependencyExplorerPage = {
-    case (targetProject, dataView, filterUpToDateProjects) =>
-      DependencyExplorerPage(
-        targetProject = targetProject,
-        dataView = dataView.flatMap(DataView.fromString).getOrElse(DataView.Dependencies),
-        filterUpToDateProjects = filterUpToDateProjects.getOrElse(false)
-      )
+  : ((Option[String], Option[Boolean])) => DependencyExplorerPage = {
+    case (targetProject, filterUpToDateProjects) =>
+      DependencyExplorerPage(targetProject = targetProject, filterUpToDateProjects = filterUpToDateProjects.getOrElse(false))
   }
 
-  val params: QueryParameters[(Option[String], Option[String], Option[Boolean]), DummyError] =
-    param[String]("targetProject").? & param[String]("dataView").? &
-      param[Boolean]("filterUpToDateProjects").?
+  val params: QueryParameters[(Option[String], Option[Boolean]), DummyError] =
+    param[String]("targetProject").? & param[Boolean]("filterUpToDateProjects").?
 
   private val prodRoute =
-    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[String], Option[Boolean])](
+    Route.onlyQuery[DependencyExplorerPage, (Option[String], Option[Boolean])](
       encode = encodePage,
       decode = decodePage,
       pattern = (root / endOfSegments) ? params
@@ -51,11 +44,7 @@ object Routing:
       deserializePage = pageStr => read(pageStr)(rw), // deserialize the above
       routeFallback =
         _ =>
-          DependencyExplorerPage(
-            targetProject = None,
-            dataView = DataView.Dependencies,
-            filterUpToDateProjects = false
-          ),
+          DependencyExplorerPage(targetProject = None, filterUpToDateProjects = false),
     )(
       $popStateEvent =
         L.windowEvents.onPopState, // this is how Waypoint avoids an explicit dependency on Laminar
