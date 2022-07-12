@@ -13,7 +13,7 @@ sealed private trait Page
 
 case class DependencyExplorerPage(
     targetProject: Option[String],
-    dataView: DataView,
+    dataView: DataView, // TODO Destroy
     filterUpToDateProjects: Boolean
 ) extends Page:
   def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
@@ -192,7 +192,7 @@ object DependencyViewerLaminar:
                 div("No info to display!")
               case Some(fullAppDataLive) =>
                 val manipulatedData: Seq[ConnectedProjectData] =
-                  FullAppData.filterData(
+                  filterData(
                     fullAppDataLive,
                     busPageInfo.dataView,
                     busPageInfo.filterUpToDateProjects,
