@@ -28,7 +28,7 @@ object DependencyViewerLaminar:
 
   def ConnectedProjectsContainer(
                                   title: String,
-                                  connectedProjects: Seq[ProjectMetaData],
+                                  connectedProjects: Seq[ProjectMetaDataSmall],
                                   currentZioVersion: Version
                                 ) =
 

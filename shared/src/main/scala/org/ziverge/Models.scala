@@ -64,6 +64,25 @@ object VersionedProject:
       )
       .getOrElse(project)
 
+case class ProjectMetaDataSmall(project: Project, typedVersion: Version, zioDep: Option[VersionedProject]):
+  def onLatestZio(currentZioVersion: Version): Boolean =
+    zioDep.fold(true)(zDep => zDep.typedVersion.compareTo(currentZioVersion) == 0)
+
+object ProjectMetaDataSmall:
+  implicit val rw: RW[ProjectMetaDataSmall] = macroRW
+  def apply(project: Project, version: String, dependencies: Seq[VersionedProject]): ProjectMetaDataSmall =
+    val zioDep: Option[VersionedProject] =
+      dependencies
+        .find(project => project.project.artifactId == "zio" && project.project.group == "dev.zio")
+
+    val typedVersion = Version(version)
+    ProjectMetaDataSmall(project, typedVersion, zioDep)
+
+  def apply(data: ProjectMetaData): ProjectMetaDataSmall =
+    ProjectMetaDataSmall(
+      data.project, data.typedVersion, data.zioDep
+    )
+
 case class ProjectMetaData(project: Project, version: String, dependencies: Seq[VersionedProject]):
   val zioDep: Option[VersionedProject] =
     dependencies
@@ -105,6 +124,7 @@ object ProjectMetaData:
         else
           Right(
             projectMetaData
+              // TODO Remove this usage of dependencies and access a new field that provides the same info
               .dependencies
               .find( dep =>
                 TrackedProjects.coreProjects.contains(dep.project)
@@ -137,8 +157,10 @@ object ZioDep:
 case class ConnectedProjectData(
     project: Project,
     version: Version,
-    dependencies: Seq[ProjectMetaData],
-    dependants: Seq[ProjectMetaData],
+    // These 2 fields keep track of a whole extra layer of dependencies that we *do not need*
+    // TODO Change to smaller type
+    dependencies: Seq[ProjectMetaDataSmall],
+    dependants: Seq[ProjectMetaDataSmall],
     zioDep: Option[ZioDep],
     latestZio: Version,
     relevantPr: Option[PullRequest] = None
@@ -206,8 +228,8 @@ object ConnectedProjectData:
         ConnectedProjectData(
           projectMetaData.project,
           projectMetaData.typedVersion,
-          typedDependencies,
-          typedDependants,
+          typedDependencies.map(ProjectMetaDataSmall.apply),
+          typedDependants.map(ProjectMetaDataSmall.apply),
           zioDep,
           currentZioVersion
         )
