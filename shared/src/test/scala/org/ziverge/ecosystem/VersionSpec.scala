@@ -1,6 +1,6 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
-import zio.test.*
+import zio.test.assertTrue
 
 object VersionSpec extends zio.test.ZIOSpecDefault:
   val spec =
@@ -17,5 +17,4 @@ object VersionSpec extends zio.test.ZIOSpecDefault:
       test("compareTo minor")(
         assertTrue(Version.compareVersions(Version("1.0.13"), Version("1.1.03")) == -1)
       )
-
     )

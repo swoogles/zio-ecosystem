@@ -1,4 +1,4 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge

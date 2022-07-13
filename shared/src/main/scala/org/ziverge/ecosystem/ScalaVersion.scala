@@ -1,4 +1,4 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
 import upickle.default.{macroRW, ReadWriter as RW, *}
 

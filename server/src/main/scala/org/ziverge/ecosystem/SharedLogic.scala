@@ -1,5 +1,6 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
+import org.ziverge.*
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 import zio.ZIO
@@ -39,7 +40,7 @@ object SharedLogic:
 
   def fetchAppData(scalaVersion: ScalaVersion): ZIO[Any, Throwable, FullAppData] =
     for
-      currentZioVersion: org.ziverge.Version <-
+      currentZioVersion: Version <-
         Maven.projectMetaDataFor(TrackedProjects.zioCore, scalaVersion).map(_.typedVersion)
       allProjectsMetaData <-
         ZIO.collectAllSuccessesPar(TrackedProjects.projects.map{ project =>
@@ -86,10 +87,10 @@ end SharedLogic
 
 // TODO Move around
 import scalax.collection.Graph
-import scalax.collection.GraphPredef.*
 import scalax.collection.GraphEdge.*
-import scalax.collection.edge.LDiEdge
+import scalax.collection.GraphPredef.*
 import scalax.collection.edge.Implicits.*
+import scalax.collection.edge.LDiEdge
 object ConnectedProjectServer:
 
   def apply(

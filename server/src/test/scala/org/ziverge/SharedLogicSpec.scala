@@ -1,7 +1,8 @@
 package org.ziverge
 
-//import org.ziverge.SharedLogic;
+//import org.ziverge.ecosystem.SharedLogic;
 
+import org.ziverge.ecosystem.{ScalaVersion, SharedLogic, Version}
 import zio.*
 import zio.test.*
 

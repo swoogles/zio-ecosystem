@@ -1,6 +1,6 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
-import upickle.default.{read, write}
+import upickle.default.read
 
 object Github:
   import sttp.model.Uri

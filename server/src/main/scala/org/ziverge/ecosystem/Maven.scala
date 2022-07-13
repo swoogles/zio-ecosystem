@@ -1,4 +1,4 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
 import sttp.model.Uri
 import zio.ZIO

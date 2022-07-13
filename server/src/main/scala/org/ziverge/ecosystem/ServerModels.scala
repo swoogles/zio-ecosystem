@@ -1,5 +1,6 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
+import org.ziverge.*
 import sttp.model.Uri
 import upickle.default.{macroRW, ReadWriter as RW, *}
 
@@ -74,7 +75,7 @@ case class VersionedProject(project: Project, version: String):
 
 object VersionedProject:
   def stripped(project: Project, version: String): VersionedProject =
-    VersionedProject(stripScalaVersionFromArtifact(project), version)
+    ecosystem.VersionedProject(stripScalaVersionFromArtifact(project), version)
 
   def stripScalaVersionFromArtifact(project: Project): Project =
     ScalaVersion

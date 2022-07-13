@@ -1,16 +1,14 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
 import scalax.collection.Graph
 import scalax.collection.GraphEdge.DiEdge
 import zhttp.http.*
-import zhttp.http.Header
 import zhttp.service.Server
 import zio.*
-import zio.durationInt
 import zio.stream.ZStream
 
-import java.nio.file.Paths
 import java.io.File
+import java.nio.file.Paths
 import java.time.Instant
 
 

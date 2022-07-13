@@ -18,7 +18,7 @@ lazy val sharedSettings = Seq(
 
 lazy val server = (project in file("server"))
   .settings(
-    mainClass in Compile := Some("org.ziverge.DependencyServer"),
+    mainClass in Compile := Some("org.ziverge.ecosystem.DependencyServer"),
     name := "ZioEcosystemTracker",
     libraryDependencies ++= Seq(
       "io.d11" %% "zhttp"      % "2.0.0-RC9",
@@ -60,7 +60,7 @@ lazy val shared = (project in file("shared"))
 
 lazy val root = (project in file("."))
   .settings(
-    mainClass in Compile := Some("org.ziverge.DependencyServer"),
+    mainClass in Compile := Some("org.ziverge.ecosystem.DependencyServer"),
     name := "ZioEcosystemTracker",
   )
   .aggregate(

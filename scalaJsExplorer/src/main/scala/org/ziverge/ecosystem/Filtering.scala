@@ -1,5 +1,7 @@
 package org.ziverge
 
+import org.ziverge.ecosystem.{ConnectedProjectData, FullAppData, TrackedProjects}
+
 
 def filterData(fullAppData: FullAppData, filterUpToDateProjects: Boolean, userFilterFromPage: Option[String]) =
 

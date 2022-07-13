@@ -1,5 +1,6 @@
-package org.ziverge
+package org.ziverge.ecosystem
 
+import org.ziverge.*
 import sttp.model.Uri
 import upickle.default.{macroRW, ReadWriter as RW, *}
 
