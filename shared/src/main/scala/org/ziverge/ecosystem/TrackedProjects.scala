@@ -20,7 +20,7 @@ object TrackedProjects:
       )
     )
 
-  val projects =
+  val projects: Seq[Project] =
     (
       coreProjects ++
         List(
@@ -40,8 +40,7 @@ object TrackedProjects:
           Project("dev.zio", "zio-config-typesafe", Some("https://github.com/zio/zio-config")),
           Project("dev.zio", "zio-kafka", Some("https://github.com/zio/zio-kafka")),
           Project("dev.zio", "zio-ftp", Some("https://github.com/zio/zio-ftp")),
-          // Project("dev.zio", "zio-mock", Some("https://github.com/zio/zio-mock")), // TODO Enable
-          // when published
+          Project("dev.zio", "zio-mock", Some("https://github.com/zio/zio-mock")),
           Project("dev.zio", "zio-aws-core", Some("https://github.com/zio/zio-aws")),
           Project("dev.zio", "zio-prelude", Some("https://github.com/zio/zio-prelude")),
           Project("dev.zio", "zio-prelude-macros", Some("https://github.com/zio/zio-prelude")),
