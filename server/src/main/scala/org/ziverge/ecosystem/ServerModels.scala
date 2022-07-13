@@ -6,11 +6,10 @@ import upickle.default.{macroRW, ReadWriter as RW, *}
 
 import java.time.{OffsetDateTime, ZoneId}
 
-case class ProjectMetaData(project: Project, version: String, dependencies: Seq[VersionedProject]):
+case class ProjectMetaData(project: Project, typedVersion: Version, dependencies: Seq[VersionedProject]):
   val zioDep: Option[VersionedProject] =
     dependencies
       .find(project => project.project.artifactId == "zio" && project.project.group == "dev.zio")
-  val typedVersion = Version(version)
 
 
 object ProjectMetaData:
@@ -19,7 +18,7 @@ object ProjectMetaData:
                                project: VersionedProject,
                                dependencies: Seq[VersionedProject]
                              ): ProjectMetaData =
-    ProjectMetaData(project.project, project.version, dependencies.filter(isAZioLibrary))
+    ProjectMetaData(project.project, project.typedVersion, dependencies.filter(isAZioLibrary))
 
   def apply(data: ProjectMetaData): ProjectMetaDataSmall =
     ProjectMetaDataSmall(
@@ -31,9 +30,6 @@ object ProjectMetaData:
                            allProjectsMetaData: Seq[ProjectMetaData],
                            currentZioVersion: Version
                          ): Either[Throwable, Option[ZioDep]] = {
-    if (projectMetaData.project.artifactId.contains("parser"))
-      println("zio-parser time!")
-
     projectMetaData.zioDep match
       case Some(value) =>
         Right(Some(ZioDep(zioDep = VersionedProjectUI(
