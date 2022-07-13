@@ -1,9 +1,10 @@
-package org.ziverge
-
-import org.scalajs.dom
+package org.ziverge.ecosystem
 
 import com.raquo.airstream.web.AjaxEventStream
 import com.raquo.laminar.nodes.ReactiveHtmlElement
+import org.scalajs.dom
+import org.ziverge.ecosystem.{Bulma, Glyphicons, Routing}
+import org.ziverge.*
 import upickle.default.{macroRW, read, write, ReadWriter as RW, *}
 import urldsl.errors.DummyError
 import urldsl.language.QueryParameters
