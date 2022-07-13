@@ -38,7 +38,7 @@ object ProjectMetaData:
       case Some(value) =>
         Right(Some(ZioDep(zioDep = VersionedProjectUI(
           DependencyProjectUI(value.project.group, value.project.artifactId),
-          value.version
+          value.typedVersion
 
         ), dependencyType = DependencyType.Direct)))
       case None =>
@@ -46,7 +46,7 @@ object ProjectMetaData:
           Right(
             Some(
               ZioDep(
-                zioDep = VersionedProjectUI(DependencyProjectUI(TrackedProjects.zioCore.group, TrackedProjects.zioCore.artifactId), currentZioVersion.value),
+                zioDep = VersionedProjectUI(DependencyProjectUI(TrackedProjects.zioCore.group, TrackedProjects.zioCore.artifactId), currentZioVersion),
                 dependencyType = DependencyType.Direct
               )
             )
@@ -62,7 +62,7 @@ object ProjectMetaData:
               Some(ZioDep(
                 VersionedProjectUI(
                   DependencyProjectUI(dep.project.group, dep.project.artifactId),
-                  dep.version
+                  dep.typedVersion
                 )
                 , DependencyType.Transitive))
             )

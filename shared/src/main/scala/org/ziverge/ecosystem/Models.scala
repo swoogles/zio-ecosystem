@@ -61,8 +61,7 @@ object Project:
       .getOrElse(Project(groupId, artifactId))
 
     
-case class VersionedProjectUI(project: DependencyProjectUI, version: String):
-  val typedVersion = Version(version)
+case class VersionedProjectUI(project: DependencyProjectUI, typedVersion: Version)
 
 object VersionedProjectUI:
   implicit val rw: RW[VersionedProjectUI] = macroRW
@@ -73,14 +72,13 @@ case class ProjectMetaDataSmall(project: DependencyProjectUI, typedVersion: Vers
 
 object ProjectMetaDataSmall:
   implicit val rw: RW[ProjectMetaDataSmall] = macroRW
-  def apply(project: Project, version: String, dependencies: Seq[VersionedProjectUI]): ProjectMetaDataSmall =
+  def apply(project: Project, version: Version, dependencies: Seq[VersionedProjectUI]): ProjectMetaDataSmall =
     val zioDep: Option[VersionedProjectUI] =
       dependencies
         .find(project => project.project.artifactId == "zio" && project.project.group == "dev.zio")
 
-    val typedVersion = Version(version)
     val projectUi = DependencyProjectUI(project.group, project.artifactId)
-    ProjectMetaDataSmall(projectUi, typedVersion, zioDep.map(_.typedVersion))
+    ProjectMetaDataSmall(projectUi, version, zioDep.map(_.typedVersion))
 
 
 enum DependencyType:

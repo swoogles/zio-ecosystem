@@ -159,7 +159,7 @@ object DependencyViewerLaminar:
                           ),
                           span(
                             cls := "has-text-weight-bold",
-                            zioDep.map(dep => dep.zioDep.version).getOrElse("N/A")
+                            zioDep.map(dep => dep.zioDep.typedVersion.value).getOrElse("N/A")
                           )
                         )
                       ),
