@@ -1,6 +1,5 @@
 package org.ziverge.ecosystem
 
-import org.ziverge.*
 import sttp.model.Uri
 import upickle.default.{macroRW, ReadWriter as RW, *}
 
@@ -15,11 +14,7 @@ case class DependencyProjectUI(group: String, artifactId: String):
       s"${group}.${artifactId}"
     else
       artifactId
-
-object DependencyProjectUI:
-
-  implicit val rw: RW[DependencyProjectUI] = macroRW
-
+      
 case class Project(group: String, artifactId: String, githubUrl: Option[String] = None):
   val groupUrl = group.replaceAll("\\.", "/")
   def versionedArtifactId(scalaVersion: ScalaVersion) =
@@ -43,9 +38,48 @@ case class Project(group: String, artifactId: String, githubUrl: Option[String] 
       .values
       .find(scalaVersion => artifactId.endsWith("_" + scalaVersion.mvnFriendlyVersion))
       .map(scalaVersion =>
-          copy(artifactId = artifactId.replace("_" + scalaVersion.mvnFriendlyVersion, ""))
+        copy(artifactId = artifactId.replace("_" + scalaVersion.mvnFriendlyVersion, ""))
       )
       .getOrElse(this)
+
+case class VersionedProjectUI(project: DependencyProjectUI, typedVersion: Version)
+
+case class ProjectMetaDataSmall(project: DependencyProjectUI, typedVersion: Version, zioDep: Option[Version]):
+  def onLatestZio(currentZioVersion: Version): Boolean =
+    zioDep.fold(true)(zioVersion => zioVersion.compareTo(currentZioVersion) == 0)
+
+enum DependencyType:
+  case Direct, Transitive
+  
+case class ZioDep(zioDep: VersionedProjectUI, dependencyType: DependencyType)
+
+case class ConnectedProjectData(
+                                 project: Project,
+                                 version: Version,
+                                 dependencies: Seq[ProjectMetaDataSmall],
+                                 dependants: Seq[ProjectMetaDataSmall],
+                                 zioDep: Option[ZioDep],
+                                 latestZio: Version,
+                                 relevantPr: Option[PullRequest] = None
+                               ):
+  // TODO Turn into an apply value
+  lazy val onLatestZioDep: Boolean =
+    zioDep.fold(
+      dependencies.forall(dep => dep.onLatestZio(latestZio))
+    )(zDep =>
+      zDep.zioDep.typedVersion.compareTo(latestZio) == 0
+    )
+    
+case class FullAppData(connected: Seq[ConnectedProjectData], currentZioVersion: Version, scalaVersion: ScalaVersion)
+case class PullRequest(number: Int, title: String, html_url: String)
+
+case class ProjectGroup(group: String, projects: Seq[Project])
+object ZioDep:
+  implicit val rw: RW[ZioDep] = macroRW
+
+object DependencyProjectUI:
+
+  implicit val rw: RW[DependencyProjectUI] = macroRW
 
 object Project:
   implicit val rw: RW[Project] = macroRW
@@ -61,14 +95,9 @@ object Project:
       .getOrElse(Project(groupId, artifactId))
 
     
-case class VersionedProjectUI(project: DependencyProjectUI, typedVersion: Version)
-
 object VersionedProjectUI:
   implicit val rw: RW[VersionedProjectUI] = macroRW
 
-case class ProjectMetaDataSmall(project: DependencyProjectUI, typedVersion: Version, zioDep: Option[Version]): // TODO Change zioDep type?
-  def onLatestZio(currentZioVersion: Version): Boolean =
-    zioDep.fold(true)(zioVersion => zioVersion.compareTo(currentZioVersion) == 0)
 
 object ProjectMetaDataSmall:
   implicit val rw: RW[ProjectMetaDataSmall] = macroRW
@@ -81,39 +110,12 @@ object ProjectMetaDataSmall:
     ProjectMetaDataSmall(projectUi, version, zioDep.map(_.typedVersion))
 
 
-enum DependencyType:
-  case Direct, Transitive
-
 object DependencyType:
   implicit val rw: RW[DependencyType] = macroRW
-
-case class ZioDep(zioDep: VersionedProjectUI, dependencyType: DependencyType)
-object ZioDep:
-  implicit val rw: RW[ZioDep] = macroRW
-
-case class ConnectedProjectData(
-    project: Project,
-    version: Version,
-    dependencies: Seq[ProjectMetaDataSmall],
-    dependants: Seq[ProjectMetaDataSmall],
-    zioDep: Option[ZioDep],
-    latestZio: Version,
-    relevantPr: Option[PullRequest] = None
-):
-  lazy val onLatestZioDep: Boolean =
-    zioDep.fold(
-      dependencies.forall(dep => dep.onLatestZio(latestZio))
-    )(zDep =>
-      zDep.zioDep.typedVersion.compareTo(latestZio) == 0
-    )
 
 object ConnectedProjectData:
   implicit val versionRw: RW[Version]       = readwriter[String].bimap[Version](_.value, Version(_))
   implicit val rw: RW[ConnectedProjectData] = macroRW
-
-end ConnectedProjectData
-
-case class FullAppData(connected: Seq[ConnectedProjectData], currentZioVersion: Version, scalaVersion: ScalaVersion)
 
 object FullAppData:
 
@@ -123,9 +125,6 @@ end FullAppData
 
 import upickle.default.{macroRW, ReadWriter as RW, *}
 
-case class PullRequest(number: Int, title: String, html_url: String)
 object PullRequest:
 
   implicit val rw: RW[PullRequest] = macroRW
-
-case class ProjectGroup(group: String, projects: Seq[Project])

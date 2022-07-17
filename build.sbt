@@ -4,7 +4,7 @@ ThisBuild / version := "0.1.0-SNAPSHOT"
 
 ThisBuild / scalaVersion := "3.1.3"
 
-val zioVersion = "2.0.0-RC6"
+val zioVersion = "2.0.0"
 
 lazy val sharedSettings = Seq(
   libraryDependencies ++= Seq(
@@ -21,7 +21,7 @@ lazy val server = (project in file("server"))
     mainClass in Compile := Some("org.ziverge.ecosystem.DependencyServer"),
     name := "ZioEcosystemTracker",
     libraryDependencies ++= Seq(
-      "io.d11" %% "zhttp"      % "2.0.0-RC9",
+      "io.d11" %% "zhttp"      % "2.0.0-RC10",
       "com.lihaoyi" %%% "pprint" % "0.7.0",
       "com.lihaoyi" %%% "upickle" % "1.4.3",
       ("org.scala-graph" %%% "graph-core" % "1.13.3").cross(CrossVersion.for3Use2_13),
