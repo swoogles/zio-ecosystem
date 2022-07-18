@@ -18,6 +18,7 @@ private case object LoginPageOriginal extends Page
 
 object DependencyViewerLaminar:
   import com.raquo.laminar.api.L.*
+  import Bulma._
 
   private val router = Routing.router
 
@@ -39,7 +40,8 @@ object DependencyViewerLaminar:
       )
 
     div(
-      cls := "box p-3",
+//      Bulma.p3.boxed, // TODO Finally something semi-useful.
+      Bulma.boxed.p3, // TODO Finally something semi-useful.
       span(
         Bulma.size5,
         s"$title ",
@@ -47,6 +49,8 @@ object DependencyViewerLaminar:
       ),
       connectedProjects.map(dep =>
         a(
+          // TODO try this some more?
+//          Bulma.boxed.p3(cls := colorUpToDate(dep.onLatestZio(currentZioVersion))),
           cls := s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
           onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
             scrollToProject,
@@ -54,6 +58,23 @@ object DependencyViewerLaminar:
         )
       )
     )
+
+  val x: Seq[
+    Modifier[_] | Setter[_] | Image
+
+  ] = Seq(
+    Bulma.size5(href := ""),
+    img(
+      src := "images/GitHub-Mark-64px.png",
+      styleAttr := "width: 1.0em; height: 1.0em;"
+    ),
+    a(
+      Bulma.size5,
+      cls  := "button is-info m-3",
+      href := "blah",
+      "ZIO Upgrade PR*"
+    )
+  )
 
   def Column(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) =
     div(cls := "column", content.toSeq)
@@ -138,8 +159,8 @@ object DependencyViewerLaminar:
                             ),
                             Bulma.size5,
                           span(
+                            Bulma.p3,
 
-                            cls := s"p-3 ",
                             span("Latest: "),
                             span(
                               code(project.sbtDependency(version)),
@@ -173,11 +194,7 @@ object DependencyViewerLaminar:
     end match
   end ExpandableProjectCard
 
-  def ProjectListings(
-      busPageInfo: DependencyExplorerPage,
-      viewUpdate: Observer[String],
-      fullAppData: AppDataAndEffects
-  ) =
+  def ProjectListings(busPageInfo: DependencyExplorerPage, fullAppData: AppDataAndEffects) =
     div(
       child <--
         fullAppData
@@ -294,7 +311,7 @@ object DependencyViewerLaminar:
                 }
               )
             ),
-            ProjectListings(busPageInfo, updateFilterInUrl(busPageInfo), fullAppData)
+            ProjectListings(busPageInfo, fullAppData)
           )
         )
     )
