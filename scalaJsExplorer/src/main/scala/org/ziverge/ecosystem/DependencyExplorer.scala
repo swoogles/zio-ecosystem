@@ -14,8 +14,6 @@ sealed private trait Page
 case class DependencyExplorerPage(targetProject: Option[String], filterUpToDateProjects: Boolean) extends Page:
   def changeTarget(newTarget: String) = copy(targetProject = Some(newTarget))
 
-private case object LoginPageOriginal extends Page
-
 object DependencyViewerLaminar:
   import com.raquo.laminar.api.L.*
   import Bulma._
@@ -65,6 +63,17 @@ object DependencyViewerLaminar:
       content.toSeq.map(Column(_))
     )
 
+  def openUpgradePr(pr: PullRequest) =
+    Seq(
+      div(
+        a(
+          Bulma.size5.button.isInfo.m3,
+          href := pr.html_url,
+          "ZIO Upgrade PR*"
+        )
+      ),
+      div(small("* Best Effort. Not guaranteed to be relevant."))
+    )
 
   def GitStuff(project: Project,
                relevantPr: Option[PullRequest]
@@ -75,19 +84,42 @@ object DependencyViewerLaminar:
           div(
             relevantPr
               .map(pr =>
-                Seq(
-                  div(
-                    a(
-                      Bulma.size5.button.isInfo.m3,
-                      href := pr.html_url,
-                      "ZIO Upgrade PR*"
-                    )
-                  ),
-                  div(small("* Best Effort. Not guaranteed to be relevant."))
-                )
+                openUpgradePr(pr)
               )
           )
       ).getOrElse(div())
+
+  def gitHubUrl(project: Project) =
+    a(
+      Bulma.size5,
+      href := project.githubUrl.getOrElse(""),
+      img(
+        src := "images/GitHub-Mark-64px.png",
+        styleAttr := "width: 1.0em; height: 1.0em;"
+      )
+    )
+
+  def zioDependencyIndicator(zioDep: Option[ZioDep]) =
+    div(
+      Bulma.p3,
+      span(
+        "ZIO Version: ",
+      ),
+      span(
+        Bulma.hasTextWeightBold,
+        zioDep.map(dep => dep.zioDep.typedVersion.value).getOrElse("N/A")
+      )
+    )
+
+  def latestVersion(project: Project, version: Version) =
+    span(
+      Bulma.p3,
+      span("Latest: "),
+      span(
+        code(project.sbtDependency(version)),
+        ClipboardIcon(project.sbtDependency(version))
+      )
+    )
 
   def ExpandableProjectCard(project: ConnectedProjectData, currentZioVersion: Version) =
     project match
@@ -126,54 +158,31 @@ object DependencyViewerLaminar:
                 Bulma.cardContent.isHidden,
                 div(
                   Bulma.content,
-                    Columns(
-                      // TODO Turn these raw divs into component defs
-                      div(
-                          a(
-                            Bulma.size5,
-                            href := project.githubUrl.getOrElse(""),
-                            img(
-                              src := "images/GitHub-Mark-64px.png",
-                              styleAttr := "width: 1.0em; height: 1.0em;"
-                            )
-                          ),
-                          Bulma.size5,
-                        span(
-                          Bulma.p3,
-                          span("Latest: "),
-                          span(
-                            code(project.sbtDependency(version)),
-                            ClipboardIcon(project.sbtDependency(version))
-                          )
-                        )
-                        ),
-                      ),
-                          GitStuff(
-                            project,
-                              relevantPr
-                          ),
-                        div(
-                          Bulma.p3,
-                          span(
-                            "ZIO Version: ",
-                          ),
-                          span(
-                            Bulma.hasTextWeightBold,
-                            zioDep.map(dep => dep.zioDep.typedVersion.value).getOrElse("N/A")
-                          )
-                        )
-                      ),
                   Columns(
-                    ConnectedProjectsContainer("Depends on", dependencies, currentZioVersion),
-                    ConnectedProjectsContainer("Used By ", dependants, currentZioVersion)
-                  )
+                    // TODO Turn these raw divs into component defs
+                    div(
+                      gitHubUrl(project),
+                      Bulma.size5,
+                      latestVersion(project, version)
+                    ),
+                  ),
+                  GitStuff(
+                    project,
+                    relevantPr
+                  ),
+                  zioDependencyIndicator(zioDep)
+                ),
+                Columns(
+                  ConnectedProjectsContainer("Depends on", dependencies, currentZioVersion),
+                  ConnectedProjectsContainer("Used By ", dependants, currentZioVersion)
                 )
+              )
               )
           )
     end match
   end ExpandableProjectCard
 
-  def ProjectListings(busPageInfo: DependencyExplorerPage, fullAppData: AppDataAndEffects) =
+  def ProjectListings(page: DependencyExplorerPage, fullAppData: AppDataAndEffects) =
     div(
       child <--
         fullAppData
@@ -184,7 +193,7 @@ object DependencyViewerLaminar:
                 div("No info to display!")
               case Some(fullAppDataLive) =>
                 val manipulatedData: Seq[ConnectedProjectData] =
-                  filterData(fullAppDataLive, busPageInfo.filterUpToDateProjects, busPageInfo.targetProject)
+                  filterData(fullAppDataLive, page.filterUpToDateProjects, page.targetProject)
 
                 div(
                   EcosystemSummary(
@@ -253,46 +262,51 @@ object DependencyViewerLaminar:
           )
       )
 
-    def updateSearchParameterInUrl(page: DependencyExplorerPage) =
-      Observer[String](onNext = text => router.pushState(page.changeTarget(text)))
-
-    def upToDateCheckbox(page: DependencyExplorerPage) =
-      Observer[Boolean](onNext =
-        checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState))
-      )
-
     div(
       child <--
-        $loginPage.map((busPageInfo: DependencyExplorerPage) =>
+        $loginPage.map((page: DependencyExplorerPage) =>
           div(
-            labelledInput(
-              "Hide up-to-date projects",
-              input(
-                typ := "checkbox",
-                onClick.mapToChecked --> upToDateCheckbox(busPageInfo),
-                defaultChecked := busPageInfo.filterUpToDateProjects
-              )
-            ),
-            labelledInput(
-              "Show projects that involve:",
-              input(
-                typ         := "text",
-                Bulma.inputB,
-                placeholder := busPageInfo.targetProject.getOrElse(""),
-                size        := 25,
-                value       := busPageInfo.targetProject.getOrElse(""),
-                placeholder := "Search for...",
-                onMountFocus,
-                inContext { thisNode =>
-                  onInput.mapTo(thisNode.ref.value) --> updateSearchParameterInUrl(busPageInfo)
-                }
-              )
-            ),
-            ProjectListings(busPageInfo, fullAppData)
+            filterProjects(page),
+            searchBar(page),
+            ProjectListings(page, fullAppData)
           )
         )
     )
   end renderMyPage
+  
+  def filterProjects(page: DependencyExplorerPage) =
+    def upToDateCheckbox(page: DependencyExplorerPage) =
+      Observer[Boolean](onNext =
+        checkboxState => router.pushState(page.copy(filterUpToDateProjects = checkboxState))
+      )
+    labelledInput(
+      "Hide up-to-date projects",
+      input(
+        typ := "checkbox",
+        onClick.mapToChecked --> upToDateCheckbox(page),
+        defaultChecked := page.filterUpToDateProjects
+      )
+    )
+
+  def searchBar(page: DependencyExplorerPage) =
+    def updateSearchParameterInUrl(page: DependencyExplorerPage) =
+      Observer[String](onNext = text => router.pushState(page.changeTarget(text)))
+
+    labelledInput(
+      "Show projects that involve:",
+      input(
+        typ         := "text",
+        Bulma.inputB,
+        placeholder := page.targetProject.getOrElse(""),
+        size        := 25,
+        value       := page.targetProject.getOrElse(""),
+        placeholder := "Search for...",
+        onMountFocus,
+        inContext { thisNode =>
+          onInput.mapTo(thisNode.ref.value) --> updateSearchParameterInUrl(page)
+        }
+      )
+    )
 
   def app(fullAppData: AppDataAndEffects): Div =
     div(child <-- Routing.splitter(fullAppData).$view)

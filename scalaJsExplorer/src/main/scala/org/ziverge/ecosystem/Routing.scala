@@ -54,7 +54,5 @@ object Routing:
   def splitter(fullAppData: AppDataAndEffects) =
     SplitRender[Page, HtmlElement](router.$currentPage)
       .collectSignal[DependencyExplorerPage](DependencyViewerLaminar.renderMyPage(_, fullAppData))
-      .collectStatic(LoginPageOriginal) {
-        div("Login page")
-      }
+
 end Routing
