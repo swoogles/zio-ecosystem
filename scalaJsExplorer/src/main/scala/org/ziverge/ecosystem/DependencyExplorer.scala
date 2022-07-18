@@ -40,18 +40,16 @@ object DependencyViewerLaminar:
       )
 
     div(
-//      Bulma.p3.boxed, // TODO Finally something semi-useful.
-      Bulma.boxed.p3, // TODO Finally something semi-useful.
+      Bulma.boxed.p3,
       span(
         Bulma.size5,
         s"$title ",
-        small(cls := "has-text-grey-dark", s"(${connectedProjects.length})")
+        small(Bulma.hasTextGrey, s"(${connectedProjects.length})")
       ),
       connectedProjects.map(dep =>
         a(
-          // TODO try this some more?
-//          Bulma.boxed.p3(cls := colorUpToDate(dep.onLatestZio(currentZioVersion))),
-          cls := s"box p-3 ${colorUpToDate(dep.onLatestZio(currentZioVersion))}",
+          Bulma.boxed.p3,
+          colorUpToDate(dep.onLatestZio(currentZioVersion)),
           onClick.mapTo(dep.project.artifactIdQualifiedWhenNecessary) -->
             scrollToProject,
           dep.project.artifactIdQualifiedWhenNecessary
@@ -59,28 +57,11 @@ object DependencyViewerLaminar:
       )
     )
 
-  val x: Seq[
-    Modifier[_] | Setter[_] | Image
-
-  ] = Seq(
-    Bulma.size5(href := ""),
-    img(
-      src := "images/GitHub-Mark-64px.png",
-      styleAttr := "width: 1.0em; height: 1.0em;"
-    ),
-    a(
-      Bulma.size5,
-      cls  := "button is-info m-3",
-      href := "blah",
-      "ZIO Upgrade PR*"
-    )
-  )
-
   def Column(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) =
-    div(cls := "column", content.toSeq)
+    div(Bulma.column, content.toSeq)
 
   def Columns(content: ReactiveHtmlElement[org.scalajs.dom.HTMLElement]*) =
-    div(cls:="columns",
+    div(Bulma.columns,
       content.toSeq.map(Column(_))
     )
 
@@ -97,8 +78,7 @@ object DependencyViewerLaminar:
                 Seq(
                   div(
                     a(
-                      Bulma.size5,
-                      cls  := "button is-info m-3",
+                      Bulma.size5.button.isInfo.m3,
                       href := pr.html_url,
                       "ZIO Upgrade PR*"
                     )
@@ -121,65 +101,64 @@ object DependencyViewerLaminar:
       relevantPr
       ) =>
           div(
-            cls    := "container",
+            Bulma.container,
             idAttr := project.artifactIdQualifiedWhenNecessary,
             div(
-              cls := "card is-fullwidth",
+              Bulma.card.isFullWidth,
               header(
-                cls := "card-header",
+                Bulma.cardHeader,
                 inContext { thisNode =>
                   val blah: org.scalajs.dom.html.Element = thisNode.ref
                   onClick.mapTo(thisNode.ref) -->
                     (anchor => anchor.parentElement.querySelector(".card-content").classList.toggle("is-hidden"))
                 },
                 p(
-                  cls := "card-header-title",
+                  Bulma.cardHeaderTitle,
                   UpToDateIcon(connectedProject.onLatestZioDep),
                   project.artifactIdQualifiedWhenNecessary
                 ),
                 a(
-                  cls := "card-header-icon card-toggle",
-                  i(cls := "fa fa-angle-down") // TODO Fix icons
+                  Bulma.cardHeaderIcon.cardToggle,
+                  i(Bulma.fa.faAngleDown) // TODO Fix icons
                 )
               ),
               div(
-                cls := "card-content is-hidden",
+                Bulma.cardContent.isHidden,
                 div(
-                  cls := "content",
-                      Columns(
-                        // TODO Turn these raw divs into component defs
-                        div(
-                            a(
-                              Bulma.size5,
-                              href := project.githubUrl.getOrElse(""),
-                              img(
-                                src := "images/GitHub-Mark-64px.png",
-                                styleAttr := "width: 1.0em; height: 1.0em;"
-                              )
-                            ),
+                  Bulma.content,
+                    Columns(
+                      // TODO Turn these raw divs into component defs
+                      div(
+                          a(
                             Bulma.size5,
-                          span(
-                            Bulma.p3,
-
-                            span("Latest: "),
-                            span(
-                              code(project.sbtDependency(version)),
-                              ClipboardIcon(project.sbtDependency(version))
+                            href := project.githubUrl.getOrElse(""),
+                            img(
+                              src := "images/GitHub-Mark-64px.png",
+                              styleAttr := "width: 1.0em; height: 1.0em;"
                             )
-                          )
                           ),
+                          Bulma.size5,
+                        span(
+                          Bulma.p3,
+                          span("Latest: "),
+                          span(
+                            code(project.sbtDependency(version)),
+                            ClipboardIcon(project.sbtDependency(version))
+                          )
+                        )
                         ),
+                      ),
                           GitStuff(
                             project,
                               relevantPr
                           ),
                         div(
-                          cls := s"p-3 ",
+                          Bulma.p3,
                           span(
                             "ZIO Version: ",
                           ),
                           span(
-                            cls := "has-text-weight-bold",
+                            Bulma.hasTextWeightBold,
                             zioDep.map(dep => dep.zioDep.typedVersion.value).getOrElse("N/A")
                           )
                         )
@@ -227,7 +206,7 @@ object DependencyViewerLaminar:
 
   def UpToDateIcon(upToDate: Boolean) =
     span(
-      cls := "icon",
+      Bulma.icon,
       img(
         src :=
           (if (upToDate)
@@ -239,29 +218,27 @@ object DependencyViewerLaminar:
 
   def ClipboardIcon(content: String) =
     a(
-      cls := "icon",
+      Bulma.icon,
       onClick.mapTo(content) --> (sbtText => dom.window.navigator.clipboard.writeText(sbtText)),
       img(src := Glyphicons.clipboard)
     )
 
-  def colorUpToDate(upToDate: Boolean) =
+  def colorUpToDate(upToDate: Boolean): Mod[ReactiveHtmlElement[_]] =
     if (upToDate)
-      "has-background-success"
+      Bulma.hasBackgroundSuccess
     else
-      "has-background-warning"
+      Bulma.hasBackgroundWarning
 
   def labelledInput(labelContent: String, inputElement: ReactiveHtmlElement[dom.html.Element]) =
-//    val blah = cls := "field-label is-normal"
-    // Param Type: DomHtmlElement
     div(
-      cls := "field is-horizontal",
-      div(cls := "field-label is-normal", label(cls := "label", labelContent)),
-      div(cls := "field-body", div(cls := "field", p(cls := "control", inputElement)))
+      Bulma.field.isHorizontal,
+      div(Bulma.fieldLabel.isNormal, label(Bulma.labelB, labelContent)),
+      div(Bulma.fieldBody, div(Bulma.field, p(Bulma.control, inputElement)))
     )
 
   def EcosystemSummary(numberOfTrackedProjects: Int, numberOfCurrentProjects: Int) =
     div(
-      cls := "box p-3",
+      Bulma.boxed.p3,
       div("Total Tracked Projects: " + numberOfTrackedProjects),
       div("Up-to-date Projects: " + numberOfCurrentProjects)
     )
@@ -300,7 +277,7 @@ object DependencyViewerLaminar:
               "Show projects that involve:",
               input(
                 typ         := "text",
-                cls         := "input",
+                Bulma.inputB,
                 placeholder := busPageInfo.targetProject.getOrElse(""),
                 size        := 25,
                 value       := busPageInfo.targetProject.getOrElse(""),
