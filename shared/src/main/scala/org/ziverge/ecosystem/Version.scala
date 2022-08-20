@@ -23,19 +23,36 @@ object Version:
       version2
         .value
         .split("\\.")
+
+    val major1 = version1Splits(0).toInt
+    val minor1 = version1Splits(1).toInt
+//    val patch1 = version1Splits(2).toInt
+
+    val major2 = version2Splits(0).toInt
+    val minor2 = version2Splits(1).toInt
+//    val patch2 = version2Splits(2).toInt
+
     val maxLengthOfVersionSplits = Math.max(version1Splits.length, version2Splits.length)
-    var i                        = 0
-    while (i < maxLengthOfVersionSplits && comparisonResult == 0) {
-      val v1 =
-          version1Splits(i)
-      val v2 =
-          version2Splits(i)
-      val compare = v1.compareTo(v2)
-      if (compare != 0) {
-        comparisonResult = compare
-      }
-      i = i + 1
-    }
-    comparisonResult
+
+    if (major1.compareTo(major2) != 0)
+      major1.compareTo(major2)
+    else
+      if (minor1.compareTo(minor2) != 0)
+        minor1.compareTo(minor2)
+      else
+        0
+//    var i                        = 0
+//    while (i < maxLengthOfVersionSplits && comparisonResult == 0) {
+//      val v1 =
+//          version1Splits(i)
+//      val v2 =
+//          version2Splits(i)
+//      val compare = v1.compareTo(v2)
+//      if (compare != 0) {
+//        comparisonResult = compare
+//      }
+//      i = i + 1
+//    }
+//    comparisonResult
   end compareVersions
 end Version

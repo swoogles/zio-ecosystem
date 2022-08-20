@@ -16,5 +16,8 @@ object VersionSpec extends zio.test.ZIOSpecDefault:
       ),
       test("compareTo minor")(
         assertTrue(Version.compareVersions(Version("1.0.13"), Version("1.1.03")) == -1)
+      ),
+      test("compareTo patch")(
+        assertTrue(Version.compareVersions(Version("2.0.0"), Version("2.0.1")) == 0)
       )
     )
