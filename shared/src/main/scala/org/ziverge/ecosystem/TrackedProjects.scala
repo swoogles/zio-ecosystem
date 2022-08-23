@@ -150,7 +150,9 @@ object TrackedProjects:
             "tapir-zio",
             Some("https://github.com/softwaremill/tapir")
           ),
-          Project("io.github.jkobejs", "zio-cron", Some("https://github.com/jkobejs/cron"))
+          Project("io.github.jkobejs", "zio-cron", Some("https://github.com/jkobejs/cron")),
+          Project("com.github.sideeffffect", "zio-testcontainers", Some("https://github.com/sideeffffect/zio-testcontainers")),
+          Project("com.github.sideeffffect", "zio-doobie-liquibase", Some("https://github.com/sideeffffect/zio-doobie/"))
         ) ++ desertProjects.projects ++ clippProjects.projects ++ proxProjects.projects
     ).sortBy(_.artifactId)
 
